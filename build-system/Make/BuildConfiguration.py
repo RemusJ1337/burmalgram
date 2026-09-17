@@ -70,38 +70,20 @@ def build_configuration_from_json(path):
         sys.exit(1)
     with open(path) as file:
         configuration_dict = json.load(file)
-        required_keys = [
-            'sg_config',
-            'bundle_id',
-            'api_id',
-            'api_hash',
-            'team_id',
-            'app_center_id',
-            'is_internal_build',
-            'is_appstore_build',
-            'appstore_id',
-            'app_specific_url_scheme',
-            'premium_iap_product_id',
-            'enable_siri',
-            'enable_icloud',
-        ]
-        for key in required_keys:
-            if key not in configuration_dict:
-                print('Configuration at {} does not contain {}'.format(path, key))
         return BuildConfiguration(
-            sg_config=configuration_dict['sg_config'],
-            bundle_id=configuration_dict['bundle_id'],
-            api_id=configuration_dict['api_id'],
-            api_hash=configuration_dict['api_hash'],
-            team_id=configuration_dict['team_id'],
-            app_center_id=configuration_dict['app_center_id'],
-            is_internal_build=configuration_dict['is_internal_build'],
-            is_appstore_build=configuration_dict['is_appstore_build'],
-            appstore_id=configuration_dict['appstore_id'],
-            app_specific_url_scheme=configuration_dict['app_specific_url_scheme'],
-            premium_iap_product_id=configuration_dict['premium_iap_product_id'],
-            enable_siri=configuration_dict['enable_siri'],
-            enable_icloud=configuration_dict['enable_icloud'],
+            sg_config=configuration_dict.get('sg_config', ''),
+            bundle_id=configuration_dict.get('bundle_id', 'org.burmalgram.app'),
+            api_id=configuration_dict.get('api_id', '8'),
+            api_hash=configuration_dict.get('api_hash', '7245de8e747a0d6fbe11f7cc14fcc0bb'),
+            team_id=configuration_dict.get('team_id', 'C67CF9S4VU'),
+            app_center_id=configuration_dict.get('app_center_id', '0'),
+            is_internal_build=configuration_dict.get('is_internal_build', 'false'),
+            is_appstore_build=configuration_dict.get('is_appstore_build', 'false'),
+            appstore_id=configuration_dict.get('appstore_id', '0'),
+            app_specific_url_scheme=configuration_dict.get('app_specific_url_scheme', 'burmalgram'),
+            premium_iap_product_id=configuration_dict.get('premium_iap_product_id', ''),
+            enable_siri=configuration_dict.get('enable_siri', False),
+            enable_icloud=configuration_dict.get('enable_icloud', False),
         )
 
 

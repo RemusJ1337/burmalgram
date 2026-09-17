@@ -65,7 +65,7 @@ jobs:
             --overrideXcodeVersion \
             --overrideBazelVersion \
             build \
-            --configurationPath="build-system/appstore-configuration.json" \
+            --configurationPath="build-system/burmalgram-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
             --configuration=release_arm64 \
             --buildNumber="$BUILD_NUMBER" \
