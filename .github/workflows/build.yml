@@ -5,6 +5,9 @@ on:
     branches: [ master, main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: macos-14
@@ -19,11 +22,17 @@ jobs:
         run: |
           XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
           if [ -d "/Applications/Xcode_$XCODE_VERSION.app" ]; then
+            echo "Selected /Applications/Xcode_$XCODE_VERSION.app"
             sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
           else
-            echo "Xcode $XCODE_VERSION not found, using default Xcode"
-            xcode-select -p
+            echo "Xcode $XCODE_VERSION not found, searching available Xcode versions..."
+            LATEST_XCODE=$(find /Applications -maxdepth 1 -name "Xcode_*.app" | sort -V | tail -n 1)
+            if [ -n "$LATEST_XCODE" ]; then
+              echo "Selected $LATEST_XCODE"
+              sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"
+            fi
           fi
+          xcode-select -p
 
       - name: Create canonical source directory
         run: |
@@ -53,19 +62,36 @@ jobs:
           python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
           python3 -u build-system/Make/Make.py \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
+            --overrideXcodeVersion \
+            --overrideBazelVersion \
             build \
             --configurationPath="build-system/appstore-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
             --configuration=release_arm64 \
-            --buildNumber="$BUILD_NUMBER"
+            --buildNumber="$BUILD_NUMBER" \
+            --outputBuildArtifactsPath="build/artifacts"
 
-          # collect ipa
-          OUTPUT_PATH="build/artifacts"
-          rm -rf "$OUTPUT_PATH"
-          mkdir -p "$OUTPUT_PATH"
-          for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
-            cp "$f" $OUTPUT_PATH/Burmalgram.ipa
-          done
+          # ensure Burmalgram.ipa exists
+          cd $SOURCE_DIR
+          if [ -f "build/artifacts/Swiftgram.ipa" ]; then
+            cp "build/artifacts/Swiftgram.ipa" "build/artifacts/Burmalgram.ipa"
+          fi
+
+          if [ ! -f "build/artifacts/Burmalgram.ipa" ]; then
+            echo "Searching for built IPA..."
+            FOUND_IPA=$(find bazel-bin bazel-out build -name "*.ipa" | head -n 1)
+            if [ -n "$FOUND_IPA" ]; then
+              echo "Found $FOUND_IPA"
+              mkdir -p build/artifacts
+              cp "$FOUND_IPA" build/artifacts/Burmalgram.ipa
+            else
+              echo "Error: No IPA found!"
+              exit 1
+            fi
+          fi
+
+          echo "Burmalgram.ipa successfully built:"
+          ls -lh build/artifacts/Burmalgram.ipa
 
       - name: Upload Burmalgram IPA Artifact
         uses: actions/upload-artifact@v4
@@ -93,3 +119,4 @@ jobs:
           files: /Users/Shared/telegram-ios/build/artifacts/Burmalgram.ipa
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
