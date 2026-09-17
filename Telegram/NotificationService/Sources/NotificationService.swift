@@ -622,46 +622,7 @@ private struct NotificationContent: CustomStringConvertible {
             content.subtitle = subtitle
         }
         if let body = self.body {
-            if #available(iOS 18.0, *) {
-                if !self.resolvedEmojiFiles.isEmpty {
-                    let attributedString = NSMutableAttributedString(string: body)
-                    
-                    let sortedEmoji = self.customEmoji.sorted(by: { $0.range.lowerBound < $1.range.lowerBound })
-                    
-                    for emoji in sortedEmoji.reversed() {
-                        if emoji.range.lowerBound < 0 || emoji.range.upperBound > attributedString.length {
-                            continue
-                        }
-                        guard let filePath = self.resolvedEmojiFiles[emoji.fileId] else {
-                            continue
-                        }
-                        guard let fileData = try? Data(contentsOf: URL(fileURLWithPath: filePath)) else {
-                            continue
-                        }
-                        let image: UIImage
-                        if let lottieImage = convertLottieImage(data: fileData, size: CGSize(width: 40.0, height: 40.0), forceSquare: false) {
-                            image = lottieImage
-                        } else if let webpImage = WebP.convert(fromWebP: fileData) {
-                            image = webpImage
-                        } else {
-                            continue
-                        }
-                        
-                        let emojiRange = NSRange(location: emoji.range.lowerBound, length: emoji.range.upperBound - emoji.range.lowerBound)
-                        let substring = attributedString.attributedSubstring(from: emojiRange)
-                        
-                        let glyph = try! Customoji.makeGlyph(from: image, description: substring.string, tileSizes: [40], cropToSquare: false)
-                        let imageString = NSAttributedString(adaptiveImageGlyph: glyph, attributes: [:])
-                        attributedString.replaceCharacters(in: emojiRange, with: "")
-                        attributedString.insert(imageString, at: emojiRange.lowerBound)
-                    }
-                    content.setValue(attributedString, forKey: "attributedBody")
-                } else {
-                    content.body = body
-                }
-            } else {
-                content.body = body
-            }
+            content.body = body
         }
         
         if !content.title.isEmpty || !content.subtitle.isEmpty || !content.body.isEmpty {
@@ -1825,7 +1786,7 @@ private final class NotificationServiceHandler {
                                             |> timeout(10.0, queue: queue, alternate: .single(nil)),
                                             wasDisplayed,
                                             resolvedEmojiFiles
-                                            |> timeout(10.0, queue: queue, alternate: .single([:])),
+                                            |> timeout(10.0, queue: queue, alternate: .single([:]))
                                         )
                                         |> deliverOn(queue)).start(next: { mediaData, notificationSoundData, wasDisplayed, resolvedEmojiFiles in
                                             guard let strongSelf = self, let stateManager = strongSelf.stateManager else {
@@ -2728,6 +2689,7 @@ final class NotificationService: UNNotificationServiceExtension {
     }
 }
 
+#if false
 typealias CMJImage = UIImage
 
 // MARK: - Public Namespace
@@ -3154,6 +3116,7 @@ extension Customoji {
         return sizes
     }
 }
+#endif
 
 extension NotificationContent {
     var forceIsEmpty: Bool {
