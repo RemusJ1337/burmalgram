@@ -160,7 +160,7 @@ public final class DeviceAccess {
                             subscriber.putNext(.notDetermined)
                         case .authorized:
                             subscriber.putNext(.allowed)
-                        case .limited:
+                        case let status where status.rawValue == 4:
                             subscriber.putNext(.limited)
                         default:
                             subscriber.putNext(.denied)
@@ -533,7 +533,7 @@ public final class DeviceAccess {
                                 case .authorized:
                                     self.contactsPromise.set(.single(true))
                                     completion(true)
-                                case .limited:
+                                case let status where status.rawValue == 4:
                                     self.contactsPromise.set(.single(true))
                                     completion(true)
                                 default:
