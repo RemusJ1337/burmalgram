@@ -433,7 +433,6 @@ public class GlassBackgroundView: UIView {
                     }
                     transition.setFrame(layer: maskLayer, frame: CGRect(origin: CGPoint(), size: size))
                     transition.setShapeLayerPath(layer: maskLayer, path: GlassBackgroundView.generateRoundedRectPath(size: size, cornerRadii: cornerRadii))
-                }
             }
         }
     }
