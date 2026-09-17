@@ -40,6 +40,9 @@ jobs:
           sudo mkdir -p /Users/Shared
           cp -R $GITHUB_WORKSPACE /Users/Shared/
           mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
+          cd /Users/Shared/telegram-ios
+          git submodule update --init --recursive
+          ls -la build-system/bazel-rules/rules_apple
 
       - name: Build the App
         run: |
