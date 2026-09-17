@@ -43,6 +43,9 @@ jobs:
           cd /Users/Shared/telegram-ios
           git submodule update --init --recursive
           ls -la build-system/bazel-rules/rules_apple
+          chmod -R +x build-system
+          chmod -R +x submodules/ffmpeg/Sources/FFMpeg
+          find . -type f \( -name "*.sh" -o -name "*.py" -o -name "*.pl" -o -name "configure" -o -name "pkg-config" \) -exec chmod +x {} + || true
 
       - name: Build the App
         run: |
