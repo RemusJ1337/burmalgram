@@ -290,10 +290,6 @@ struct SGProFeature: Identifiable {
             Image("SwiftgramSettings")
                 .resizable()
                 .frame(width: 32, height: 32)
-        @unknown default:
-            Image("SwiftgramPro")
-                .resizable()
-                .frame(width: 32, height: 32)
         }
     }
 
@@ -309,8 +305,6 @@ struct SGProFeature: Identifiable {
             return Image("ProDetailsFormatting")
         case .icons:
             return Image("ProDetailsIcons")
-        @unknown default:
-            return Image("pro")
         }
     }
 }
