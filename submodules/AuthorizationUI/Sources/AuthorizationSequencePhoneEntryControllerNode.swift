@@ -699,7 +699,11 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
     }
     
     @objc private func debugQrTap(_ recognizer: UITapGestureRecognizer) {
-        if self.qrNode == nil {
+        if let qrNode = self.qrNode {
+            qrNode.removeFromSupernode()
+            self.qrNode = nil
+            self.exportTokenDisposable.set(nil)
+        } else {
             let qrNode = ASImageNode()
             qrNode.frame = CGRect(origin: CGPoint(x: 16.0, y: 64.0 + 16.0), size: CGSize(width: 200.0, height: 200.0))
             self.qrNode = qrNode

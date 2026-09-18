@@ -486,6 +486,8 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
 }
 
 public final class AuthorizationSequencePaymentScreen: ViewControllerComponentContainer {
+    private let backAction: () -> Void
+
     public init(
         sharedContext: SharedAccountContext,
         engine: TelegramEngineUnauthorized,
@@ -499,6 +501,7 @@ public final class AuthorizationSequencePaymentScreen: ViewControllerComponentCo
         supportEmailSubject: String,
         back: @escaping () -> Void
     ) {
+        self.backAction = back
         super.init(component: AuthorizationSequencePaymentScreenComponent(
             sharedContext: sharedContext,
             engine: engine,
@@ -520,12 +523,11 @@ public final class AuthorizationSequencePaymentScreen: ViewControllerComponentCo
         
         self.supportedOrientations = ViewControllerSupportedOrientations(regularSize: .all, compactSize: .portrait)
         
-        
         self.attemptNavigation = { _ in
             return false
         }
-        self.navigationBar?.backPressed = {
-            back()
+        self.navigationBar?.backPressed = { [weak self] in
+            self?.backAction()
         }
     }
     
@@ -544,7 +546,7 @@ public final class AuthorizationSequencePaymentScreen: ViewControllerComponentCo
     }
     
     @objc private func cancelPressed() {
-        self.dismiss()
+        self.backAction()
     }
 }
 

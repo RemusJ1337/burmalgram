@@ -820,7 +820,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                 return
             }
             let countryCode = AuthorizationSequenceCountrySelectionController.defaultCountryCode()
-            let _ = self.engine.auth.setState(state: UnauthorizedAccountState(isTestingEnvironment: self.account.testingEnvironment, masterDatacenterId: self.account.masterDatacenterId, contents: .phoneEntry(countryCode: countryCode, number: ""))).startStandalone()
+            let _ = self.engine.auth.setState(state: UnauthorizedAccountState(isTestingEnvironment: self.account.testingEnvironment, masterDatacenterId: self.account.masterDatacenterId, contents: .phoneEntry(countryCode: countryCode, number: number))).startStandalone()
         })
         return controller
     }
@@ -1353,10 +1353,16 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                     controllers.append(self.signUpController(firstName: firstName, lastName: lastName, termsOfService: termsOfService, displayCancel: displayCancel))
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty)
                 case let .payment(number, codeHash, storeProduct, premiumDays, supportEmailAddress, supportEmailSubject, _):
+                    if self.viewControllers.isEmpty {
+                        let countryCode = AuthorizationSequenceCountrySelectionController.defaultCountryCode()
+                        let _ = self.engine.auth.setState(state: UnauthorizedAccountState(isTestingEnvironment: self.account.testingEnvironment, masterDatacenterId: self.account.masterDatacenterId, contents: .phoneEntry(countryCode: countryCode, number: number))).startStandalone()
+                        return
+                    }
                     var controllers: [ViewController] = []
                     if !self.otherAccountPhoneNumbers.1.isEmpty {
                         controllers.append(self.splashController())
                     }
+                    controllers.append(self.phoneEntryController(countryCode: AuthorizationSequenceCountrySelectionController.defaultCountryCode(), number: number, splashController: nil))
                     controllers.append(self.paymentController(number: number, phoneCodeHash: codeHash, storeProduct: storeProduct, premiumDays: premiumDays, supportEmailAddress: supportEmailAddress, supportEmailSubject: supportEmailSubject))
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty)
             }
