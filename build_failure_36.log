@@ -1,0 +1,713 @@
+﻿2026-09-18T17:25:21.4165830Z Current runner version: '2.337.0'
+2026-09-18T17:25:21.4180540Z ##[group]Runner Image Provisioner
+2026-09-18T17:25:21.4181050Z Hosted Compute Agent
+2026-09-18T17:25:21.4181420Z Version: 20260828.587
+2026-09-18T17:25:21.4181820Z Commit: abac92662cab4cc7352de4f9f9d2e2419aad9c29
+2026-09-18T17:25:21.4182280Z Build Date: 2026-08-28T16:44:25Z
+2026-09-18T17:25:21.4182710Z Worker ID: {73da5cf9-8353-4f3b-bd3e-9a7764573777}
+2026-09-18T17:25:21.4183150Z Azure Region: westus
+2026-09-18T17:25:21.4183510Z ##[endgroup]
+2026-09-18T17:25:21.4184370Z ##[group]Operating System
+2026-09-18T17:25:21.4184780Z macOS
+2026-09-18T17:25:21.4185100Z 14.8.9
+2026-09-18T17:25:21.4185420Z 23J631
+2026-09-18T17:25:21.4185740Z ##[endgroup]
+2026-09-18T17:25:21.4186090Z ##[group]Runner Image
+2026-09-18T17:25:21.4186460Z Image: macos-14-arm64
+2026-09-18T17:25:21.4186820Z Version: 20260831.0302.1
+2026-09-18T17:25:21.4187610Z Included Software: https://github.com/actions/runner-images/blob/macos-14-arm64/20260831.0302/images/macos/macos-14-arm64-Readme.md
+2026-09-18T17:25:21.4188630Z Image Release: https://github.com/actions/runner-images/releases/tag/macos-14-arm64%2F20260831.0302
+2026-09-18T17:25:21.4189270Z ##[endgroup]
+2026-09-18T17:25:21.4189970Z ##[group]GITHUB_TOKEN Permissions
+2026-09-18T17:25:21.4191030Z Contents: write
+2026-09-18T17:25:21.4191380Z Metadata: read
+2026-09-18T17:25:21.4191730Z ##[endgroup]
+2026-09-18T17:25:21.4193150Z Secret source: Actions
+2026-09-18T17:25:21.4193710Z Cache mode: write
+2026-09-18T17:25:21.4194180Z Prepare workflow directory
+2026-09-18T17:25:21.4416350Z Prepare all required actions
+2026-09-18T17:25:21.4450080Z Getting action download info
+2026-09-18T17:25:21.5869730Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+2026-09-18T17:25:21.9715790Z Download action repository 'actions/cache@v4' (SHA:0057852bfaa89a56745cba8c7296529d2fc39830)
+2026-09-18T17:25:22.0533140Z Download action repository 'actions/upload-artifact@v4' (SHA:ea165f8d65b6e75b540449e92b4886f43607fa02)
+2026-09-18T17:25:22.1549520Z Download action repository 'softprops/action-gh-release@v1' (SHA:de2c0eb89ae2a093876385947365aca7b0e5f844)
+2026-09-18T17:25:22.8310550Z Complete job name: build
+2026-09-18T17:25:22.8697450Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-18T17:25:22.8703440Z ##[group]Run actions/checkout@v4
+2026-09-18T17:25:22.8703880Z with:
+2026-09-18T17:25:22.8704180Z   submodules: recursive
+2026-09-18T17:25:22.8704500Z   fetch-depth: 1
+2026-09-18T17:25:22.8704810Z   repository: dimonchik235/burmalgram
+2026-09-18T17:25:22.8707140Z   token: ***
+2026-09-18T17:25:22.8707420Z   ssh-strict: true
+2026-09-18T17:25:22.8707720Z   ssh-user: git
+2026-09-18T17:25:22.8708030Z   persist-credentials: true
+2026-09-18T17:25:22.8708350Z   clean: true
+2026-09-18T17:25:22.8708680Z   sparse-checkout-cone-mode: true
+2026-09-18T17:25:22.8709030Z   fetch-tags: false
+2026-09-18T17:25:22.8709330Z   show-progress: true
+2026-09-18T17:25:22.8709660Z   lfs: false
+2026-09-18T17:25:22.8709950Z   set-safe-directory: true
+2026-09-18T17:25:22.8710300Z   allow-unsafe-pr-checkout: false
+2026-09-18T17:25:22.8710740Z ##[endgroup]
+2026-09-18T17:25:23.1682290Z Syncing repository: dimonchik235/burmalgram
+2026-09-18T17:25:23.1683910Z ##[group]Getting Git version info
+2026-09-18T17:25:23.1684450Z Working directory is '/Users/runner/work/burmalgram/burmalgram'
+2026-09-18T17:25:23.1685200Z [command]/opt/homebrew/bin/git version
+2026-09-18T17:25:23.1887910Z git version 2.55.0
+2026-09-18T17:25:23.1901080Z ##[endgroup]
+2026-09-18T17:25:23.1906940Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/f3fdf9c9-5fa1-4538-9309-0992b87e5486/.gitconfig'
+2026-09-18T17:25:23.1912740Z Temporarily overriding HOME='/Users/runner/work/_temp/f3fdf9c9-5fa1-4538-9309-0992b87e5486' before making global git config changes
+2026-09-18T17:25:23.1914160Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-18T17:25:23.1916280Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/burmalgram/burmalgram
+2026-09-18T17:25:23.1999340Z Deleting the contents of '/Users/runner/work/burmalgram/burmalgram'
+2026-09-18T17:25:23.2001770Z ##[group]Initializing the repository
+2026-09-18T17:25:23.2004770Z [command]/opt/homebrew/bin/git init /Users/runner/work/burmalgram/burmalgram
+2026-09-18T17:25:23.2167830Z hint: Using 'master' as the name for the initial branch. This default branch name
+2026-09-18T17:25:23.2168700Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+2026-09-18T17:25:23.2169460Z hint: to use in all of your new repositories, which will suppress this warning,
+2026-09-18T17:25:23.2170140Z hint: call:
+2026-09-18T17:25:23.2171390Z hint:
+2026-09-18T17:25:23.2171820Z hint: 	git config --global init.defaultBranch <name>
+2026-09-18T17:25:23.2172300Z hint:
+2026-09-18T17:25:23.2172740Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+2026-09-18T17:25:23.2173440Z hint: 'development'. The just-created branch can be renamed via this command:
+2026-09-18T17:25:23.2174040Z hint:
+2026-09-18T17:25:23.2174350Z hint: 	git branch -m <name>
+2026-09-18T17:25:23.2174720Z hint:
+2026-09-18T17:25:23.2175180Z hint: Disable this message with "git config set advice.defaultBranchName false"
+2026-09-18T17:25:23.2175950Z Initialized empty Git repository in /Users/runner/work/burmalgram/burmalgram/.git/
+2026-09-18T17:25:23.2177410Z [command]/opt/homebrew/bin/git remote add origin https://github.com/dimonchik235/burmalgram
+2026-09-18T17:25:23.2226380Z ##[endgroup]
+2026-09-18T17:25:23.2226980Z ##[group]Disabling automatic garbage collection
+2026-09-18T17:25:23.2228670Z [command]/opt/homebrew/bin/git config --local gc.auto 0
+2026-09-18T17:25:23.2263770Z ##[endgroup]
+2026-09-18T17:25:23.2264330Z ##[group]Setting up auth
+2026-09-18T17:25:23.2268090Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-18T17:25:23.2305030Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-18T17:25:23.2982520Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-18T17:25:23.3019030Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-18T17:25:23.3497890Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:25:23.3538890Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-18T17:25:23.3974140Z [command]/opt/homebrew/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-18T17:25:23.4017040Z ##[endgroup]
+2026-09-18T17:25:23.4017670Z ##[group]Fetching the repository
+2026-09-18T17:25:23.4022320Z [command]/opt/homebrew/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +29ea2b2abe0b5ba31e2f0104e0761abbdd434967:refs/remotes/origin/main
+2026-09-18T17:25:28.2821260Z From https://github.com/dimonchik235/burmalgram
+2026-09-18T17:25:28.2833250Z  * [new ref]           29ea2b2abe0b5ba31e2f0104e0761abbdd434967 -> origin/main
+2026-09-18T17:25:28.2862670Z ##[endgroup]
+2026-09-18T17:25:28.2863430Z ##[group]Determining the checkout info
+2026-09-18T17:25:28.2864190Z ##[endgroup]
+2026-09-18T17:25:28.2864840Z [command]/opt/homebrew/bin/git sparse-checkout disable
+2026-09-18T17:25:28.2898020Z [command]/opt/homebrew/bin/git config --local --unset-all extensions.worktreeConfig
+2026-09-18T17:25:28.2946370Z ##[group]Checking out the ref
+2026-09-18T17:25:28.2949110Z [command]/opt/homebrew/bin/git checkout --progress --force -B main refs/remotes/origin/main
+2026-09-18T17:25:29.3474380Z Updating files:  20% (6378/30389)
+2026-09-18T17:25:29.3946880Z Updating files:  21% (6382/30389)
+2026-09-18T17:25:29.4390850Z Updating files:  22% (6686/30389)
+2026-09-18T17:25:29.4718690Z Updating files:  23% (6990/30389)
+2026-09-18T17:25:29.5192250Z Updating files:  24% (7294/30389)
+2026-09-18T17:25:29.5566360Z Updating files:  25% (7598/30389)
+2026-09-18T17:25:29.6281020Z Updating files:  26% (7902/30389)
+2026-09-18T17:25:29.6725350Z Updating files:  27% (8206/30389)
+2026-09-18T17:25:29.7163580Z Updating files:  28% (8509/30389)
+2026-09-18T17:25:29.7475550Z Updating files:  29% (8813/30389)
+2026-09-18T17:25:29.7916240Z Updating files:  30% (9117/30389)
+2026-09-18T17:25:29.8230830Z Updating files:  31% (9421/30389)
+2026-09-18T17:25:29.8531290Z Updating files:  32% (9725/30389)
+2026-09-18T17:25:29.9039530Z Updating files:  33% (10029/30389)
+2026-09-18T17:25:29.9588730Z Updating files:  34% (10333/30389)
+2026-09-18T17:25:30.0184400Z Updating files:  35% (10637/30389)
+2026-09-18T17:25:30.0749880Z Updating files:  36% (10941/30389)
+2026-09-18T17:25:30.1636990Z Updating files:  37% (11244/30389)
+2026-09-18T17:25:30.2237980Z Updating files:  38% (11548/30389)
+2026-09-18T17:25:30.2834470Z Updating files:  39% (11852/30389)
+2026-09-18T17:25:30.3301280Z Updating files:  40% (12156/30389)
+2026-09-18T17:25:30.4126980Z Updating files:  40% (12222/30389)
+2026-09-18T17:25:30.4890720Z Updating files:  41% (12460/30389)
+2026-09-18T17:25:30.5212910Z Updating files:  42% (12764/30389)
+2026-09-18T17:25:30.5644150Z Updating files:  43% (13068/30389)
+2026-09-18T17:25:30.6002060Z Updating files:  44% (13372/30389)
+2026-09-18T17:25:30.6499820Z Updating files:  45% (13676/30389)
+2026-09-18T17:25:30.7184050Z Updating files:  46% (13979/30389)
+2026-09-18T17:25:30.7806170Z Updating files:  47% (14283/30389)
+2026-09-18T17:25:30.8672020Z Updating files:  48% (14587/30389)
+2026-09-18T17:25:30.9371340Z Updating files:  49% (14891/30389)
+2026-09-18T17:25:31.0065120Z Updating files:  50% (15195/30389)
+2026-09-18T17:25:31.0697240Z Updating files:  51% (15499/30389)
+2026-09-18T17:25:31.1030480Z Updating files:  52% (15803/30389)
+2026-09-18T17:25:31.1651110Z Updating files:  53% (16107/30389)
+2026-09-18T17:25:31.2336130Z Updating files:  54% (16411/30389)
+2026-09-18T17:25:31.3201560Z Updating files:  55% (16714/30389)
+2026-09-18T17:25:31.3280580Z Updating files:  56% (17018/30389)
+2026-09-18T17:25:31.3932860Z Updating files:  56% (17066/30389)
+2026-09-18T17:25:31.4645010Z Updating files:  57% (17322/30389)
+2026-09-18T17:25:31.5380310Z Updating files:  58% (17626/30389)
+2026-09-18T17:25:31.5950060Z Updating files:  59% (17930/30389)
+2026-09-18T17:25:31.6468110Z Updating files:  60% (18234/30389)
+2026-09-18T17:25:31.7368310Z Updating files:  61% (18538/30389)
+2026-09-18T17:25:31.7873270Z Updating files:  62% (18842/30389)
+2026-09-18T17:25:31.8140620Z Updating files:  63% (19146/30389)
+2026-09-18T17:25:31.8392930Z Updating files:  64% (19449/30389)
+2026-09-18T17:25:31.8957260Z Updating files:  65% (19753/30389)
+2026-09-18T17:25:31.9613930Z Updating files:  66% (20057/30389)
+2026-09-18T17:25:32.0122980Z Updating files:  67% (20361/30389)
+2026-09-18T17:25:32.0337200Z Updating files:  68% (20665/30389)
+2026-09-18T17:25:32.0598540Z Updating files:  69% (20969/30389)
+2026-09-18T17:25:32.1082460Z Updating files:  70% (21273/30389)
+2026-09-18T17:25:32.2199370Z Updating files:  71% (21577/30389)
+2026-09-18T17:25:32.2943520Z Updating files:  72% (21881/30389)
+2026-09-18T17:25:32.3281100Z Updating files:  73% (22184/30389)
+2026-09-18T17:25:32.3406720Z Updating files:  73% (22391/30389)
+2026-09-18T17:25:32.3831000Z Updating files:  74% (22488/30389)
+2026-09-18T17:25:32.4465550Z Updating files:  75% (22792/30389)
+2026-09-18T17:25:32.5216150Z Updating files:  76% (23096/30389)
+2026-09-18T17:25:32.5807880Z Updating files:  77% (23400/30389)
+2026-09-18T17:25:32.6465020Z Updating files:  78% (23704/30389)
+2026-09-18T17:25:32.7899450Z Updating files:  79% (24008/30389)
+2026-09-18T17:25:32.8555990Z Updating files:  80% (24312/30389)
+2026-09-18T17:25:32.9192960Z Updating files:  81% (24616/30389)
+2026-09-18T17:25:32.9525210Z Updating files:  82% (24919/30389)
+2026-09-18T17:25:33.0062560Z Updating files:  83% (25223/30389)
+2026-09-18T17:25:33.0423180Z Updating files:  84% (25527/30389)
+2026-09-18T17:25:33.1670070Z Updating files:  85% (25831/30389)
+2026-09-18T17:25:33.1955490Z Updating files:  86% (26135/30389)
+2026-09-18T17:25:33.2237120Z Updating files:  87% (26439/30389)
+2026-09-18T17:25:33.2570440Z Updating files:  88% (26743/30389)
+2026-09-18T17:25:33.2938660Z Updating files:  89% (27047/30389)
+2026-09-18T17:25:33.3276430Z Updating files:  90% (27351/30389)
+2026-09-18T17:25:33.3293130Z Updating files:  91% (27654/30389)
+2026-09-18T17:25:33.3627640Z Updating files:  91% (27667/30389)
+2026-09-18T17:25:33.3863890Z Updating files:  92% (27958/30389)
+2026-09-18T17:25:33.4074370Z Updating files:  93% (28262/30389)
+2026-09-18T17:25:33.4466010Z Updating files:  94% (28566/30389)
+2026-09-18T17:25:33.4771050Z Updating files:  95% (28870/30389)
+2026-09-18T17:25:33.5284100Z Updating files:  96% (29174/30389)
+2026-09-18T17:25:33.5572050Z Updating files:  97% (29478/30389)
+2026-09-18T17:25:33.5819040Z Updating files:  98% (29782/30389)
+2026-09-18T17:25:33.6078680Z Updating files:  99% (30086/30389)
+2026-09-18T17:25:33.6079280Z Updating files: 100% (30389/30389)
+2026-09-18T17:25:33.6079600Z Updating files: 100% (30389/30389), done.
+2026-09-18T17:25:33.6370200Z Switched to a new branch 'main'
+2026-09-18T17:25:33.6372600Z branch 'main' set up to track 'origin/main'.
+2026-09-18T17:25:33.6393680Z ##[endgroup]
+2026-09-18T17:25:33.6394000Z ##[group]Setting up auth for fetching submodules
+2026-09-18T17:25:33.6398810Z [command]/opt/homebrew/bin/git config --global http.https://github.com/.extraheader AUTHORIZATION: basic ***
+2026-09-18T17:25:33.6467290Z [command]/opt/homebrew/bin/git config --global --unset-all url.https://github.com/.insteadOf
+2026-09-18T17:25:33.6505820Z [command]/opt/homebrew/bin/git config --global --add url.https://github.com/.insteadOf git@github.com:
+2026-09-18T17:25:33.6546310Z [command]/opt/homebrew/bin/git config --global --add url.https://github.com/.insteadOf org-184439176@github.com:
+2026-09-18T17:25:33.6579160Z ##[endgroup]
+2026-09-18T17:25:33.6579640Z ##[group]Fetching submodules
+2026-09-18T17:25:33.6582260Z [command]/opt/homebrew/bin/git submodule sync --recursive
+2026-09-18T17:25:33.7141280Z [command]/opt/homebrew/bin/git -c protocol.version=2 submodule update --init --force --depth=1 --recursive
+2026-09-18T17:25:33.7657660Z Submodule 'build-system/bazel-rules/apple_support' (https://github.com/bazelbuild/apple_support.git) registered for path 'build-system/bazel-rules/apple_support'
+2026-09-18T17:25:33.7660850Z Submodule 'build-system/bazel-rules/rules_apple' (https://github.com/ali-fareed/rules_apple.git) registered for path 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:25:33.7665650Z Submodule 'build-system/bazel-rules/rules_swift' (https://github.com/bazelbuild/rules_swift.git) registered for path 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:25:33.7670630Z Submodule 'build-system/bazel-rules/rules_xcodeproj' (https://github.com/MobileNativeFoundation/rules_xcodeproj.git) registered for path 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:25:33.7675030Z Submodule 'build-system/bazel-rules/sourcekit-bazel-bsp' (https://github.com/spotify/sourcekit-bazel-bsp.git) registered for path 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:25:33.7679860Z Submodule 'submodules/LottieCpp/lottiecpp' (https://github.com/ali-fareed/lottiecpp.git) registered for path 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:25:33.7684800Z Submodule 'submodules/TgVoipWebrtc/tgcalls' (https://github.com/TelegramMessenger/tgcalls.git) registered for path 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:25:33.7689460Z Submodule 'submodules/rlottie/rlottie' (https://github.com/TelegramMessenger/rlottie.git) registered for path 'submodules/rlottie/rlottie'
+2026-09-18T17:25:33.7696140Z Submodule 'third-party/XcodeGen' (https://github.com/yonaskolb/XcodeGen.git) registered for path 'third-party/XcodeGen'
+2026-09-18T17:25:33.7701370Z Submodule 'third-party/dav1d/dav1d' (https://github.com/ali-fareed/dav1d.git) registered for path 'third-party/dav1d/dav1d'
+2026-09-18T17:25:33.7707430Z Submodule 'third-party/libvpx/libvpx' (https://github.com/webmproject/libvpx.git) registered for path 'third-party/libvpx/libvpx'
+2026-09-18T17:25:33.7712590Z Submodule 'third-party/td/td' (https://github.com/tdlib/td) registered for path 'third-party/td/td'
+2026-09-18T17:25:33.7717890Z Submodule 'third-party/webrtc/webrtc' (https://github.com/ali-fareed/webrtc.git) registered for path 'third-party/webrtc/webrtc'
+2026-09-18T17:25:33.7789410Z Cloning into '/Users/runner/work/burmalgram/burmalgram/build-system/bazel-rules/apple_support'...
+2026-09-18T17:25:34.8873940Z Cloning into '/Users/runner/work/burmalgram/burmalgram/build-system/bazel-rules/rules_apple'...
+2026-09-18T17:25:36.3778860Z Cloning into '/Users/runner/work/burmalgram/burmalgram/build-system/bazel-rules/rules_swift'...
+2026-09-18T17:25:37.7810540Z Cloning into '/Users/runner/work/burmalgram/burmalgram/build-system/bazel-rules/rules_xcodeproj'...
+2026-09-18T17:25:39.2977100Z Cloning into '/Users/runner/work/burmalgram/burmalgram/build-system/bazel-rules/sourcekit-bazel-bsp'...
+2026-09-18T17:25:40.6082030Z Cloning into '/Users/runner/work/burmalgram/burmalgram/submodules/LottieCpp/lottiecpp'...
+2026-09-18T17:25:41.8168360Z Cloning into '/Users/runner/work/burmalgram/burmalgram/submodules/TgVoipWebrtc/tgcalls'...
+2026-09-18T17:25:43.4100080Z Cloning into '/Users/runner/work/burmalgram/burmalgram/submodules/rlottie/rlottie'...
+2026-09-18T17:25:44.9724070Z Cloning into '/Users/runner/work/burmalgram/burmalgram/third-party/XcodeGen'...
+2026-09-18T17:25:46.1658740Z Cloning into '/Users/runner/work/burmalgram/burmalgram/third-party/dav1d/dav1d'...
+2026-09-18T17:25:47.4572790Z Cloning into '/Users/runner/work/burmalgram/burmalgram/third-party/libvpx/libvpx'...
+2026-09-18T17:25:49.2971450Z Cloning into '/Users/runner/work/burmalgram/burmalgram/third-party/td/td'...
+2026-09-18T17:25:51.3983020Z Cloning into '/Users/runner/work/burmalgram/burmalgram/third-party/webrtc/webrtc'...
+2026-09-18T17:25:57.0986030Z From https://github.com/bazelbuild/apple_support
+2026-09-18T17:25:57.0986710Z  * branch            a99414ad848c3aeb84640934352ecc85d8a937f5 -> FETCH_HEAD
+2026-09-18T17:25:57.1528720Z Submodule path 'build-system/bazel-rules/apple_support': checked out 'a99414ad848c3aeb84640934352ecc85d8a937f5'
+2026-09-18T17:25:58.8543040Z From https://github.com/ali-fareed/rules_apple
+2026-09-18T17:25:58.8543970Z  * branch            1791d916de4083388f22e20248d8b010d23f0d6b -> FETCH_HEAD
+2026-09-18T17:25:59.0172310Z Submodule path 'build-system/bazel-rules/rules_apple': checked out '1791d916de4083388f22e20248d8b010d23f0d6b'
+2026-09-18T17:26:01.1574270Z From https://github.com/bazelbuild/rules_swift
+2026-09-18T17:26:01.1575300Z  * branch            9dce728ed1e9168ec8c912fcd3443dad48a286fe -> FETCH_HEAD
+2026-09-18T17:26:01.2097460Z Submodule path 'build-system/bazel-rules/rules_swift': checked out '9dce728ed1e9168ec8c912fcd3443dad48a286fe'
+2026-09-18T17:26:03.0089590Z From https://github.com/MobileNativeFoundation/rules_xcodeproj
+2026-09-18T17:26:03.0090120Z  * branch            997f2db058596f91663e54782b79490de87208da -> FETCH_HEAD
+2026-09-18T17:26:03.1210590Z Submodule path 'build-system/bazel-rules/rules_xcodeproj': checked out '997f2db058596f91663e54782b79490de87208da'
+2026-09-18T17:26:04.7915270Z From https://github.com/spotify/sourcekit-bazel-bsp
+2026-09-18T17:26:04.7927440Z  * branch            feea27cfc88eccc58af0cfe5674444e945cfb75f -> FETCH_HEAD
+2026-09-18T17:26:04.8321220Z Submodule path 'build-system/bazel-rules/sourcekit-bazel-bsp': checked out 'feea27cfc88eccc58af0cfe5674444e945cfb75f'
+2026-09-18T17:26:04.8709560Z Submodule path 'submodules/LottieCpp/lottiecpp': checked out '4a3144b5d527429f7bbd0f07003cb372bf8939ce'
+2026-09-18T17:26:06.8787680Z From https://github.com/TelegramMessenger/tgcalls
+2026-09-18T17:26:06.8788460Z  * branch            e3069322a3d1e16ecb11a5e302242e59ddd7f09e -> FETCH_HEAD
+2026-09-18T17:26:06.9164530Z Submodule path 'submodules/TgVoipWebrtc/tgcalls': checked out 'e3069322a3d1e16ecb11a5e302242e59ddd7f09e'
+2026-09-18T17:26:06.9948190Z Submodule path 'submodules/rlottie/rlottie': checked out '67f103bc8b625f2a4a9e94f1d8c7bd84c5a08d1d'
+2026-09-18T17:26:09.1584130Z From https://github.com/yonaskolb/XcodeGen
+2026-09-18T17:26:09.1586450Z  * branch            53cb43cb66908a28812d7629d03fed94c9827a24 -> FETCH_HEAD
+2026-09-18T17:26:09.2116250Z Submodule path 'third-party/XcodeGen': checked out '53cb43cb66908a28812d7629d03fed94c9827a24'
+2026-09-18T17:26:09.3267750Z Submodule path 'third-party/dav1d/dav1d': checked out '330e20672e85f9de1678dccd6957845898ef57a1'
+2026-09-18T17:26:11.3885670Z From https://github.com/webmproject/libvpx
+2026-09-18T17:26:11.3886320Z  * branch            e7bfd8b6c230a6824e7fd1efa2378a7322986128 -> FETCH_HEAD
+2026-09-18T17:26:11.5831900Z Submodule path 'third-party/libvpx/libvpx': checked out 'e7bfd8b6c230a6824e7fd1efa2378a7322986128'
+2026-09-18T17:26:14.2492010Z From https://github.com/tdlib/td
+2026-09-18T17:26:14.2492950Z  * branch            e894536b2f46caad93f997448d2daff9431b19dd -> FETCH_HEAD
+2026-09-18T17:26:14.5102750Z Submodule path 'third-party/td/td': checked out 'e894536b2f46caad93f997448d2daff9431b19dd'
+2026-09-18T17:26:15.9820400Z From https://github.com/ali-fareed/webrtc
+2026-09-18T17:26:15.9820870Z  * branch            3817e906cb6c22ec9cc62023b073e1a668d9cb33 -> FETCH_HEAD
+2026-09-18T17:26:17.2136660Z Submodule path 'third-party/webrtc/webrtc': checked out '3817e906cb6c22ec9cc62023b073e1a668d9cb33'
+2026-09-18T17:26:17.2230910Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local gc.auto 0
+2026-09-18T17:26:17.3083880Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:26:17.3196140Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:26:17.3302680Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:26:17.3409090Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:26:17.3503530Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:26:17.3595670Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:26:17.3687100Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:26:17.3776860Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:26:17.3864450Z Entering 'third-party/XcodeGen'
+2026-09-18T17:26:17.3951890Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:26:17.4040330Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:26:17.4127970Z Entering 'third-party/td/td'
+2026-09-18T17:26:17.4216910Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:26:17.4326110Z ##[endgroup]
+2026-09-18T17:26:17.4326610Z ##[group]Persisting credentials for submodules
+2026-09-18T17:26:17.4337000Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'url\.https\:\/\/github\.com\/\.insteadOf' && git config --local --unset-all 'url.https://github.com/.insteadOf' || :"
+2026-09-18T17:26:17.4805050Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:26:17.4922620Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:26:17.5030450Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:26:17.5143980Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:26:17.5248770Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:26:17.5354150Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:26:17.5466750Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:26:17.5571440Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:26:17.5681030Z Entering 'third-party/XcodeGen'
+2026-09-18T17:26:17.5786550Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:26:17.5890640Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:26:17.5994450Z Entering 'third-party/td/td'
+2026-09-18T17:26:17.6100140Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:26:17.6220920Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local 'http.https://github.com/.extraheader' 'AUTHORIZATION: basic ***' && git config --local --show-origin --name-only --get-regexp remote.origin.url"
+2026-09-18T17:26:17.6665000Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:26:17.6771910Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/apple_support/config	remote.origin.url
+2026-09-18T17:26:17.6809590Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:26:17.6913530Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_apple/config	remote.origin.url
+2026-09-18T17:26:17.6952280Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:26:17.7061720Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_swift/config	remote.origin.url
+2026-09-18T17:26:17.7097400Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:26:17.7207090Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_xcodeproj/config	remote.origin.url
+2026-09-18T17:26:17.7243480Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:26:17.7354200Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/sourcekit-bazel-bsp/config	remote.origin.url
+2026-09-18T17:26:17.7390660Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:26:17.7492060Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/LottieCpp/lottiecpp/config	remote.origin.url
+2026-09-18T17:26:17.7533000Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:26:17.7644690Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/TgVoipWebrtc/tgcalls/config	remote.origin.url
+2026-09-18T17:26:17.7686700Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:26:17.7789980Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/rlottie/rlottie/config	remote.origin.url
+2026-09-18T17:26:17.7829850Z Entering 'third-party/XcodeGen'
+2026-09-18T17:26:17.7936010Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/XcodeGen/config	remote.origin.url
+2026-09-18T17:26:17.7977600Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:26:17.8082570Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/dav1d/dav1d/config	remote.origin.url
+2026-09-18T17:26:17.8118880Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:26:17.8222950Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/libvpx/libvpx/config	remote.origin.url
+2026-09-18T17:26:17.8258990Z Entering 'third-party/td/td'
+2026-09-18T17:26:17.8360320Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/td/td/config	remote.origin.url
+2026-09-18T17:26:17.8396950Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:26:17.8501740Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/webrtc/webrtc/config	remote.origin.url
+2026-09-18T17:26:17.8595330Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --add 'url.https://github.com/.insteadOf' 'git@github.com:'
+2026-09-18T17:26:17.9048190Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:26:17.9139510Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:26:17.9235870Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:26:17.9328470Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:26:17.9414660Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:26:17.9503250Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:26:17.9618270Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:26:17.9764560Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:26:17.9927190Z Entering 'third-party/XcodeGen'
+2026-09-18T17:26:18.0029960Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:26:18.0140320Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:26:18.0251210Z Entering 'third-party/td/td'
+2026-09-18T17:26:18.0376610Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:26:18.0515600Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --add 'url.https://github.com/.insteadOf' 'org-184439176@github.com:'
+2026-09-18T17:26:18.1137110Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:26:18.1296540Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:26:18.1429030Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:26:18.1527430Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:26:18.1650830Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:26:18.1742380Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:26:18.1828440Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:26:18.1924010Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:26:18.2011380Z Entering 'third-party/XcodeGen'
+2026-09-18T17:26:18.2107510Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:26:18.2194490Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:26:18.2288970Z Entering 'third-party/td/td'
+2026-09-18T17:26:18.2375630Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:26:18.2472690Z ##[endgroup]
+2026-09-18T17:26:18.2546170Z [command]/opt/homebrew/bin/git log -1 --format=%H
+2026-09-18T17:26:18.2589180Z 29ea2b2abe0b5ba31e2f0104e0761abbdd434967
+2026-09-18T17:26:18.2835890Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-18T17:26:18.2836990Z ##[group]Run actions/cache/restore@v4
+2026-09-18T17:26:18.2837160Z with:
+2026-09-18T17:26:18.2837350Z   path: /Users/Shared/bazel-cache
+/Users/Shared/bazel-repo-cache
+
+2026-09-18T17:26:18.2837690Z   key: bazel-macOS-35374224559
+2026-09-18T17:26:18.2837860Z   restore-keys: bazel-macOS-
+
+2026-09-18T17:26:18.2838060Z   enableCrossOsArchive: false
+2026-09-18T17:26:18.2838230Z   fail-on-cache-miss: false
+2026-09-18T17:26:18.2838380Z   lookup-only: false
+2026-09-18T17:26:18.2838520Z ##[endgroup]
+2026-09-18T17:26:18.3851370Z (node:9273) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-18T17:26:18.3852110Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-18T17:26:18.5082690Z Cache hit for restore-key: bazel-macOS-35373707265
+2026-09-18T17:26:18.5153470Z (node:9273) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-18T17:26:19.5597930Z Received 213909504 of 971644955 (22.0%), 203.0 MBs/sec
+2026-09-18T17:26:20.5664140Z Received 402653184 of 971644955 (41.4%), 190.1 MBs/sec
+2026-09-18T17:26:21.5740590Z Received 629145600 of 971644955 (64.8%), 198.7 MBs/sec
+2026-09-18T17:26:22.5748570Z Received 884998144 of 971644955 (91.1%), 209.7 MBs/sec
+2026-09-18T17:26:23.0240990Z Received 971644955 of 971644955 (100.0%), 207.0 MBs/sec
+2026-09-18T17:26:23.0341420Z Cache Size: ~927 MB (971644955 B)
+2026-09-18T17:26:23.0443340Z [command]/opt/homebrew/bin/gtar -xf /Users/runner/work/_temp/5a751379-f3f6-4440-9f64-08ca930b58bc/cache.tzst -P -C /Users/runner/work/burmalgram/burmalgram --delay-directory-restore --use-compress-program unzstd
+2026-09-18T17:26:33.3504240Z Cache restored successfully
+2026-09-18T17:26:33.3734710Z Cache restored from key: bazel-macOS-35373707265
+2026-09-18T17:26:33.3932990Z ##[group]Run XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
+2026-09-18T17:26:33.3933710Z [36;1mXCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')[0m
+2026-09-18T17:26:33.3934210Z [36;1mif [ -d "/Applications/Xcode_$XCODE_VERSION.app" ]; then[0m
+2026-09-18T17:26:33.3941070Z [36;1m  echo "Selected /Applications/Xcode_$XCODE_VERSION.app"[0m
+2026-09-18T17:26:33.3941500Z [36;1m  sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer[0m
+2026-09-18T17:26:33.3941840Z [36;1melse[0m
+2026-09-18T17:26:33.3942200Z [36;1m  echo "Xcode $XCODE_VERSION not found, searching available Xcode versions..."[0m
+2026-09-18T17:26:33.3942740Z [36;1m  LATEST_XCODE=$(find /Applications -maxdepth 1 -name "Xcode_*.app" | sort -V | tail -n 1)[0m
+2026-09-18T17:26:33.3943150Z [36;1m  if [ -n "$LATEST_XCODE" ]; then[0m
+2026-09-18T17:26:33.3943450Z [36;1m    echo "Selected $LATEST_XCODE"[0m
+2026-09-18T17:26:33.3943760Z [36;1m    sudo xcode-select -s "$LATEST_XCODE/Contents/Developer"[0m
+2026-09-18T17:26:33.3944030Z [36;1m  fi[0m
+2026-09-18T17:26:33.3944280Z [36;1mfi[0m
+2026-09-18T17:26:33.3944440Z [36;1mxcode-select -p[0m
+2026-09-18T17:26:33.5645050Z shell: /bin/bash -e {0}
+2026-09-18T17:26:33.5645260Z ##[endgroup]
+2026-09-18T17:26:33.7373780Z Selected /Applications/Xcode_15.4.app
+2026-09-18T17:26:33.7734990Z /Applications/Xcode_15.4.app/Contents/Developer
+2026-09-18T17:26:33.7773370Z ##[group]Run set -x
+2026-09-18T17:26:33.7773630Z [36;1mset -x[0m
+2026-09-18T17:26:33.7773960Z [36;1msudo mkdir -p /Users/Shared/bazel-cache /Users/Shared/bazel-repo-cache[0m
+2026-09-18T17:26:33.7774330Z [36;1msudo chown -R $(whoami) /Users/Shared[0m
+2026-09-18T17:26:33.7774610Z [36;1mmkdir -p /Users/Shared/telegram-ios[0m
+2026-09-18T17:26:33.7775020Z [36;1mrsync -a --delete --exclude='.git/modules' $GITHUB_WORKSPACE/ /Users/Shared/telegram-ios/[0m
+2026-09-18T17:26:33.7775410Z [36;1mcd /Users/Shared/telegram-ios[0m
+2026-09-18T17:26:33.7775710Z [36;1mchmod -R +x build-system[0m
+2026-09-18T17:26:33.7775980Z [36;1mchmod -R +x submodules/ffmpeg/Sources/FFMpeg[0m
+2026-09-18T17:26:33.7776600Z [36;1mfind . -type f \( -name "*.sh" -o -name "*.py" -o -name "*.pl" -o -name "configure" -o -name "pkg-config" \) -exec chmod +x {} + || true[0m
+2026-09-18T17:26:33.7835360Z shell: /bin/bash -e {0}
+2026-09-18T17:26:33.7835600Z ##[endgroup]
+2026-09-18T17:26:33.8133150Z + sudo mkdir -p /Users/Shared/bazel-cache /Users/Shared/bazel-repo-cache
+2026-09-18T17:26:33.8245820Z ++ whoami
+2026-09-18T17:26:33.8279370Z + sudo chown -R runner /Users/Shared
+2026-09-18T17:26:34.5330320Z + mkdir -p /Users/Shared/telegram-ios
+2026-09-18T17:26:34.5344400Z + rsync -a --delete --exclude=.git/modules /Users/runner/work/burmalgram/burmalgram/ /Users/Shared/telegram-ios/
+2026-09-18T17:26:48.9204080Z + cd /Users/Shared/telegram-ios
+2026-09-18T17:26:48.9204540Z + chmod -R +x build-system
+2026-09-18T17:26:49.0062660Z + chmod -R +x submodules/ffmpeg/Sources/FFMpeg
+2026-09-18T17:26:49.1640260Z + find . -type f '(' -name '*.sh' -o -name '*.py' -o -name '*.pl' -o -name configure -o -name pkg-config ')' -exec chmod +x '{}' +
+2026-09-18T17:26:49.4394600Z ##[group]Run set -x
+2026-09-18T17:26:49.4394850Z [36;1mset -x[0m
+2026-09-18T17:26:49.4395250Z [36;1m[0m
+2026-09-18T17:26:49.4395490Z [36;1mSOURCE_DIR=/Users/Shared/telegram-ios[0m
+2026-09-18T17:26:49.4395840Z [36;1mBAZEL_USER_ROOT="/private/var/tmp/_bazel_containerhost"[0m
+2026-09-18T17:26:49.4396100Z [36;1m[0m
+2026-09-18T17:26:49.4396250Z [36;1mcd $SOURCE_DIR[0m
+2026-09-18T17:26:49.4396410Z [36;1m[0m
+2026-09-18T17:26:49.4396640Z [36;1mBUILD_NUMBER_OFFSET="$(cat build_number_offset 2>/dev/null || echo 0)"[0m
+2026-09-18T17:26:49.4396930Z [36;1m[0m
+2026-09-18T17:26:49.4397290Z [36;1mexport APP_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["app"]);')[0m
+2026-09-18T17:26:49.4397790Z [36;1mexport COMMIT_COUNT=$(git rev-list --count HEAD 2>/dev/null || echo 1)[0m
+2026-09-18T17:26:49.4398230Z [36;1mexport COMMIT_COUNT="$(($COMMIT_COUNT+$BUILD_NUMBER_OFFSET))"[0m
+2026-09-18T17:26:49.4398590Z [36;1mexport BUILD_NUMBER="$COMMIT_COUNT"[0m
+2026-09-18T17:26:49.4398840Z [36;1mecho "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_ENV[0m
+2026-09-18T17:26:49.4399120Z [36;1mecho "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV[0m
+2026-09-18T17:26:49.4399580Z [36;1m[0m
+2026-09-18T17:26:49.4399890Z [36;1mpython3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs[0m
+2026-09-18T17:26:49.4400320Z [36;1mpython3 build-system/Make/GenerateProfiles.py \[0m
+2026-09-18T17:26:49.4400610Z [36;1m  --source build-system/fake-codesigning/profiles \[0m
+2026-09-18T17:26:49.4400940Z [36;1m  --destination build-system/fake-codesigning/profiles \[0m
+2026-09-18T17:26:49.4401260Z [36;1m  --certs build-system/fake-codesigning/certs \[0m
+2026-09-18T17:26:49.4401530Z [36;1m  --bundleId org.burmalgram.Telegram || true[0m
+2026-09-18T17:26:49.4401800Z [36;1mpython3 -u build-system/Make/Make.py \[0m
+2026-09-18T17:26:49.4402100Z [36;1m  --bazelUserRoot="$BAZEL_USER_ROOT" \[0m
+2026-09-18T17:26:49.4402350Z [36;1m  --cacheDir="/Users/Shared/bazel-cache" \[0m
+2026-09-18T17:26:49.4402830Z [36;1m  --bazelArguments="--repository_cache=/Users/Shared/bazel-repo-cache --//Telegram:disableProvisioningProfiles=True" \[0m
+2026-09-18T17:26:49.4403290Z [36;1m  --overrideXcodeVersion \[0m
+2026-09-18T17:26:49.4403480Z [36;1m  --overrideBazelVersion \[0m
+2026-09-18T17:26:49.4403670Z [36;1m  build \[0m
+2026-09-18T17:26:49.4403940Z [36;1m  --configurationPath="build-system/burmalgram-configuration.json" \[0m
+2026-09-18T17:26:49.4404340Z [36;1m  --codesigningInformationPath=build-system/fake-codesigning \[0m
+2026-09-18T17:26:49.4404650Z [36;1m  --configuration=release_arm64 \[0m
+2026-09-18T17:26:49.4404870Z [36;1m  --buildNumber="$BUILD_NUMBER" \[0m
+2026-09-18T17:26:49.4405130Z [36;1m  --outputBuildArtifactsPath="build/artifacts"[0m
+2026-09-18T17:26:49.4405370Z [36;1m[0m
+2026-09-18T17:26:49.4405520Z [36;1m# ensure Burmalgram.ipa exists[0m
+2026-09-18T17:26:49.4405720Z [36;1mcd $SOURCE_DIR[0m
+2026-09-18T17:26:49.4405940Z [36;1mif [ -f "build/artifacts/Swiftgram.ipa" ]; then[0m
+2026-09-18T17:26:49.4406290Z [36;1m  cp "build/artifacts/Swiftgram.ipa" "build/artifacts/Burmalgram.ipa"[0m
+2026-09-18T17:26:49.4406660Z [36;1mfi[0m
+2026-09-18T17:26:49.4406790Z [36;1m[0m
+2026-09-18T17:26:49.4406980Z [36;1mif [ ! -f "build/artifacts/Burmalgram.ipa" ]; then[0m
+2026-09-18T17:26:49.4407230Z [36;1m  echo "Searching for built IPA..."[0m
+2026-09-18T17:26:49.4407530Z [36;1m  FOUND_IPA=$(find bazel-bin bazel-out build -name "*.ipa" | head -n 1)[0m
+2026-09-18T17:26:49.4407830Z [36;1m  if [ -n "$FOUND_IPA" ]; then[0m
+2026-09-18T17:26:49.4408080Z [36;1m    echo "Found $FOUND_IPA"[0m
+2026-09-18T17:26:49.4408290Z [36;1m    mkdir -p build/artifacts[0m
+2026-09-18T17:26:49.4408550Z [36;1m    cp "$FOUND_IPA" build/artifacts/Burmalgram.ipa[0m
+2026-09-18T17:26:49.4408780Z [36;1m  else[0m
+2026-09-18T17:26:49.4408930Z [36;1m    echo "Error: No IPA found!"[0m
+2026-09-18T17:26:49.4409120Z [36;1m    exit 1[0m
+2026-09-18T17:26:49.4409460Z [36;1m  fi[0m
+2026-09-18T17:26:49.4409660Z [36;1mfi[0m
+2026-09-18T17:26:49.4409780Z [36;1m[0m
+2026-09-18T17:26:49.4409960Z [36;1mecho "Burmalgram.ipa successfully built:"[0m
+2026-09-18T17:26:49.4410230Z [36;1mls -lh build/artifacts/Burmalgram.ipa[0m
+2026-09-18T17:26:49.4857510Z shell: /bin/bash -e {0}
+2026-09-18T17:26:49.4857730Z ##[endgroup]
+2026-09-18T17:26:49.5429860Z + SOURCE_DIR=/Users/Shared/telegram-ios
+2026-09-18T17:26:49.5430440Z + BAZEL_USER_ROOT=/private/var/tmp/_bazel_containerhost
+2026-09-18T17:26:49.5430780Z + cd /Users/Shared/telegram-ios
+2026-09-18T17:26:49.5434190Z ++ cat build_number_offset
+2026-09-18T17:26:49.5465480Z + BUILD_NUMBER_OFFSET=3730
+2026-09-18T17:26:49.5471700Z ++ cat versions.json
+2026-09-18T17:26:49.5475090Z ++ python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["app"]);'
+2026-09-18T17:26:49.6593650Z + export APP_VERSION=12.9.2
+2026-09-18T17:26:49.6594100Z + APP_VERSION=12.9.2
+2026-09-18T17:26:49.6597250Z ++ git rev-list --count HEAD
+2026-09-18T17:26:49.7187040Z + export COMMIT_COUNT=1
+2026-09-18T17:26:49.7187400Z + COMMIT_COUNT=1
+2026-09-18T17:26:49.7187670Z + export COMMIT_COUNT=3731
+2026-09-18T17:26:49.7188340Z + COMMIT_COUNT=3731
+2026-09-18T17:26:49.7188550Z + export BUILD_NUMBER=3731
+2026-09-18T17:26:49.7188790Z + BUILD_NUMBER=3731
+2026-09-18T17:26:49.7189170Z + echo BUILD_NUMBER=3731
+2026-09-18T17:26:49.7189470Z + echo APP_VERSION=12.9.2
+2026-09-18T17:26:49.7189910Z + python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+2026-09-18T17:26:50.0650580Z + python3 build-system/Make/GenerateProfiles.py --source build-system/fake-codesigning/profiles --destination build-system/fake-codesigning/profiles --certs build-system/fake-codesigning/certs --bundleId org.burmalgram.Telegram
+2026-09-18T17:26:50.8741560Z Using signing identity: Apple Distribution: Telegram FZ-LLC (C67CF9S4VU)
+2026-09-18T17:26:50.8742280Z Processing Widget.mobileprovision
+2026-09-18T17:26:50.8742760Z Processing WatchApp.mobileprovision
+2026-09-18T17:26:50.8743230Z Processing WatchExtension.mobileprovision
+2026-09-18T17:26:50.8743600Z Processing Share.mobileprovision
+2026-09-18T17:26:50.8744020Z Processing BroadcastUpload.mobileprovision
+2026-09-18T17:26:50.8744420Z Processing NotificationService.mobileprovision
+2026-09-18T17:26:50.8744810Z Processing Intents.mobileprovision
+2026-09-18T17:26:50.8745280Z Processing NotificationContent.mobileprovision
+2026-09-18T17:26:50.8745650Z Processing Telegram.mobileprovision
+2026-09-18T17:26:50.8746050Z Done. Generated 9 profiles.
+2026-09-18T17:26:50.8795950Z + python3 -u build-system/Make/Make.py --bazelUserRoot=/private/var/tmp/_bazel_containerhost --cacheDir=/Users/Shared/bazel-cache '--bazelArguments=--repository_cache=/Users/Shared/bazel-repo-cache --//Telegram:disableProvisioningProfiles=True' --overrideXcodeVersion --overrideBazelVersion build --configurationPath=build-system/burmalgram-configuration.json --codesigningInformationPath=build-system/fake-codesigning --configuration=release_arm64 --buildNumber=3731 --outputBuildArtifactsPath=build/artifacts
+2026-09-18T17:26:51.3087060Z TelegramBuild: running
+2026-09-18T17:26:51.3089130Z /Users/Shared/telegram-ios/build-input/bazel-8.4.2-darwin-arm64 --output_user_root=/private/var/tmp/_bazel_containerhost build Telegram/Burmalgram --announce_rc --features=swift.use_global_module_cache --verbose_failures --remote_cache_async --define=buildNumber=3731 --disk_cache=/Users/Shared/bazel-cache -c opt --ios_multi_cpus=arm64 --features=-swift.index_while_building --features=swift.opt_uses_wmo --features=swift.opt_uses_osize --features=dead_strip --objc_enable_binary_stripping --repository_cache=/Users/Shared/bazel-repo-cache --//Telegram:disableProvisioningProfiles=True
+2026-09-18T17:26:51.3254910Z Extracting Bazel installation...
+2026-09-18T17:26:51.8993050Z Starting local Bazel server (8.4.2) and connecting to it...
+2026-09-18T17:26:52.9138940Z INFO: Invocation ID: e7bf2a52-19cb-4a35-9b37-f35c3743320a
+2026-09-18T17:26:52.9240320Z INFO: Options provided by the client:
+2026-09-18T17:26:52.9241550Z   Inherited 'common' options: --isatty=0 --terminal_columns=80
+2026-09-18T17:26:52.9461880Z INFO: Reading rc options for 'build' from /Users/Shared/telegram-ios/.bazelrc:
+2026-09-18T17:26:52.9569500Z   'build' options: --action_env=ZERO_AR_DATE=1 --enable_platform_specific_config --strategy=Genrule=standalone --spawn_strategy=standalone
+2026-09-18T17:26:52.9670160Z INFO: Found applicable config definition common:macos in file /Users/Shared/telegram-ios/.bazelrc: --features=swift.index_while_building --features=swift.use_global_index_store --features=swift.use_global_module_cache --features=oso_prefix_is_pwd
+2026-09-18T17:26:52.9771420Z INFO: Found applicable config definition build:macos in file /Users/Shared/telegram-ios/.bazelrc: --apple_platform_type=ios --apple_crosstool_top=@local_config_apple_cc//:toolchain --crosstool_top=@local_config_apple_cc//:toolchain --host_crosstool_top=@local_config_apple_cc//:toolchain --per_file_copt=.*.m$,@-fno-objc-msgsend-selector-stubs --per_file_copt=.*.mm$,@-fno-objc-msgsend-selector-stubs --features=debug_prefix_map_pwd_is_dot --features=swift.cacheable_swiftmodules --features=swift.debug_prefix_map --features=swift.enable_vfsoverlays --strategy=SwiftCompile=worker
+2026-09-18T17:26:52.9879790Z Computing main repo mapping: 
+2026-09-18T17:26:53.1862070Z WARNING: For repository 'bazel_features', the root module requires module version bazel_features@1.33.0, but got bazel_features@1.42.1 in the resolved dependency graph. Please update the version in your MODULE.bazel or set --check_direct_dependencies=off
+2026-09-18T17:26:53.1865320Z WARNING: For repository 'bazel_skylib', the root module requires module version bazel_skylib@1.8.1, but got bazel_skylib@1.9.0 in the resolved dependency graph. Please update the version in your MODULE.bazel or set --check_direct_dependencies=off
+2026-09-18T17:26:53.1869940Z WARNING: For repository 'platforms', the root module requires module version platforms@0.0.11, but got platforms@1.0.0 in the resolved dependency graph. Please update the version in your MODULE.bazel or set --check_direct_dependencies=off
+2026-09-18T17:26:53.9576140Z Computing main repo mapping: 
+2026-09-18T17:26:54.5833720Z Loading: 
+2026-09-18T17:26:54.5935100Z Loading: 1 packages loaded
+2026-09-18T17:26:54.7159920Z Analyzing: target //Telegram:Burmalgram (1 packages loaded, 0 targets configured)
+2026-09-18T17:26:54.7303900Z Analyzing: target //Telegram:Burmalgram (1 packages loaded, 0 targets configured)
+2026-09-18T17:26:54.7392450Z 
+2026-09-18T17:26:55.8564940Z Analyzing: target //Telegram:Burmalgram (56 packages loaded, 27 targets configured)
+2026-09-18T17:26:55.8566130Z 
+2026-09-18T17:26:56.9293320Z Analyzing: target //Telegram:Burmalgram (83 packages loaded, 1844 targets configured)
+2026-09-18T17:26:56.9461380Z 
+2026-09-18T17:26:58.2467340Z Analyzing: target //Telegram:Burmalgram (92 packages loaded, 5620 targets configured)
+2026-09-18T17:26:58.2467740Z 
+2026-09-18T17:27:00.1943200Z Analyzing: target //Telegram:Burmalgram (92 packages loaded, 5620 targets configured)
+2026-09-18T17:27:00.1972500Z 
+2026-09-18T17:27:01.1969490Z Analyzing: target //Telegram:Burmalgram (388 packages loaded, 10116 targets configured)
+2026-09-18T17:27:01.1976130Z 
+2026-09-18T17:27:02.1973170Z Analyzing: target //Telegram:Burmalgram (809 packages loaded, 28446 targets configured)
+2026-09-18T17:27:02.2074900Z 
+2026-09-18T17:27:03.6055020Z Analyzing: target //Telegram:Burmalgram (934 packages loaded, 31288 targets configured)
+2026-09-18T17:27:03.6059140Z 
+2026-09-18T17:27:04.8263910Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:04.8264890Z 
+2026-09-18T17:27:05.8991660Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:05.8992140Z 
+2026-09-18T17:27:07.9726960Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:07.9727430Z 
+2026-09-18T17:27:09.1515800Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:09.1516370Z 
+2026-09-18T17:27:10.6599700Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:10.6700700Z 
+2026-09-18T17:27:12.8707560Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:12.8809160Z 
+2026-09-18T17:27:15.1747450Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:15.1748070Z 
+2026-09-18T17:27:17.5516640Z Analyzing: target //Telegram:Burmalgram (937 packages loaded, 33590 targets configured)
+2026-09-18T17:27:17.5627140Z 
+2026-09-18T17:27:18.6121840Z ERROR: /Users/Shared/telegram-ios/Telegram/BUILD:1407:14: in ios_extension rule //Telegram:IntentsExtension: 
+2026-09-18T17:27:18.6222120Z Traceback (most recent call last):
+2026-09-18T17:27:18.6327340Z 	File "/private/var/tmp/_bazel_containerhost/f57942b09ba819e06419c338536e4c9e/external/rules_apple+/apple/internal/ios_rules.bzl", line 1413, column 41, in _ios_extension_impl
+2026-09-18T17:27:18.6470530Z 		processor_result = processor.process(
+2026-09-18T17:27:18.6572120Z 	File "/private/var/tmp/_bazel_containerhost/f57942b09ba819e06419c338536e4c9e/external/rules_apple+/apple/internal/processor.bzl", line 748, column 36, in _process
+2026-09-18T17:27:18.6653350Z 		partial_outputs = [partial.call(p) for p in partials]
+2026-09-18T17:27:18.6755730Z 	File "/private/var/tmp/_bazel_containerhost/f57942b09ba819e06419c338536e4c9e/external/bazel_skylib+/lib/partial.bzl", line 43, column 28, in _call
+2026-09-18T17:27:18.6862430Z 		return partial.function(*function_args, **function_kwargs)
+2026-09-18T17:27:18.6964180Z 	File "/private/var/tmp/_bazel_containerhost/f57942b09ba819e06419c338536e4c9e/external/rules_apple+/apple/internal/partials/provisioning_profile.bzl", line 41, column 13, in _provisioning_profile_partial_impl
+2026-09-18T17:27:18.7065670Z 		fail(
+2026-09-18T17:27:18.7179750Z Error in fail: ERROR: In @@//Telegram:IntentsExtension:
+2026-09-18T17:27:18.7281330Z Building for device, but no provisioning_profile attribute was set.
+2026-09-18T17:27:18.7403920Z ERROR: /Users/Shared/telegram-ios/Telegram/BUILD:1407:14: Analysis of target '//Telegram:IntentsExtension' (config: 56b78b8) failed
+2026-09-18T17:27:18.7503850Z Analyzing: target //Telegram:Burmalgram (942 packages loaded, 34040 targets configured)
+2026-09-18T17:27:18.7617580Z 
+2026-09-18T17:27:18.7724050Z ERROR: Analysis of target '//Telegram:Burmalgram' failed; build aborted: Analysis failed
+2026-09-18T17:27:18.7724650Z INFO: Elapsed time: 27.354s, Critical Path: 0.02s
+2026-09-18T17:27:18.7814920Z INFO: 1 process: 1 internal.
+2026-09-18T17:27:18.7923760Z ERROR: Build did NOT complete successfully
+2026-09-18T17:27:18.7931110Z Traceback (most recent call last):
+2026-09-18T17:27:18.7931660Z   File "/Users/Shared/telegram-ios/build-system/Make/Make.py", line 1420, in <module>
+2026-09-18T17:27:18.7932220Z     build(bazel=bazel_path, arguments=args)
+2026-09-18T17:27:18.7932620Z     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-18T17:27:18.7933430Z   File "/Users/Shared/telegram-ios/build-system/Make/Make.py", line 712, in build
+2026-09-18T17:27:18.7933970Z     bazel_command_line.invoke_build()
+2026-09-18T17:27:18.7934360Z     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+2026-09-18T17:27:18.7934870Z   File "/Users/Shared/telegram-ios/build-system/Make/Make.py", line 327, in invoke_build
+2026-09-18T17:27:18.7935460Z     call_executable(combined_arguments)
+2026-09-18T17:27:18.7936000Z     ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+2026-09-18T17:27:18.7936500Z   File "/Users/Shared/telegram-ios/build-system/Make/BuildEnvironment.py", line 104, in call_executable
+2026-09-18T17:27:18.7937200Z     subprocess.check_call(resolved_arguments, env=resolved_env)
+2026-09-18T17:27:18.7937660Z     ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-18T17:27:18.7938820Z   File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 420, in check_call
+2026-09-18T17:27:18.7948260Z     raise CalledProcessError(retcode, cmd)
+2026-09-18T17:27:18.7950570Z subprocess.CalledProcessError: Command '['/Users/Shared/telegram-ios/build-input/bazel-8.4.2-darwin-arm64', '--output_user_root=/private/var/tmp/_bazel_containerhost', 'build', 'Telegram/Burmalgram', '--announce_rc', '--features=swift.use_global_module_cache', '--verbose_failures', '--remote_cache_async', '--define=buildNumber=3731', '--disk_cache=/Users/Shared/bazel-cache', '-c', 'opt', '--ios_multi_cpus=arm64', '--features=-swift.index_while_building', '--features=swift.opt_uses_wmo', '--features=swift.opt_uses_osize', '--features=dead_strip', '--objc_enable_binary_stripping', '--repository_cache=/Users/Shared/bazel-repo-cache', '--//Telegram:disableProvisioningProfiles=True']' returned non-zero exit status 1.
+2026-09-18T17:27:18.7995550Z ##[error]Process completed with exit code 1.
+2026-09-18T17:27:18.8127850Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-18T17:27:18.8129100Z ##[group]Run actions/cache/save@v4
+2026-09-18T17:27:18.8129310Z with:
+2026-09-18T17:27:18.8129690Z   path: /Users/Shared/bazel-cache
+/Users/Shared/bazel-repo-cache
+
+2026-09-18T17:27:18.8130060Z   key: bazel-macOS-35374224559
+2026-09-18T17:27:18.8130250Z   enableCrossOsArchive: false
+2026-09-18T17:27:18.8130410Z env:
+2026-09-18T17:27:18.8130580Z   BUILD_NUMBER: 3731
+2026-09-18T17:27:18.8130750Z   APP_VERSION: 12.9.2
+2026-09-18T17:27:18.8130900Z ##[endgroup]
+2026-09-18T17:27:19.1588130Z (node:10880) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2026-09-18T17:27:19.1590640Z (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-09-18T17:27:19.2063980Z [command]/opt/homebrew/bin/gtar --posix -cf cache.tzst --exclude cache.tzst -P -C /Users/runner/work/burmalgram/burmalgram --files-from manifest.txt --delay-directory-restore --use-compress-program zstdmt
+2026-09-18T17:27:34.8222090Z (node:10880) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-09-18T17:27:35.7830210Z Sent 0 of 971672967 (0.0%), 0.0 MBs/sec
+2026-09-18T17:27:36.7836720Z Sent 0 of 971672967 (0.0%), 0.0 MBs/sec
+2026-09-18T17:27:37.7833350Z Sent 0 of 971672967 (0.0%), 0.0 MBs/sec
+2026-09-18T17:27:38.7851810Z Sent 536870912 of 971672967 (55.3%), 127.9 MBs/sec
+2026-09-18T17:27:39.7852700Z Sent 569019783 of 971672967 (58.6%), 108.5 MBs/sec
+2026-09-18T17:27:40.7849870Z Sent 636128647 of 971672967 (65.5%), 101.1 MBs/sec
+2026-09-18T17:27:40.9594980Z Sent 971672967 of 971672967 (100.0%), 150.0 MBs/sec
+2026-09-18T17:27:41.0730250Z Cache saved with key: bazel-macOS-35374224559
+2026-09-18T17:27:41.1207760Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+2026-09-18T17:27:41.1209310Z Post job cleanup.
+2026-09-18T17:27:41.2734980Z [command]/opt/homebrew/bin/git version
+2026-09-18T17:27:41.2926210Z git version 2.55.0
+2026-09-18T17:27:41.2943640Z Copying '/Users/runner/.gitconfig' to '/Users/runner/work/_temp/111c02c9-bf7f-48ac-85c2-446c65a92597/.gitconfig'
+2026-09-18T17:27:41.2954750Z Temporarily overriding HOME='/Users/runner/work/_temp/111c02c9-bf7f-48ac-85c2-446c65a92597' before making global git config changes
+2026-09-18T17:27:41.2955630Z Adding repository directory to the temporary git global config as a safe directory
+2026-09-18T17:27:41.2958370Z [command]/opt/homebrew/bin/git config --global --add safe.directory /Users/runner/work/burmalgram/burmalgram
+2026-09-18T17:27:41.3052880Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp core\.sshCommand
+2026-09-18T17:27:41.3093780Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+2026-09-18T17:27:41.4204460Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:27:41.4363480Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:27:41.4533720Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:27:41.4680840Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:27:41.4827160Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:27:41.4963850Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:27:41.5092530Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:27:41.5227020Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:27:41.5355750Z Entering 'third-party/XcodeGen'
+2026-09-18T17:27:41.5488740Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:27:41.5632610Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:27:41.5772160Z Entering 'third-party/td/td'
+2026-09-18T17:27:41.5905990Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:27:41.6063600Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+2026-09-18T17:27:41.6100470Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.6107350Z [command]/opt/homebrew/bin/git config --local --unset-all http.https://github.com/.extraheader
+2026-09-18T17:27:41.6165690Z [command]/opt/homebrew/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+2026-09-18T17:27:41.6616600Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:27:41.6689980Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.6778920Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:27:41.6855430Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.6927240Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:27:41.7002930Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.7088190Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:27:41.7171140Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.7253650Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:27:41.7339100Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.7420190Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:27:41.7501450Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.7584920Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:27:41.7668860Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.7761160Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:27:41.7848350Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.7929980Z Entering 'third-party/XcodeGen'
+2026-09-18T17:27:41.8007610Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.8082640Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:27:41.8154000Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.8224550Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:27:41.8294110Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.8368900Z Entering 'third-party/td/td'
+2026-09-18T17:27:41.8440330Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.8515140Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:27:41.8596320Z http.https://github.com/.extraheader
+2026-09-18T17:27:41.8694500Z [command]/opt/homebrew/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:41.8737700Z [command]/opt/homebrew/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+2026-09-18T17:27:41.9187680Z Entering 'build-system/bazel-rules/apple_support'
+2026-09-18T17:27:41.9241270Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/apple_support/config	remote.origin.url
+2026-09-18T17:27:41.9274810Z Entering 'build-system/bazel-rules/rules_apple'
+2026-09-18T17:27:41.9332950Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_apple/config	remote.origin.url
+2026-09-18T17:27:41.9368560Z Entering 'build-system/bazel-rules/rules_swift'
+2026-09-18T17:27:41.9418720Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_swift/config	remote.origin.url
+2026-09-18T17:27:41.9452460Z Entering 'build-system/bazel-rules/rules_xcodeproj'
+2026-09-18T17:27:41.9502510Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_xcodeproj/config	remote.origin.url
+2026-09-18T17:27:41.9536300Z Entering 'build-system/bazel-rules/sourcekit-bazel-bsp'
+2026-09-18T17:27:41.9585520Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/sourcekit-bazel-bsp/config	remote.origin.url
+2026-09-18T17:27:41.9618590Z Entering 'submodules/LottieCpp/lottiecpp'
+2026-09-18T17:27:41.9667310Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/LottieCpp/lottiecpp/config	remote.origin.url
+2026-09-18T17:27:41.9701410Z Entering 'submodules/TgVoipWebrtc/tgcalls'
+2026-09-18T17:27:41.9751840Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/TgVoipWebrtc/tgcalls/config	remote.origin.url
+2026-09-18T17:27:41.9789010Z Entering 'submodules/rlottie/rlottie'
+2026-09-18T17:27:41.9990430Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/rlottie/rlottie/config	remote.origin.url
+2026-09-18T17:27:42.0091900Z Entering 'third-party/XcodeGen'
+2026-09-18T17:27:42.0174450Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/XcodeGen/config	remote.origin.url
+2026-09-18T17:27:42.0174970Z Entering 'third-party/dav1d/dav1d'
+2026-09-18T17:27:42.0231420Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/dav1d/dav1d/config	remote.origin.url
+2026-09-18T17:27:42.0266440Z Entering 'third-party/libvpx/libvpx'
+2026-09-18T17:27:42.0317190Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/libvpx/libvpx/config	remote.origin.url
+2026-09-18T17:27:42.0351730Z Entering 'third-party/td/td'
+2026-09-18T17:27:42.0402540Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/td/td/config	remote.origin.url
+2026-09-18T17:27:42.0438120Z Entering 'third-party/webrtc/webrtc'
+2026-09-18T17:27:42.0488780Z file:/Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/webrtc/webrtc/config	remote.origin.url
+2026-09-18T17:27:42.0537510Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/apple_support/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0575070Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_apple/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0613990Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_swift/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0651460Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/rules_xcodeproj/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0688880Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/build-system/bazel-rules/sourcekit-bazel-bsp/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0726060Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/LottieCpp/lottiecpp/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0767870Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/TgVoipWebrtc/tgcalls/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0802150Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/submodules/rlottie/rlottie/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0835570Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/XcodeGen/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0868210Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/dav1d/dav1d/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.0899540Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/libvpx/libvpx/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.1133550Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/td/td/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.1218180Z [command]/opt/homebrew/bin/git config --file /Users/runner/work/burmalgram/burmalgram/.git/modules/third-party/webrtc/webrtc/config --name-only --get-regexp ^includeIf\.gitdir:
+2026-09-18T17:27:42.1281150Z Cleaning up orphan processes
+2026-09-18T17:27:42.4979100Z Terminate orphan process: pid (10037) (java)
+2026-09-18T17:27:42.6174010Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/cache/restore@v4, actions/cache/save@v4, actions/checkout@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
