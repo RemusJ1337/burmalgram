@@ -360,8 +360,9 @@ public func sendAuthorizationCode(accountManager: AccountManager<TelegramAccount
                             }
                         }
                         transaction.setState(UnauthorizedAccountState(isTestingEnvironment: account.testingEnvironment, masterDatacenterId: account.masterDatacenterId, contents: .confirmationCodeEntry(number: phoneNumber, type: parsedType, hash: phoneCodeHash, timeout: codeTimeout, nextType: parsedNextType, syncContacts: syncContacts, previousCodeEntry: previousCodeEntry, usePrevious: false)))
-                    case .sentCodePaymentRequired:
-                        return .never()
+                    case let .sentCodePaymentRequired(sentCodePaymentRequiredData):
+                        let codeHash = sentCodePaymentRequiredData.phoneCodeHash
+                        transaction.setState(UnauthorizedAccountState(isTestingEnvironment: account.testingEnvironment, masterDatacenterId: account.masterDatacenterId, contents: .confirmationCodeEntry(number: phoneNumber, type: .otherSession(length: 5), hash: codeHash, timeout: 60, nextType: nil, syncContacts: syncContacts, previousCodeEntry: nil, usePrevious: false)))
                     case let .sentCodeSuccess(sentCodeSuccessData):
                         let authorization = sentCodeSuccessData.authorization
                         switch authorization {
