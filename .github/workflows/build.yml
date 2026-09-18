@@ -80,10 +80,10 @@ jobs:
             --bazelUserRoot="$BAZEL_USER_ROOT" \
             --cacheDir="/Users/Shared/bazel-cache" \
             --bazelArguments="--repository_cache=/Users/Shared/bazel-repo-cache" \
-            --enableParallelSwiftmoduleGeneration \
             --overrideXcodeVersion \
             --overrideBazelVersion \
             build \
+            --enableParallelSwiftmoduleGeneration \
             --configurationPath="build-system/burmalgram-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
             --configuration=release_arm64 \

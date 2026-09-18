@@ -933,6 +933,12 @@ if __name__ == '__main__':
         action='store_true',
         help='Override xcode version with the actual version reported by \'xcode-select -p\''
     )
+    parser.add_argument(
+        '--enableParallelSwiftmoduleGeneration',
+        action='store_true',
+        default=False,
+        help='Generate .swiftmodule files in parallel to building modules'
+    )
 
     parser.add_argument(
         '--bazelArguments',
