@@ -125,16 +125,14 @@ struct SessionBackupManagerView: View {
         
         wrapperController?.present(controller, in: .window(.root), with: nil)
         
-        Task {
-            if let result = try? await combineLatest(signal, signal2).awaitable() {
-                let (view, accountsWithInfo) = result
-                backupSessionsFromView(view, accountsWithInfo: accountsWithInfo.1)
-                withAnimation {
-                    sessions = getBackedSessions()
-                }
-                controller.dismiss()
+        let _ = (combineLatest(signal, signal2)
+        |> deliverOnMainQueue).start(next: { [weak controller] view, accountsWithInfo in
+            backupSessionsFromView(view, accountsWithInfo: accountsWithInfo.1)
+            withAnimation {
+                sessions = getBackedSessions()
             }
-        }
+            controller?.dismiss()
+        })
         
     }
     
