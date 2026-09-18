@@ -1352,12 +1352,13 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                     }
                     controllers.append(self.signUpController(firstName: firstName, lastName: lastName, termsOfService: termsOfService, displayCancel: displayCancel))
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty)
-                case let .payment(number, codeHash, storeProduct, premiumDays, supportEmailAddress, supportEmailSubject, _):
+                case let .payment(number, codeHash, _, _, _, _, _):
                     var controllers: [ViewController] = []
                     if !self.otherAccountPhoneNumbers.1.isEmpty {
                         controllers.append(self.splashController())
                     }
-                controllers.append(self.paymentController(number: number, phoneCodeHash: codeHash, storeProduct: storeProduct, premiumDays: premiumDays, supportEmailAddress: supportEmailAddress, supportEmailSubject: supportEmailSubject))
+                    controllers.append(self.phoneEntryController(countryCode: AuthorizationSequenceCountrySelectionController.defaultCountryCode(), number: "", splashController: nil))
+                    controllers.append(self.codeEntryController(number: number, phoneCodeHash: codeHash, email: self.currentEmail, type: .app(length: 5), nextType: nil, timeout: 60, previousCodeType: nil, isPrevious: false, termsOfService: nil))
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty)
             }
         }

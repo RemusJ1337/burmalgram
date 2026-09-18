@@ -97,8 +97,10 @@ def get_certificate_base64_from_p12(p12_path, p12_password=''):
     return base64.b64encode(cert_der).decode('utf-8')
 
 
-def process_provisioning_profile(source, destination, certificate_data, signing_identity, keychain_name):
+def process_provisioning_profile(source, destination, certificate_data, signing_identity, keychain_name, bundle_id=None):
     parsed_plist = run_executable_with_output('security', arguments=['cms', '-D', '-i', source], check_result=True)
+    if bundle_id:
+        parsed_plist = parsed_plist.replace('ph.telegra.Telegraph', bundle_id)
     parsed_plist_file = tempfile.mktemp()
     with open(parsed_plist_file, 'w+') as file:
         file.write(parsed_plist)
@@ -126,7 +128,7 @@ def process_provisioning_profile(source, destination, certificate_data, signing_
     os.unlink(parsed_plist_file)
 
 
-def generate_provisioning_profiles(source_path, destination_path, certs_path):
+def generate_provisioning_profiles(source_path, destination_path, certs_path, bundle_id=None):
     p12_path = os.path.join(certs_path, 'SelfSigned.p12')
 
     if not os.path.exists(p12_path):
@@ -160,10 +162,27 @@ def generate_provisioning_profiles(source_path, destination_path, certs_path):
                     destination=os.path.join(destination_path, file_name),
                     certificate_data=certificate_data,
                     signing_identity=signing_identity,
-                    keychain_name=keychain_name
+                    keychain_name=keychain_name,
+                    bundle_id=bundle_id
                 )
         print('Done. Generated {} profiles.'.format(
             len([f for f in os.listdir(destination_path) if f.endswith('.mobileprovision')])
         ))
     finally:
         cleanup_temp_keychain(keychain_name)
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--source', required=True)
+    parser.add_argument('--destination', required=True)
+    parser.add_argument('--certs', required=True)
+    parser.add_argument('--bundleId', required=False, default=None)
+    args = parser.parse_args()
+
+    generate_provisioning_profiles(
+        source_path=args.source,
+        destination_path=args.destination,
+        certs_path=args.certs,
+        bundle_id=args.bundleId
+    )

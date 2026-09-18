@@ -75,10 +75,15 @@ jobs:
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
 
           python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
+          python3 build-system/Make/GenerateProfiles.py \
+            --source build-system/fake-codesigning/profiles \
+            --destination build-system/fake-codesigning/profiles \
+            --certs build-system/fake-codesigning/certs \
+            --bundleId org.burmalgram.Telegram
           python3 -u build-system/Make/Make.py \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
             --cacheDir="/Users/Shared/bazel-cache" \
-            --bazelArguments="--repository_cache=/Users/Shared/bazel-repo-cache" \
+            --bazelArguments="--repository_cache=/Users/Shared/bazel-repo-cache --//Telegram:disableProvisioningProfiles=True" \
             --overrideXcodeVersion \
             --overrideBazelVersion \
             build \
