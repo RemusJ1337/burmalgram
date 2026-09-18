@@ -16,7 +16,18 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
-          fetch-depth: '0'
+          fetch-depth: '1'
+
+      - name: Cache Bazel Artifacts and Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            /Users/Shared/bazel-cache
+            /Users/Shared/bazel-repo-cache
+          key: bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'WORKSPACE', '**/*.bzl') }}-${{ github.sha }}
+          restore-keys: |
+            bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'WORKSPACE', '**/*.bzl') }}-
+            bazel-${{ runner.os }}-
 
       - name: Set active Xcode path
         run: |
@@ -37,12 +48,11 @@ jobs:
       - name: Create canonical source directory
         run: |
           set -x
-          sudo mkdir -p /Users/Shared
-          cp -R $GITHUB_WORKSPACE /Users/Shared/
-          mv /Users/Shared/$(basename $GITHUB_WORKSPACE) /Users/Shared/telegram-ios
+          sudo mkdir -p /Users/Shared/bazel-cache /Users/Shared/bazel-repo-cache
+          sudo chown -R $(whoami) /Users/Shared
+          mkdir -p /Users/Shared/telegram-ios
+          rsync -a --delete --exclude='.git/modules' $GITHUB_WORKSPACE/ /Users/Shared/telegram-ios/
           cd /Users/Shared/telegram-ios
-          git submodule update --init --recursive
-          ls -la build-system/bazel-rules/rules_apple
           chmod -R +x build-system
           chmod -R +x submodules/ffmpeg/Sources/FFMpeg
           find . -type f \( -name "*.sh" -o -name "*.py" -o -name "*.pl" -o -name "configure" -o -name "pkg-config" \) -exec chmod +x {} + || true
@@ -68,6 +78,9 @@ jobs:
           python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
           python3 -u build-system/Make/Make.py \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
+            --cacheDir="/Users/Shared/bazel-cache" \
+            --bazelArguments="--repository_cache=/Users/Shared/bazel-repo-cache" \
+            --enableParallelSwiftmoduleGeneration \
             --overrideXcodeVersion \
             --overrideBazelVersion \
             build \

@@ -765,36 +765,40 @@ public class AttachmentController: ViewController, MinimizableController {
                 }
             }
             self.panel.invokeAICompose = { [weak self] in
-                Task { @MainActor in
-                    guard let self, let controller = self.controller, let mediaPickerContext = self.mediaPickerContext else {
+                Task { @MainActor [weak self] in
+                    guard let strongSelf = self, let controller = strongSelf.controller, let mediaPickerContext = strongSelf.mediaPickerContext else {
                         return
                     }
 
-                    guard let caption = await mediaPickerContext.caption.get() else {
-                        return
+                    let captionString: String? = await withCheckedContinuation { continuation in
+                        let disposable = MetaDisposable()
+                        disposable.set((mediaPickerContext.caption.get() |> take(1) |> deliverOnMainQueue).startStandalone(next: { text in
+                            continuation.resume(returning: text?.string)
+                            disposable.dispose()
+                        }))
                     }
-                    if caption.length == 0 {
+                    guard let captionString, !captionString.isEmpty else {
                         return
                     }
 
                     let textProcessingScreen = await controller.context.sharedContext.makeTextProcessingScreen(
                         context: controller.context,
-                        theme: self.presentationData.theme,
+                        theme: strongSelf.presentationData.theme,
                         mode: .edit(
                             saveRestoreStateId: nil,
                             completion: { [weak self] text in
-                                guard let self, let mediaPickerContext = self.mediaPickerContext else {
+                                guard let strongSelf = self, let mediaPickerContext = strongSelf.mediaPickerContext else {
                                     return
                                 }
                                 // Captions are plain text with entities; the API only returns a rich result for rich input.
                                 guard case let .plain(text, entities) = text else {
                                     return
                                 }
-                                self.panel.updateCaption(chatInputStateStringWithAppliedEntities(text, entities: entities))
+                                strongSelf.panel.updateCaption(chatInputStateStringWithAppliedEntities(text, entities: entities))
                                 mediaPickerContext.setCaption(chatInputStateStringWithAppliedEntities(text, entities: entities))
                             },
                             send: { [weak self] text in
-                                guard let self, let mediaPickerContext = self.mediaPickerContext else {
+                                guard let strongSelf = self, let mediaPickerContext = strongSelf.mediaPickerContext else {
                                     return
                                 }
                                 // Captions are plain text with entities; the API only returns a rich result for rich input.
@@ -806,11 +810,11 @@ public class AttachmentController: ViewController, MinimizableController {
                             },
                             sendContextActions: nil
                         ),
-                        inputText: .plain(text: caption.string, entities: []),
+                        inputText: .plain(text: captionString, entities: []),
                         copyResult: nil,
                         translateChat: nil
                     )
-                    self.controller?.push(textProcessingScreen)
+                    strongSelf.controller?.push(textProcessingScreen)
                 }
             }
 

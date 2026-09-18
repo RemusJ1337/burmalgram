@@ -52,6 +52,7 @@ class BazelCommandLine:
         self.watch_api_hash = None
         self.watch_signing_identity = None
         self.watch_provisioning_profile = None
+        self.generate_dsym = False
 
         self.common_args = [
             # https://docs.bazel.build/versions/master/command-line-reference.html
@@ -141,6 +142,9 @@ class BazelCommandLine:
     def set_profile_swift(self, value):
         self.profile_swift = value
 
+    def set_generate_dsym(self, value):
+        self.generate_dsym = value
+
     def set_configuration(self, configuration):
         if configuration == 'debug_arm64':
             self.configuration_args = [
@@ -182,16 +186,10 @@ class BazelCommandLine:
 
                 # Build single-architecture binaries. It is almost 2 times faster is 32-bit support is not required.
                 '--ios_multi_cpus=arm64',
-
-                # Always build universal Watch binaries.
-                '--watchos_cpus=armv7k,arm64_32',
-
-                # Generate DSYM files when building.
-                '--apple_generate_dsym',
-
-                # Require DSYM files as build output.
-                '--output_groups=+dsyms',
+                '--features=-swift.index_while_building',
             ] + self.common_release_args
+            if self.embed_watch_app:
+                self.configuration_args += ['--watchos_cpus=armv7k,arm64_32']
         else:
             raise Exception('Unknown configuration {}'.format(configuration))
 
@@ -317,6 +315,12 @@ class BazelCommandLine:
         combined_arguments += self.configuration_args
         if self.profile_swift:
             combined_arguments += ['--config=swift_profile']
+
+        if self.generate_dsym:
+            combined_arguments += ['--apple_generate_dsym', '--output_groups=+dsyms']
+
+        if self.additional_args is not None:
+            combined_arguments += self.additional_args
 
         print('TelegramBuild: running')
         print(subprocess.list2cmdline(combined_arguments))
@@ -700,6 +704,11 @@ def build(bazel, arguments):
 
     bazel_command_line.set_split_swiftmodules(arguments.enableParallelSwiftmoduleGeneration)
 
+    if arguments.bazelArguments is not None:
+        bazel_command_line.add_additional_args(shlex.split(arguments.bazelArguments))
+
+    bazel_command_line.set_generate_dsym(arguments.generateDsym)
+
     bazel_command_line.invoke_build()
 
     if arguments.outputBuildArtifactsPath is not None:
@@ -722,18 +731,20 @@ def build(bazel, arguments):
         shutil.copyfile(ipa_paths[0], artifacts_path + '/Swiftgram.ipa')
 
         dsym_paths = glob.glob('bazel-bin/Telegram/*.dSYM') + glob.glob('bazel-out/watchos_arm64_32-opt-watchos-arm64_32-min7.0-applebin_watchos-ST-*/bin/Telegram/SwiftgramWatchApp_dsyms/*.dSYM') + glob.glob('bazel-out/watchos_armv7k-opt-watchos-armv7k-min7.0-applebin_watchos-ST-*/bin/Telegram/SwiftgramWatchApp_dsyms/*.dSYM') 
-        for dsym_path in dsym_paths:
-            file_name = os.path.basename(dsym_path)
-            shutil.copytree(dsym_path, artifacts_path + '/DSYMs/{}'.format(file_name))
-        previous_directory = os.getcwd()
-        os.chdir(artifacts_path)
-        run_executable_with_output('zip', arguments=[
-            '-r',
-            'Swiftgram.DSYMs.zip',
-            './DSYMs'
-        ], check_result=True)
-        os.chdir(previous_directory)
-        shutil.rmtree(artifacts_path + '/DSYMs')
+        if len(dsym_paths) > 0:
+            for dsym_path in dsym_paths:
+                file_name = os.path.basename(dsym_path)
+                shutil.copytree(dsym_path, artifacts_path + '/DSYMs/{}'.format(file_name))
+            previous_directory = os.getcwd()
+            os.chdir(artifacts_path)
+            run_executable_with_output('zip', arguments=[
+                '-r',
+                'Swiftgram.DSYMs.zip',
+                './DSYMs'
+            ], check_result=True)
+            os.chdir(previous_directory)
+        if os.path.exists(artifacts_path + '/DSYMs'):
+            shutil.rmtree(artifacts_path + '/DSYMs')
 
 
 def test(bazel, arguments):
@@ -1047,6 +1058,12 @@ if __name__ == '__main__':
         ],
         required=True,
         help='Build configuration'
+    )
+    buildParser.add_argument(
+        '--generateDsym',
+        action='store_true',
+        default=False,
+        help='Generate DSYM files when building. Keep disabled for faster builds.'
     )
     buildParser.add_argument(
         '--enableParallelSwiftmoduleGeneration',
