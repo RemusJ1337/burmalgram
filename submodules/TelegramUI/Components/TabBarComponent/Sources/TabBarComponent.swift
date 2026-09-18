@@ -574,18 +574,20 @@ public final class TabBarComponent: Component {
                         if !handledDoubleTap {
                             if item.doubleTapAction != nil {
                                 let timer = Foundation.Timer.scheduledTimer(withTimeInterval: 0.18, repeats: false, block: { [weak self] timer in
-                                    guard let self else {
-                                        return
-                                    }
-                                    if let pendingDoubleTapItemValue = self.pendingDoubleTapItem, pendingDoubleTapItemValue.timer === timer {
-                                        self.pendingDoubleTapItem = nil
-                                        
-                                        self.overrideSelectedItemId = pendingDoubleTapItemValue.id
-                                        if let item = component.items.first(where: { $0.id == pendingDoubleTapItemValue.id }) {
-                                            item.action(false)
+                                    Task { @MainActor [weak self, weak timer] in
+                                        guard let self, let timer else {
+                                            return
                                         }
-                                        
-                                        self.state?.updated(transition: .spring(duration: 0.4), isLocal: true)
+                                        if let pendingDoubleTapItemValue = self.pendingDoubleTapItem, pendingDoubleTapItemValue.timer === timer {
+                                            self.pendingDoubleTapItem = nil
+                                            
+                                            self.overrideSelectedItemId = pendingDoubleTapItemValue.id
+                                            if let item = component.items.first(where: { $0.id == pendingDoubleTapItemValue.id }) {
+                                                item.action(false)
+                                            }
+                                            
+                                            self.state?.updated(transition: .spring(duration: 0.4), isLocal: true)
+                                        }
                                     }
                                 })
                                 self.overrideSelectedItemId = selectionGestureState.itemId

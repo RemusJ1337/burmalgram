@@ -1407,26 +1407,28 @@ public final class StarsTransactionsScreen: ViewControllerComponentContainer {
             if remainingCooldownSeconds < 3600 {
                 if self.timer == nil {
                     self.timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { [weak self] _ in
-                        guard let self else {
-                            return
-                        }
-                        
-                        if let tooltipScreen = self.tooltipScreen {
-                            let remainingCooldownSeconds = cooldownUntilTimestamp - Int32(Date().timeIntervalSince1970)
-                            let content: UndoOverlayContent = .universal(
-                                animation: "anim_clock",
-                                scale: 0.058,
-                                colors: [:],
-                                title: nil,
-                                text: presentationData.strings.Stars_Withdraw_Withdraw_ErrorTimeout(stringForRemainingTime(remainingCooldownSeconds)).string,
-                                customUndoText: nil,
-                                timeout: nil
-                            )
-                            tooltipScreen.content = content
-                        } else {
-                            if let timer = self.timer {
-                                self.timer = nil
-                                timer.invalidate()
+                        Task { @MainActor [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            
+                            if let tooltipScreen = self.tooltipScreen {
+                                let remainingCooldownSeconds = cooldownUntilTimestamp - Int32(Date().timeIntervalSince1970)
+                                let content: UndoOverlayContent = .universal(
+                                    animation: "anim_clock",
+                                    scale: 0.058,
+                                    colors: [:],
+                                    title: nil,
+                                    text: presentationData.strings.Stars_Withdraw_Withdraw_ErrorTimeout(stringForRemainingTime(remainingCooldownSeconds)).string,
+                                    customUndoText: nil,
+                                    timeout: nil
+                                )
+                                tooltipScreen.content = content
+                            } else {
+                                if let timer = self.timer {
+                                    self.timer = nil
+                                    timer.invalidate()
+                                }
                             }
                         }
                     })

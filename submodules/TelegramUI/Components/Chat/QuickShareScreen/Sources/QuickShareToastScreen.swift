@@ -190,10 +190,12 @@ private final class QuickShareToastScreenComponent: Component {
             
             if self.component == nil {
                 self.doneTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false, block: { [weak self] _ in
-                    guard let self, let controller = self.environment?.controller() as? QuickShareToastScreen else {
-                        return
+                    Task { @MainActor [weak self] in
+                        guard let self, let controller = self.environment?.controller() as? QuickShareToastScreen else {
+                            return
+                        }
+                        controller.dismissWithCommitAction()
                     }
-                    controller.dismissWithCommitAction()
                 })
             }
             

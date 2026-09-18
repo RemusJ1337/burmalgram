@@ -476,13 +476,15 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
                 } else {
                     self.hideControlsTimer?.invalidate()
                     self.hideControlsTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false, block: { [weak self] _ in
-                        guard let self else {
-                            return
-                        }
-                        if !self.areControlsHidden {
-                            self.areControlsHidden = true
-                            self.displayEmojiTooltip = false
-                            self.update(transition: .spring(duration: 0.4))
+                        Task { @MainActor [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            if !self.areControlsHidden {
+                                self.areControlsHidden = true
+                                self.displayEmojiTooltip = false
+                                self.update(transition: .spring(duration: 0.4))
+                            }
                         }
                     })
                 }
@@ -629,12 +631,14 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
                     self.displayEmojiTooltip = true
                     
                     self.hideEmojiTooltipTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false, block: { [weak self] _ in
-                        guard let self else {
-                            return
-                        }
-                        if self.displayEmojiTooltip {
-                            self.displayEmojiTooltip = false
-                            self.update(transition: .spring(duration: 0.4))
+                        Task { @MainActor [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            if self.displayEmojiTooltip {
+                                self.displayEmojiTooltip = false
+                                self.update(transition: .spring(duration: 0.4))
+                            }
                         }
                     })
                 }
@@ -697,13 +701,15 @@ public final class PrivateCallScreen: OverlayMaskContainerView, AVPictureInPictu
         
         if havePrimaryVideo && self.hideControlsTimer == nil {
             self.hideControlsTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false, block: { [weak self] _ in
-                guard let self else {
-                    return
-                }
-                if !self.areControlsHidden {
-                    self.areControlsHidden = true
-                    self.displayEmojiTooltip = false
-                    self.update(transition: .spring(duration: 0.4))
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    if !self.areControlsHidden {
+                        self.areControlsHidden = true
+                        self.displayEmojiTooltip = false
+                        self.update(transition: .spring(duration: 0.4))
+                    }
                 }
             })
         }

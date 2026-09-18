@@ -537,10 +537,12 @@ public final class HorizontalTabsComponent: Component {
                             self.didTapOnAnItem = true
                             self.didTapOnAnItemTimer?.invalidate()
                             self.didTapOnAnItemTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false, block: { [weak self] _ in
-                                guard let self else {
-                                    return
+                                Task { @MainActor [weak self] in
+                                    guard let self else {
+                                        return
+                                    }
+                                    self.didTapOnAnItem = false
                                 }
-                                self.didTapOnAnItem = false
                             })
                             tab.action()
                         }
@@ -622,12 +624,14 @@ public final class HorizontalTabsComponent: Component {
                     
                     if !transition.animation.isImmediate && self.didTapOnAnItem {
                         self.temporaryLiftTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false, block: { [weak self] _ in
-                            guard let self else {
-                                return
-                            }
-                            self.temporaryLiftTimer = nil
-                            if !self.isUpdating {
-                                self.state?.updated(transition: .easeInOut(duration: 0.2), isLocal: true)
+                            Task { @MainActor [weak self] in
+                                guard let self else {
+                                    return
+                                }
+                                self.temporaryLiftTimer = nil
+                                if !self.isUpdating {
+                                    self.state?.updated(transition: .easeInOut(duration: 0.2), isLocal: true)
+                                }
                             }
                         })
                     }

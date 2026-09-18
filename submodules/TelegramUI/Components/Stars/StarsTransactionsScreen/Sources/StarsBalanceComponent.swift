@@ -161,10 +161,12 @@ final class StarsBalanceComponent: Component {
             if remainingCooldownSeconds > 0 || remainingSecondaryCooldownSeconds > 0  {
                 if self.timer == nil {
                     self.timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { [weak self] _ in
-                        guard let self else {
-                            return
+                        Task { @MainActor [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            self.state?.updated(transition: .immediate)
                         }
-                        self.state?.updated(transition: .immediate)
                     })
                 }
             } else {

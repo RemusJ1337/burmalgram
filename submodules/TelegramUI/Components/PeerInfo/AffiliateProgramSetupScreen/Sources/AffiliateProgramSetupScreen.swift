@@ -576,26 +576,28 @@ final class AffiliateProgramSetupScreenComponent: Component {
                             
                             if let endDate = currentRefProgram.endDate {
                                 self.programEndTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { [weak self] _ in
-                                    guard let self else {
-                                        return
-                                    }
-                                    
-                                    let timestamp = Int32(Date().timeIntervalSince1970)
-                                    let remainingTime: Int32 = max(0, endDate - timestamp)
-                                    if remainingTime <= 0 {
-                                        self.currentProgram = nil
-                                        self.programEndTimer?.invalidate()
-                                        self.programEndTimer = nil
+                                    Task { @MainActor [weak self] in
+                                        guard let self else {
+                                            return
+                                        }
                                         
-                                        self.commissionSliderValue = 0.0
-                                        self.commissionPermille = 10
-                                        self.commissionMinPermille = 10
+                                        let timestamp = Int32(Date().timeIntervalSince1970)
+                                        let remainingTime: Int32 = max(0, endDate - timestamp)
+                                        if remainingTime <= 0 {
+                                            self.currentProgram = nil
+                                            self.programEndTimer?.invalidate()
+                                            self.programEndTimer = nil
+                                            
+                                            self.commissionSliderValue = 0.0
+                                            self.commissionPermille = 10
+                                            self.commissionMinPermille = 10
+                                            
+                                            self.durationValue = 0
+                                            self.durationMinValue = 0
+                                        }
                                         
-                                        self.durationValue = 0
-                                        self.durationMinValue = 0
+                                        self.state?.updated(transition: .immediate)
                                     }
-                                    
-                                    self.state?.updated(transition: .immediate)
                                 })
                             }
                         } else {

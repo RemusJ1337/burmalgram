@@ -243,9 +243,11 @@ final class FaceScanScreenComponent: Component {
                 case .waitingForFace:
                     self.processState = .positioning
                     self.faceDetectionTimer = Timer.scheduledTimer(withTimeInterval: self.positioningTime, repeats: false) { [weak self] _ in
-                        self?.processState = .readyToStart
-                        
-                        self?.state?.updated(transition: .spring(duration: 0.3))
+                        Task { @MainActor [weak self] in
+                            self?.processState = .readyToStart
+                            
+                            self?.state?.updated(transition: .spring(duration: 0.3))
+                        }
                     }
                 case .positioning:
                     break
@@ -292,8 +294,10 @@ final class FaceScanScreenComponent: Component {
                     self.currentSegment = segmentIndex
                                         
                     self.segmentTimer?.invalidate()
-                    self.segmentTimer = Timer.scheduledTimer(withTimeInterval: self.segmentDwellTime, repeats: false) { _ in
-                        self.fillSegment(segmentIndex)
+                    self.segmentTimer = Timer.scheduledTimer(withTimeInterval: self.segmentDwellTime, repeats: false) { [weak self] _ in
+                        Task { @MainActor [weak self] in
+                            self?.fillSegment(segmentIndex)
+                        }
                     }
                 }
             }

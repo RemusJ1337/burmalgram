@@ -85,15 +85,17 @@ private final class StoryStealthModeSheetContentComponent: Component {
             
             self.hideCooldownTimer?.invalidate()
             self.hideCooldownTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false, block: { [weak self] _ in
-                guard let self else {
-                    return
+                Task { @MainActor [weak self] in
+                    guard let self else {
+                        return
+                    }
+                    self.hideCooldownTimer?.invalidate()
+                    self.hideCooldownTimer = nil
+                    
+                    self.showCooldownToast = false
+                    
+                    self.state?.updated(transition: ComponentTransition(animation: .curve(duration: 0.25, curve: .easeInOut)))
                 }
-                self.hideCooldownTimer?.invalidate()
-                self.hideCooldownTimer = nil
-                
-                self.showCooldownToast = false
-                
-                self.state?.updated(transition: ComponentTransition(animation: .curve(duration: 0.25, curve: .easeInOut)))
             })
         }
         
@@ -112,10 +114,12 @@ private final class StoryStealthModeSheetContentComponent: Component {
             if remainingCooldownSeconds > 0 {
                 if self.timer == nil {
                     self.timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true, block: { [weak self] _ in
-                        guard let self else {
-                            return
+                        Task { @MainActor [weak self] in
+                            guard let self else {
+                                return
+                            }
+                            self.state?.updated(transition: .immediate)
                         }
-                        self.state?.updated(transition: .immediate)
                     })
                 }
             } else {

@@ -54,14 +54,16 @@ private final class NewSessionInfoSheetContentComponent: Component {
         func update(component: NewSessionInfoSheetContentComponent, availableSize: CGSize, state: EmptyComponentState, environment: Environment<EnvironmentType>, transition: ComponentTransition) -> CGSize {
             if self.timer == nil {
                 self.timer = Foundation.Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true, block: { [weak self] _ in
-                    guard let self else {
-                        return
+                    Task { @MainActor [weak self] in
+                        guard let self else {
+                            return
+                        }
+                        self.remainingTimer = max(0, self.remainingTimer - 1)
+                        if self.remainingTimer == 0 {
+                            self.timer?.invalidate()
+                        }
+                        self.state?.updated(transition: .immediate)
                     }
-                    self.remainingTimer = max(0, self.remainingTimer - 1)
-                    if self.remainingTimer == 0 {
-                        self.timer?.invalidate()
-                    }
-                    self.state?.updated(transition: .immediate)
                 })
             }
             

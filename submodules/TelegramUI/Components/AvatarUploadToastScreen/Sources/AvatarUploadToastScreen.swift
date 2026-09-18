@@ -177,10 +177,12 @@ private final class AvatarUploadToastScreenComponent: Component {
                     
                     if case .done = status, self.doneTimer == nil {
                         self.doneTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 4.0, repeats: false, block: { [weak self] _ in
-                            guard let self else {
-                                return
+                            Task { @MainActor [weak self] in
+                                guard let self else {
+                                    return
+                                }
+                                self.environment?.controller()?.dismiss()
                             }
-                            self.environment?.controller()?.dismiss()
                         })
                     }
                 })

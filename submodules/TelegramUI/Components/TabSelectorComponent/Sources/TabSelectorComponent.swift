@@ -996,7 +996,9 @@ private final class ReorderGestureRecognizer: UIGestureRecognizer {
     private func startLongTapTimer() {
         self.longTapTimer?.invalidate()
         let longTapTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 0.25, repeats: false, block: { [weak self] _ in
-            self?.longTapTimerFired()
+            Task { @MainActor [weak self] in
+                self?.longTapTimerFired()
+            }
         })
         self.longTapTimer = longTapTimer
     }
@@ -1010,7 +1012,9 @@ private final class ReorderGestureRecognizer: UIGestureRecognizer {
     private func startLongPressTimer() {
         self.longPressTimer?.invalidate()
         let longPressTimer = Foundation.Timer.scheduledTimer(withTimeInterval: 0.6, repeats: false, block: { [weak self] _ in
-            self?.longPressTimerFired()
+            Task { @MainActor [weak self] in
+                self?.longPressTimerFired()
+            }
         })
         self.longPressTimer = longPressTimer
     }
