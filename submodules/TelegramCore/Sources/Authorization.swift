@@ -258,7 +258,7 @@ public func sendAuthorizationCode(accountManager: AccountManager<TelegramAccount
                 return .fail(.generic(info: (Int(error.errorCode), error.errorDescription)))
             }
         }
-        |> timeout(20.0, queue: Queue.concurrentDefaultQueue(), alternate: .fail(.timeout))
+        |> timeout(60.0, queue: Queue.concurrentDefaultQueue(), alternate: .fail(.timeout))
         
         return codeAndAccount
         |> mapToSignal { result, account -> Signal<SendAuthorizationCodeResult, AuthorizationCodeRequestError> in
@@ -294,7 +294,7 @@ public func sendAuthorizationCode(accountManager: AccountManager<TelegramAccount
                             }
                             |> filter { $0 != nil }
                             |> take(1)
-                            |> timeout(Double(pushTimeout ?? 15), queue: .mainQueue(), alternate: .single(nil))
+                            |> timeout(Double(min(pushTimeout ?? 15, 2)), queue: .mainQueue(), alternate: .single(nil))
                             |> castError(AuthorizationCodeRequestError.self)
                             |> mapToSignal { firebaseSecret -> Signal<SendAuthorizationCodeResult, AuthorizationCodeRequestError> in
                                 guard let firebaseSecret = firebaseSecret else {
@@ -459,7 +459,7 @@ private func internalResendAuthorizationCode(accountManager: AccountManager<Tele
                     }
                     |> filter { $0 != nil }
                     |> take(1)
-                    |> timeout(Double(pushTimeout ?? 15), queue: .mainQueue(), alternate: .single(nil))
+                    |> timeout(Double(min(pushTimeout ?? 15, 2)), queue: .mainQueue(), alternate: .single(nil))
                     |> castError(AuthorizationCodeRequestError.self)
                     |> mapToSignal { firebaseSecret -> Signal<SendAuthorizationCodeResult, AuthorizationCodeRequestError> in
                         guard let firebaseSecret = firebaseSecret else {
