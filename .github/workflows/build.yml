@@ -18,15 +18,14 @@ jobs:
           submodules: 'recursive'
           fetch-depth: '1'
 
-      - name: Cache Bazel Artifacts and Dependencies
-        uses: actions/cache@v4
+      - name: Restore Bazel Cache
+        uses: actions/cache/restore@v4
         with:
           path: |
             /Users/Shared/bazel-cache
             /Users/Shared/bazel-repo-cache
-          key: bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'WORKSPACE', '**/*.bzl') }}-${{ github.sha }}
+          key: bazel-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
-            bazel-${{ runner.os }}-${{ hashFiles('versions.json', 'WORKSPACE', '**/*.bzl') }}-
             bazel-${{ runner.os }}-
 
       - name: Set active Xcode path
@@ -83,7 +82,6 @@ jobs:
             --overrideXcodeVersion \
             --overrideBazelVersion \
             build \
-            --enableParallelSwiftmoduleGeneration \
             --configurationPath="build-system/burmalgram-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
             --configuration=release_arm64 \
@@ -112,8 +110,18 @@ jobs:
           echo "Burmalgram.ipa successfully built:"
           ls -lh build/artifacts/Burmalgram.ipa
 
+      - name: Save Bazel Cache
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            /Users/Shared/bazel-cache
+            /Users/Shared/bazel-repo-cache
+          key: bazel-${{ runner.os }}-${{ github.run_id }}
+
       - name: Upload Burmalgram IPA Artifact
         uses: actions/upload-artifact@v4
+        if: success()
         with:
           name: Burmalgram-${{ env.APP_VERSION }}-build${{ env.BUILD_NUMBER }}
           path: /Users/Shared/telegram-ios/build/artifacts/Burmalgram.ipa
