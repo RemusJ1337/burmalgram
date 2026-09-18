@@ -634,8 +634,11 @@ func presentChatReplyOptions(selfController: ChatControllerImpl, sourceView: UIV
 
 func moveReplyMessageToAnotherChat(selfController: ChatControllerImpl, replySubject: ChatInterfaceState.ReplyMessageSubject) {
     let _ = selfController.presentVoiceMessageDiscardAlert(action: { [weak selfController] in
-        Task { @MainActor in
-            guard let selfController else {
+        guard let strongSelf = selfController else {
+            return
+        }
+        Task { @MainActor [weak strongSelf] in
+            guard let selfController = strongSelf else {
                 return
             }
             let filter: ChatListNodePeersFilter = [.onlyWriteable, .excludeDisabled, .doNotSearchMessages]

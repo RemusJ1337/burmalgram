@@ -891,6 +891,7 @@ public final class SharedWakeupManager {
         } catch let e {
             Logger.shared.log("Wakeup", "Story BGTaskScheduler submit error: \(e)")
         }
+        #endif
     }
     
     func allowBackgroundTimeExtension(timeout: Double, extendNow: Bool = false) {
