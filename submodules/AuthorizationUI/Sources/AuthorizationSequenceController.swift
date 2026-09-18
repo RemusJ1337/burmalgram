@@ -1358,7 +1358,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                         controllers.append(self.splashController())
                     }
                     controllers.append(self.phoneEntryController(countryCode: AuthorizationSequenceCountrySelectionController.defaultCountryCode(), number: "", splashController: nil))
-                    controllers.append(self.codeEntryController(number: number, phoneCodeHash: codeHash, email: self.currentEmail, type: .app(length: 5), nextType: nil, timeout: 60, previousCodeType: nil, isPrevious: false, termsOfService: nil))
+                    controllers.append(self.codeEntryController(number: number, phoneCodeHash: codeHash, email: self.currentEmail, type: .otherSession(length: 5), nextType: nil, timeout: 60, previousCodeType: nil, isPrevious: false, termsOfService: nil))
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty)
             }
         }
