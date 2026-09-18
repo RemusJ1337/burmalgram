@@ -769,7 +769,7 @@ public class AttachmentController: ViewController, MinimizableController {
                     return
                 }
                 _ = (mediaPickerContext.caption |> take(1) |> deliverOnMainQueue).startStandalone(next: { [weak strongSelf] caption in
-                    guard let strongSelf, let controller = strongSelf.controller, let mediaPickerContext = strongSelf.mediaPickerContext else {
+                    guard let strongSelf else {
                         return
                     }
                     guard let caption, caption.length > 0 else {
@@ -777,7 +777,7 @@ public class AttachmentController: ViewController, MinimizableController {
                     }
                     let captionText = caption.string
                     Task { @MainActor [weak strongSelf] in
-                        guard let strongSelf, let controller = strongSelf.controller, let mediaPickerContext = strongSelf.mediaPickerContext else {
+                        guard let strongSelf, let controller = strongSelf.controller else {
                             return
                         }
                         let textProcessingScreen = await controller.context.sharedContext.makeTextProcessingScreen(
