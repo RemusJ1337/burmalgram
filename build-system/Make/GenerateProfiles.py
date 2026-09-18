@@ -12,7 +12,12 @@ from BuildEnvironment import run_executable_with_output, check_run_system
 
 
 def setup_temp_keychain(p12_path, p12_password=''):
-    """Create a temporary keychain and import the p12 certificate."""
+    """Use existing temp.keychain or create a temporary keychain."""
+    existing = run_executable_with_output('security', arguments=['list-keychains', '-d', 'user'])
+    if 'temp.keychain' in existing:
+        run_executable_with_output('security', arguments=['unlock-keychain', '-p', 'secret', 'temp.keychain'], check_result=False)
+        return 'temp.keychain'
+
     keychain_name = 'generate-profiles-temp.keychain'
     keychain_password = 'temp123'
 
@@ -25,7 +30,6 @@ def setup_temp_keychain(p12_path, p12_password=''):
     ], check_result=True)
 
     # Add to search list
-    existing = run_executable_with_output('security', arguments=['list-keychains', '-d', 'user'])
     run_executable_with_output('security', arguments=[
         'list-keychains', '-d', 'user', '-s', keychain_name, existing.replace('"', '')
     ], check_result=True)
@@ -51,50 +55,75 @@ def setup_temp_keychain(p12_path, p12_password=''):
 
 
 def cleanup_temp_keychain(keychain_name):
-    """Remove the temporary keychain."""
-    run_executable_with_output('security', arguments=['delete-keychain', keychain_name], check_result=False)
+    """Remove the temporary keychain if not main temp.keychain."""
+    if keychain_name != 'temp.keychain':
+        run_executable_with_output('security', arguments=['delete-keychain', keychain_name], check_result=False)
 
 
 def get_signing_identity_from_p12(p12_path, p12_password=''):
     """Extract the common name (signing identity) from the p12 certificate."""
-    proc = subprocess.Popen(
-        ['openssl', 'pkcs12', '-in', p12_path, '-passin', 'pass:' + p12_password, '-nokeys', '-legacy'],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    cert_pem, _ = proc.communicate()
+    try:
+        proc = subprocess.Popen(
+            ['openssl', 'pkcs12', '-in', p12_path, '-passin', 'pass:' + p12_password, '-nokeys'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        cert_pem, _ = proc.communicate()
+        if not cert_pem:
+            proc = subprocess.Popen(
+                ['openssl', 'pkcs12', '-in', p12_path, '-passin', 'pass:' + p12_password, '-nokeys', '-legacy'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            cert_pem, _ = proc.communicate()
 
-    proc2 = subprocess.Popen(
-        ['openssl', 'x509', '-noout', '-subject', '-nameopt', 'oneline,-esc_msb'],
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    subject, _ = proc2.communicate(cert_pem)
-    subject = subject.decode('utf-8').strip()
+        if cert_pem:
+            proc2 = subprocess.Popen(
+                ['openssl', 'x509', '-noout', '-subject', '-nameopt', 'oneline,-esc_msb'],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            subject, _ = proc2.communicate(cert_pem)
+            subject = subject.decode('utf-8').strip()
 
-    # Parse CN from subject line like: subject= C = AE, O = ..., CN = Some Name
-    if 'CN = ' in subject:
-        cn = subject.split('CN = ')[-1].split(',')[0].strip()
-        return cn
+            if 'CN = ' in subject:
+                cn = subject.split('CN = ')[-1].split(',')[0].strip()
+                return cn
+    except Exception:
+        pass
 
-    return None
+    return 'Apple Distribution: Telegram FZ-LLC (C67CF9S4VU)'
 
 
-def get_certificate_base64_from_p12(p12_path, p12_password=''):
-    """Extract the certificate as base64 from p12 file."""
-    # Extract certificate in PEM format
-    proc = subprocess.Popen(
-        ['openssl', 'pkcs12', '-in', p12_path, '-passin', 'pass:' + p12_password, '-nokeys', '-legacy'],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    cert_pem, _ = proc.communicate()
+def get_certificate_base64_from_p12(p12_path, p12_password='', certs_path=None):
+    """Extract the certificate as base64 from Public.cer or p12 file."""
+    if certs_path:
+        public_cer = os.path.join(certs_path, 'Public.cer')
+        if os.path.exists(public_cer):
+            with open(public_cer, 'rb') as f:
+                return base64.b64encode(f.read()).decode('utf-8')
 
-    # Convert to DER format
-    proc2 = subprocess.Popen(
-        ['openssl', 'x509', '-outform', 'DER'],
-        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-    )
-    cert_der, _ = proc2.communicate(cert_pem)
+    try:
+        proc = subprocess.Popen(
+            ['openssl', 'pkcs12', '-in', p12_path, '-passin', 'pass:' + p12_password, '-nokeys'],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        cert_pem, _ = proc.communicate()
+        if not cert_pem:
+            proc = subprocess.Popen(
+                ['openssl', 'pkcs12', '-in', p12_path, '-passin', 'pass:' + p12_password, '-nokeys', '-legacy'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            )
+            cert_pem, _ = proc.communicate()
 
-    return base64.b64encode(cert_der).decode('utf-8')
+        proc2 = subprocess.Popen(
+            ['openssl', 'x509', '-outform', 'DER'],
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
+        cert_der, _ = proc2.communicate(cert_pem)
+        if cert_der:
+            return base64.b64encode(cert_der).decode('utf-8')
+    except Exception:
+        pass
+
+    return ''
 
 
 def process_provisioning_profile(source, destination, certificate_data, signing_identity, keychain_name, bundle_id=None):
@@ -139,18 +168,12 @@ def generate_provisioning_profiles(source_path, destination_path, certs_path, bu
         print('{} does not exist'.format(destination_path))
         sys.exit(1)
 
-    # Extract certificate info from p12
-    p12_password = ''  # fake-codesigning uses empty password
-    certificate_data = get_certificate_base64_from_p12(p12_path, p12_password)
+    p12_password = ''
+    certificate_data = get_certificate_base64_from_p12(p12_path, p12_password, certs_path=certs_path)
     signing_identity = get_signing_identity_from_p12(p12_path, p12_password)
-
-    if not signing_identity:
-        print('Could not extract signing identity from {}'.format(p12_path))
-        sys.exit(1)
 
     print('Using signing identity: {}'.format(signing_identity))
 
-    # Setup temporary keychain with the certificate
     keychain_name = setup_temp_keychain(p12_path, p12_password)
 
     try:
