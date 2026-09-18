@@ -2,6 +2,14 @@
 
 This file provides guidance to AI assistants when working with code in this repository.
 
+> **CRITICAL: Burmalgram Fork & CI Setup**
+> - See [AGENTS.md](file:///c:/Users/dmitr/Desktop/burmalgramm/burmalgram-src/AGENTS.md) for full project context, architecture, and workflows.
+> - **App Name**: `Burmalgram`, Bundle ID: `org.burmalgram.Telegram` (defined in `build-system/burmalgram-configuration.json`).
+> - **Build Environment**: Local building on Windows is NOT used. Builds run automatically on **GitHub Actions** via `.github/workflows/build.yml` on push to `main`.
+> - **MTProto API Invariant**: Telegram backend requires `_dataDict[@"bundleId"] = @"ph.telegra.Telegraph"` in `submodules/BuildConfig/Sources/BuildConfig.m:139` to validate `api_id: 8`. DO NOT change this back to `org.burmalgram.Telegram` or login MTProto requests will fail.
+> - **Releases & IPA**: CI outputs `Burmalgram.ipa` to GitHub Release `v12.9.2-b3731` and can be downloaded to `c:\Users\dmitr\Desktop\burmalgramm\Burmalgram.ipa`.
+
+
 ## Build
 
 The app is built using Bazel via the `Make.py` wrapper. There is no selective per-module build — the only supported invocation builds the full `Telegram/Telegram` target.
