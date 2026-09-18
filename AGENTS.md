@@ -44,11 +44,10 @@ This document provides complete instructions and architectural context for AI as
 - **Why this is critical**: Telegram MTProto backend strictly verifies that `api_id: 8` is sent with `bundleId: "ph.telegra.Telegraph"`. If `_dataDict[@"bundleId"]` is set to `org.burmalgram.Telegram`, Telegram's servers reject auth requests or silently hang, producing the error: *"нет инета проверь инет или попробуй прокси"*.
 
 ### B. Configuration Profile
-- **File**: `build-system/burmalgram-configuration.json`
+- **File**: `burmalgram-src/build-system/burmalgram-configuration.json`
 - **Invariant**:
-  - `"bundle_id": "org.burmalgram.Telegram"`
-  - `"app_name": "Burmalgram"`
-  - `"is_appstore_build": "true"` (prevents hanging on missing Firebase tokens in non-AppStore environments)
+  - `"bundle_id": "ph.telegra.Telegraph"`
+  - `"is_appstore_build": "false"` (enables NetworkFramework TCP connection interface on modern iOS)
 
 ### C. Authorization & Push Timeouts
 - **File**: `submodules/TelegramCore/Sources/Authorization.swift`
