@@ -1334,11 +1334,11 @@ private enum BurmalgramToolsEntry: ItemListNodeEntry {
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleFilePickerFix(val)
             })
-        case let .clearCache(_, text, value):
+        case let .clearCache(_, text, _):
             return ItemListActionItem(presentationData: presentationData, title: text, kind: .generic, alignment: .natural, sectionId: self.section, style: .blocks, action: {
                 args.clearCache()
             })
-        case let .resetSettings(_, text, value):
+        case let .resetSettings(_, text, _):
             return ItemListActionItem(presentationData: presentationData, title: text, kind: .destructive, alignment: .natural, sectionId: self.section, style: .blocks, action: {
                 args.resetSettings()
             })
