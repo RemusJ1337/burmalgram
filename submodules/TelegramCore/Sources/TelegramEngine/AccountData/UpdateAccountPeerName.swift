@@ -67,6 +67,27 @@ func _internal_updateNameColorAndEmoji(account: Account, nameColor: UpdateNameCo
         }
         SGSimpleSettings.shared.fakeProfileColor = profileColor?.rawValue ?? -1
         SGSimpleSettings.shared.fakeProfileBackgroundEmojiId = profileBackgroundEmojiId ?? 0
+
+        return account.postbox.transaction { transaction -> Void in
+            guard let peer = transaction.getPeer(account.peerId) as? TelegramUser else {
+                return
+            }
+            var nameColorValue: PeerColor
+            var backgroundEmojiIdValue: Int64?
+            switch nameColor {
+            case let .preset(color, backgroundEmojiId):
+                nameColorValue = .preset(color)
+                backgroundEmojiIdValue = backgroundEmojiId
+            case let .collectible(collectibleColor):
+                nameColorValue = .collectible(collectibleColor)
+                backgroundEmojiIdValue = collectibleColor.backgroundEmojiId
+            }
+            
+            updatePeersCustom(transaction: transaction, peers: [peer.withUpdatedNameColor(nameColorValue).withUpdatedBackgroundEmojiId(backgroundEmojiIdValue).withUpdatedProfileColor(profileColor).withUpdatedProfileBackgroundEmojiId(profileBackgroundEmojiId)], update: { _, updated in
+                return updated
+            })
+        }
+        |> castError(UpdateNameColorAndEmojiError.self)
     }
 
     return account.postbox.transaction { transaction -> Signal<Peer, NoError> in
@@ -112,20 +133,6 @@ func _internal_updateNameColorAndEmoji(account: Account, nameColor: UpdateNameCo
             flagsProfile |= (1 << 1)
         }
         
-        if SGSimpleSettings.shared.fakePremium {
-            let _ = combineLatest(
-                account.network.request(Api.functions.account.updateColor(flags: (1 << 2), color: inputRepliesColor))
-                |> `catch` { _ -> Signal<Api.Bool, NoError> in
-                    return .single(.boolFalse)
-                },
-                account.network.request(Api.functions.account.updateColor(flags: (1 << 1) | (1 << 2), color: .peerColor(.init(flags: flagsProfile, color: profileColor?.rawValue ?? 0, backgroundEmojiId: profileBackgroundEmojiId))))
-                |> `catch` { _ -> Signal<Api.Bool, NoError> in
-                    return .single(.boolFalse)
-                }
-            ).start()
-            return .complete()
-        }
-
         return combineLatest(
             account.network.request(Api.functions.account.updateColor(flags: (1 << 2), color: inputRepliesColor)),
             account.network.request(Api.functions.account.updateColor(flags: (1 << 1) | (1 << 2), color: .peerColor(.init(flags: flagsProfile, color: profileColor?.rawValue ?? 0, backgroundEmojiId: profileBackgroundEmojiId))))

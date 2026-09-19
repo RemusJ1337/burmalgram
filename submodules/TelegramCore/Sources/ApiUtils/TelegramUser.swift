@@ -189,6 +189,7 @@ extension TelegramUser {
                     break
                 }
             }
+            var fakeEmojiStatus = emojiStatus.flatMap(PeerEmojiStatus.init(apiStatus:))
             if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
                 if SGSimpleSettings.shared.fakeProfileColor >= 0 {
                     profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
@@ -202,9 +203,12 @@ extension TelegramUser {
                 if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
                     backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
                 }
+                if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
+                    fakeEmojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                }
             }
             
-            self.init(id: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(id)), accessHash: accessHashValue, firstName: firstName, lastName: lastName, username: username, phone: phone, photo: representations, botInfo: botInfo, restrictionInfo: restrictionInfo, flags: userFlags, emojiStatus: emojiStatus.flatMap(PeerEmojiStatus.init(apiStatus:)), usernames: usernames?.map(TelegramPeerUsername.init(apiUsername:)) ?? [], storiesHidden: storiesHidden, nameColor: nameColor, backgroundEmojiId: backgroundEmojiId, profileColor: profileColorIndex.flatMap { PeerNameColor(rawValue: $0) }, profileBackgroundEmojiId: profileBackgroundEmojiId, subscriberCount: subscriberCount, verificationIconFileId: verificationIconFileId, linkedCommunityId: linkedCommunityId)
+            self.init(id: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(id)), accessHash: accessHashValue, firstName: firstName, lastName: lastName, username: username, phone: phone, photo: representations, botInfo: botInfo, restrictionInfo: restrictionInfo, flags: userFlags, emojiStatus: fakeEmojiStatus, usernames: usernames?.map(TelegramPeerUsername.init(apiUsername:)) ?? [], storiesHidden: storiesHidden, nameColor: nameColor, backgroundEmojiId: backgroundEmojiId, profileColor: profileColorIndex.flatMap { PeerNameColor(rawValue: $0) }, profileBackgroundEmojiId: profileBackgroundEmojiId, subscriberCount: subscriberCount, verificationIconFileId: verificationIconFileId, linkedCommunityId: linkedCommunityId)
         case let .userEmpty(userEmptyData):
             let id = userEmptyData.id
             self.init(id: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(id)), accessHash: nil, firstName: nil, lastName: nil, username: nil, phone: nil, photo: [], botInfo: nil, restrictionInfo: nil, flags: [], emojiStatus: nil, usernames: [], storiesHidden: nil, nameColor: nil, backgroundEmojiId: nil, profileColor: nil, profileBackgroundEmojiId: nil, subscriberCount: nil, verificationIconFileId: nil)
@@ -248,6 +252,9 @@ extension TelegramUser {
                             userFlags.insert(.isFake)
                         }
                         if (flags & (1 << 28)) != 0 {
+                            userFlags.insert(.isPremium)
+                        }
+                        if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
                             userFlags.insert(.isPremium)
                         }
                         
@@ -334,6 +341,7 @@ extension TelegramUser {
                                 break
                             }
                         }
+                        var fakeEmojiStatus = emojiStatus.flatMap(PeerEmojiStatus.init(apiStatus:))
                         if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
                             if SGSimpleSettings.shared.fakeProfileColor >= 0 {
                                 profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
@@ -347,11 +355,14 @@ extension TelegramUser {
                             if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
                                 backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
                             }
+                            if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
+                                fakeEmojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                            }
                         }
 
                         let linkedCommunityId = linkedCommunityIdValue.flatMap { PeerId(namespace: Namespaces.Peer.CloudChannel, id: PeerId.Id._internalFromInt64Value($0)) } ?? lhs.linkedCommunityId
 
-                        return TelegramUser(id: lhs.id, accessHash: accessHash, firstName: lhs.firstName, lastName: lhs.lastName, username: lhs.username, phone: lhs.phone, photo: telegramPhoto, botInfo: botInfo, restrictionInfo: restrictionInfo, flags: userFlags, emojiStatus: emojiStatus.flatMap(PeerEmojiStatus.init(apiStatus:)), usernames: lhs.usernames, storiesHidden: lhs.storiesHidden, nameColor: nameColor, backgroundEmojiId: backgroundEmojiId, profileColor: profileColorIndex.flatMap { PeerNameColor(rawValue: $0) }, profileBackgroundEmojiId: profileBackgroundEmojiId, subscriberCount: subscriberCount, verificationIconFileId: lhs.verificationIconFileId, linkedCommunityId: linkedCommunityId)
+                        return TelegramUser(id: lhs.id, accessHash: accessHash, firstName: lhs.firstName, lastName: lhs.lastName, username: lhs.username, phone: lhs.phone, photo: telegramPhoto, botInfo: botInfo, restrictionInfo: restrictionInfo, flags: userFlags, emojiStatus: fakeEmojiStatus, usernames: lhs.usernames, storiesHidden: lhs.storiesHidden, nameColor: nameColor, backgroundEmojiId: backgroundEmojiId, profileColor: profileColorIndex.flatMap { PeerNameColor(rawValue: $0) }, profileBackgroundEmojiId: profileBackgroundEmojiId, subscriberCount: subscriberCount, verificationIconFileId: lhs.verificationIconFileId, linkedCommunityId: linkedCommunityId)
                     } else {
                         return TelegramUser(user: rhs)
                     }
@@ -384,10 +395,36 @@ extension TelegramUser {
             if rhs.flags.contains(.isPremium) {
                 userFlags.insert(.isPremium)
             }
+            let isSelf = (!SGSimpleSettings.shared.primaryUserId.isEmpty && (String(rhs.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId || (lhs != nil && String(lhs!.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId)))
+            if isSelf && SGSimpleSettings.shared.fakePremium {
+                userFlags.insert(.isPremium)
+            }
 
             let botInfo: BotUserInfo? = rhs.botInfo
             
-            let emojiStatus = rhs.emojiStatus
+            var emojiStatus = rhs.emojiStatus
+            var nameColor = rhs.nameColor
+            var backgroundEmojiId = rhs.backgroundEmojiId
+            var profileColor = rhs.profileColor
+            var profileBackgroundEmojiId = rhs.profileBackgroundEmojiId
+
+            if isSelf && SGSimpleSettings.shared.fakePremium {
+                if SGSimpleSettings.shared.fakeProfileColor >= 0 {
+                    profileColor = PeerNameColor(rawValue: SGSimpleSettings.shared.fakeProfileColor)
+                }
+                if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
+                    profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
+                }
+                if SGSimpleSettings.shared.fakeNameColor >= 0 {
+                    nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
+                }
+                if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
+                    backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
+                }
+                if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
+                    emojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                }
+            }
             
             let restrictionInfo: PeerAccessRestrictionInfo? = rhs.restrictionInfo
             
@@ -414,7 +451,7 @@ extension TelegramUser {
 
             let linkedCommunityId = rhs.linkedCommunityId ?? lhs.linkedCommunityId
 
-            return TelegramUser(id: lhs.id, accessHash: accessHash, firstName: lhs.firstName, lastName: lhs.lastName, username: lhs.username, phone: lhs.phone, photo: photo, botInfo: botInfo, restrictionInfo: restrictionInfo, flags: userFlags, emojiStatus: emojiStatus, usernames: lhs.usernames, storiesHidden: storiesHidden, nameColor: rhs.nameColor, backgroundEmojiId: rhs.backgroundEmojiId, profileColor: rhs.profileColor, profileBackgroundEmojiId: rhs.profileBackgroundEmojiId, subscriberCount: rhs.subscriberCount, verificationIconFileId: rhs.verificationIconFileId, linkedCommunityId: linkedCommunityId)
+            return TelegramUser(id: lhs.id, accessHash: accessHash, firstName: lhs.firstName, lastName: lhs.lastName, username: lhs.username, phone: lhs.phone, photo: photo, botInfo: botInfo, restrictionInfo: restrictionInfo, flags: userFlags, emojiStatus: emojiStatus, usernames: lhs.usernames, storiesHidden: storiesHidden, nameColor: nameColor, backgroundEmojiId: backgroundEmojiId, profileColor: profileColor, profileBackgroundEmojiId: profileBackgroundEmojiId, subscriberCount: rhs.subscriberCount, verificationIconFileId: rhs.verificationIconFileId, linkedCommunityId: linkedCommunityId)
         }
     }
 }

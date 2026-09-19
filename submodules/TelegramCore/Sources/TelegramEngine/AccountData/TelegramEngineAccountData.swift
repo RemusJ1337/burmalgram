@@ -2,6 +2,7 @@ import Foundation
 import SwiftSignalKit
 import Postbox
 import TelegramApi
+import SGSimpleSettings
 
 public extension TelegramEngine {
     final class AccountData {
@@ -149,6 +150,27 @@ public extension TelegramEngine {
         
         public func setEmojiStatus(file: TelegramMediaFile?, expirationDate: Int32?) -> Signal<Never, NoError> {
             let peerId = self.account.peerId
+            
+            if SGSimpleSettings.shared.fakePremium {
+                SGSimpleSettings.shared.fakeEmojiStatusFileId = file?.fileId.id ?? 0
+                return self.account.postbox.transaction { transaction -> Void in
+                    if let file = file {
+                        transaction.storeMediaIfNotPresent(media: file)
+                        
+                        if let entry = CodableEntry(RecentMediaItem(file)) {
+                            let itemEntry = OrderedItemListEntry(id: RecentMediaItemId(file.fileId).rawValue, contents: entry)
+                            transaction.addOrMoveToFirstPositionOrderedItemListItem(collectionId: Namespaces.OrderedItemList.CloudRecentStatusEmoji, item: itemEntry, removeTailIfCountExceeds: 32)
+                        }
+                    }
+                    
+                    if let peer = transaction.getPeer(peerId) as? TelegramUser {
+                        updatePeersCustom(transaction: transaction, peers: [peer.withUpdatedEmojiStatus(file.flatMap({ PeerEmojiStatus(content: .emoji(fileId: $0.fileId.id), expirationDate: expirationDate) }))], update: { _, updated in
+                            updated
+                        })
+                    }
+                }
+                |> ignoreValues
+            }
             
             let remoteApply = self.account.network.request(Api.functions.account.updateEmojiStatus(emojiStatus: file.flatMap({ file in
                 var flags: Int32 = 0

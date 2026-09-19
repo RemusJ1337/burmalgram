@@ -42,30 +42,125 @@ private func burmalgramFontDisplayName(_ key: String) -> String {
     return "По умолчанию"
 }
 
-private func presentBurmalgramFontPicker(context: AccountContext, onSelect: @escaping (String) -> Void) {
-    let presentationData = context.sharedContext.currentPresentationData.with { $0 }
-    let actionSheet = ActionSheetController(presentationData: presentationData)
-    var items: [ActionSheetItem] = [
-        ActionSheetTextItem(title: "Выберите шрифт интерфейса")
-    ]
-    let current = SGSimpleSettings.shared.customFont
-    for (key, title) in burmalgramFontOptions {
-        items.append(ActionSheetButtonItem(title: title, color: .accent, font: key == current ? .bold : .default, action: { [weak actionSheet] in
-            actionSheet?.dismissAnimated()
-            SGSimpleSettings.shared.customFont = key
-            onSelect(key)
-        }))
-    }
-    items.append(ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
-        actionSheet?.dismissAnimated()
-    }))
-    actionSheet.setItemGroups([ActionSheetItemGroup(items: items)])
+// MARK: - Font Selection Screen (Native Telegram Controller)
+
+private enum BurmalgramFontSection: Int32 {
+    case fonts
+}
+
+private enum BurmalgramFontEntry: ItemListNodeEntry {
+    case header(PresentationTheme, String)
+    case font(PresentationTheme, String, String, Bool)
+    case footer(PresentationTheme, String)
     
-    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
-       let rootVC = window.rootViewController {
-        rootVC.present(actionSheet, animated: true, completion: nil)
+    var section: ItemListSectionId {
+        return BurmalgramFontSection.fonts.rawValue
+    }
+    
+    var stableId: Int32 {
+        switch self {
+        case .header:
+            return 0
+        case let .font(_, key, _, _):
+            for (i, opt) in burmalgramFontOptions.enumerated() {
+                if opt.0 == key {
+                    return Int32(1 + i)
+                }
+            }
+            return 100
+        case .footer:
+            return 1000
+        }
+    }
+    
+    static func ==(lhs: BurmalgramFontEntry, rhs: BurmalgramFontEntry) -> Bool {
+        switch lhs {
+        case let .header(lhsTheme, lhsText):
+            if case let .header(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        case let .font(lhsTheme, lhsKey, lhsTitle, lhsSelected):
+            if case let .font(rhsTheme, rhsKey, rhsTitle, rhsSelected) = rhs, lhsTheme === rhsTheme, lhsKey == rhsKey, lhsTitle == rhsTitle, lhsSelected == rhsSelected { return true }
+            return false
+        case let .footer(lhsTheme, lhsText):
+            if case let .footer(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        }
+    }
+    
+    static func <(lhs: BurmalgramFontEntry, rhs: BurmalgramFontEntry) -> Bool {
+        return lhs.stableId < rhs.stableId
+    }
+    
+    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
+        let args = arguments as! BurmalgramFontArguments
+        switch self {
+        case let .header(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .font(_, key, title, selected):
+            return ItemListCheckboxItem(presentationData: presentationData, title: title, style: .left, checked: selected, zeroSeparatorInsets: false, sectionId: self.section, action: {
+                args.selectFont(key)
+            })
+        case let .footer(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+        }
     }
 }
+
+private final class BurmalgramFontArguments {
+    let selectFont: (String) -> Void
+    init(selectFont: @escaping (String) -> Void) {
+        self.selectFont = selectFont
+    }
+}
+
+public func burmalgramFontSelectionController(context: AccountContext) -> ViewController {
+    let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
+    
+    let arguments = BurmalgramFontArguments(
+        selectFont: { key in
+            SGSimpleSettings.shared.customFont = key
+            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+                return current
+            }).start()
+            reloadPromise.set(true)
+        }
+    )
+    
+    let signal = combineLatest(
+        queue: .mainQueue(),
+        context.sharedContext.presentationData,
+        reloadPromise.get()
+    )
+    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        var entries: [BurmalgramFontEntry] = []
+        entries.append(.header(presentationData.theme, "ВЫБЕРИТЕ ШРИФТ ИНТЕРФЕЙСА"))
+        let currentFont = SGSimpleSettings.shared.customFont
+        for (key, title) in burmalgramFontOptions {
+            entries.append(.font(presentationData.theme, key, title, key == currentFont))
+        }
+        entries.append(.footer(presentationData.theme, "Выбранный шрифт применяется ко всему интерфейсу приложения мгновенно."))
+        
+        let controllerState = ItemListControllerState(
+            presentationData: ItemListPresentationData(presentationData),
+            title: .text("Шрифт интерфейса"),
+            leftNavigationButton: nil,
+            rightNavigationButton: nil,
+            backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back)
+        )
+        let listState = ItemListNodeState(
+            presentationData: ItemListPresentationData(presentationData),
+            entries: entries,
+            style: .blocks,
+            animateChanges: false
+        )
+        return (controllerState, (listState, arguments))
+    }
+    
+    let controller = ItemListController(context: context, state: signal)
+    return controller
+}
+
+// MARK: - Phone Editor Alert
 
 private func presentBurmalgramPhoneEditor(context: AccountContext, onComplete: @escaping () -> Void) {
     let alert = UIAlertController(
@@ -89,17 +184,23 @@ private func presentBurmalgramPhoneEditor(context: AccountContext, onComplete: @
     }
 }
 
+// MARK: - Exclusive App Icon Themes
+
 private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
     SGSimpleSettings.shared.burmalgramTheme = themeKey
     let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
         var current = current
         
         switch themeKey {
-        case "midnight": // Тёмная (Черная / Midnight Black)
+        case "midnight": // Тёмная (Obsidian AMOLED / Midnight Black)
             let baseThemeRef: PresentationThemeReference = .builtin(.night)
-            let accentColor: UInt32 = 0x2ea6ff
-            let bubbleColors: [UInt32] = [0x182533, 0x243b55]
-            let wallpaper: TelegramWallpaper = .color(0x0a0f1d)
+            let accentColor: UInt32 = 0x00a8ff
+            let bubbleColors: [UInt32] = [0x0b1e36, 0x103459, 0x154b7d, 0x1a62a1]
+            let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
+                id: nil,
+                colors: [0x04070c, 0x080f1a, 0x0c1626, 0x060a12],
+                settings: WallpaperSettings(rotation: 45)
+            ))
             var accents = current.themeSpecificAccentColors
             accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             var wallpapers = current.themeSpecificChatWallpapers
@@ -108,11 +209,15 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
-        case "sparkling": // Сверкающая (Sparkling Star / Сапфир)
+        case "sparkling": // Сверкающая (Sparkling Star / Cosmic Sapphire)
             let baseThemeRef: PresentationThemeReference = .builtin(.nightAccent)
-            let accentColor: UInt32 = 0x3e95ff
-            let bubbleColors: [UInt32] = [0x1e3c72, 0x2a5298]
-            let wallpaper: TelegramWallpaper = .color(0x0b132b)
+            let accentColor: UInt32 = 0x8a2be2
+            let bubbleColors: [UInt32] = [0x2e0854, 0x4d1282, 0x6e1cb2, 0x8e24e3]
+            let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
+                id: nil,
+                colors: [0x0d031a, 0x1c0638, 0x2e0a5c, 0x140326],
+                settings: WallpaperSettings(rotation: 55)
+            ))
             var accents = current.themeSpecificAccentColors
             accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             var wallpapers = current.themeSpecificChatWallpapers
@@ -121,11 +226,15 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
-        case "neon": // Неон (Neon Blue / Киберпанк)
+        case "neon": // Неон (Cyber Neon / Electric Aqua)
             let baseThemeRef: PresentationThemeReference = .builtin(.night)
-            let accentColor: UInt32 = 0x00e5ff
-            let bubbleColors: [UInt32] = [0x00416a, 0x0072ff]
-            let wallpaper: TelegramWallpaper = .color(0x030811)
+            let accentColor: UInt32 = 0x00f5d4
+            let bubbleColors: [UInt32] = [0x002b42, 0x004e75, 0x0077a8, 0x00a8e8]
+            let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
+                id: nil,
+                colors: [0x010811, 0x021626, 0x03243d, 0x01101d],
+                settings: WallpaperSettings(rotation: 40)
+            ))
             var accents = current.themeSpecificAccentColors
             accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             var wallpapers = current.themeSpecificChatWallpapers
@@ -134,11 +243,15 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
-        case "titanium": // Титан (Titanium Metal / Графит)
+        case "titanium": // Титан (Titanium Metal / Space Gray & Platinum)
             let baseThemeRef: PresentationThemeReference = .builtin(.night)
-            let accentColor: UInt32 = 0x95a5a6
-            let bubbleColors: [UInt32] = [0x2c3e50, 0x34495e]
-            let wallpaper: TelegramWallpaper = .color(0x131518)
+            let accentColor: UInt32 = 0xd1d5db
+            let bubbleColors: [UInt32] = [0x1f242d, 0x303846, 0x434e61, 0x56647c]
+            let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
+                id: nil,
+                colors: [0x0d0e12, 0x16181f, 0x1f222b, 0x121318],
+                settings: WallpaperSettings(rotation: 45)
+            ))
             var accents = current.themeSpecificAccentColors
             accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             var wallpapers = current.themeSpecificChatWallpapers
@@ -147,7 +260,7 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
-        default: // Reset
+        default: // Reset to default
             current.theme = .builtin(.dayClassic)
         }
         
@@ -168,7 +281,6 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
     case customization(PresentationTheme, String, String)
     case privacy(PresentationTheme, String, String)
     case tools(PresentationTheme, String, String)
-    case swiftgram(PresentationTheme, String, String)
     
     case headerQuick(PresentationTheme, String)
     case fakePremium(PresentationTheme, String, Bool)
@@ -180,7 +292,7 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
     
     var section: ItemListSectionId {
         switch self {
-        case .headerCategories, .customization, .privacy, .tools, .swiftgram:
+        case .headerCategories, .customization, .privacy, .tools:
             return BurmalgramMainSection.categories.rawValue
         case .headerQuick, .fakePremium, .ghostMode, .antiDelete, .customFont:
             return BurmalgramMainSection.quickAccess.rawValue
@@ -195,7 +307,6 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
         case .customization: return 1
         case .privacy: return 2
         case .tools: return 3
-        case .swiftgram: return 4
         case .headerQuick: return 10
         case .fakePremium: return 11
         case .ghostMode: return 12
@@ -218,9 +329,6 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
             return false
         case let .tools(lhsTheme, lhsText, lhsValue):
             if case let .tools(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
-            return false
-        case let .swiftgram(lhsTheme, lhsText, lhsValue):
-            if case let .swiftgram(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .headerQuick(lhsTheme, lhsText):
             if case let .headerQuick(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
@@ -264,10 +372,6 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
             return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.settings, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.openTools()
             })
-        case let .swiftgram(_, text, value):
-            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.proxy, title: text, label: value, sectionId: self.section, style: .blocks, action: {
-                args.openSwiftgram()
-            })
         case let .headerQuick(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
         case let .fakePremium(_, text, value):
@@ -296,7 +400,6 @@ private final class BurmalgramMainArguments {
     let openCustomization: () -> Void
     let openPrivacy: () -> Void
     let openTools: () -> Void
-    let openSwiftgram: () -> Void
     let toggleFakePremium: (Bool) -> Void
     let toggleGhostMode: (Bool) -> Void
     let toggleAntiDelete: (Bool) -> Void
@@ -306,7 +409,6 @@ private final class BurmalgramMainArguments {
         openCustomization: @escaping () -> Void,
         openPrivacy: @escaping () -> Void,
         openTools: @escaping () -> Void,
-        openSwiftgram: @escaping () -> Void,
         toggleFakePremium: @escaping (Bool) -> Void,
         toggleGhostMode: @escaping (Bool) -> Void,
         toggleAntiDelete: @escaping (Bool) -> Void,
@@ -315,7 +417,6 @@ private final class BurmalgramMainArguments {
         self.openCustomization = openCustomization
         self.openPrivacy = openPrivacy
         self.openTools = openTools
-        self.openSwiftgram = openSwiftgram
         self.toggleFakePremium = toggleFakePremium
         self.toggleGhostMode = toggleGhostMode
         self.toggleAntiDelete = toggleAntiDelete
@@ -338,11 +439,22 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         openTools: {
             pushControllerImpl?(burmalgramToolsController(context: context))
         },
-        openSwiftgram: {
-            pushControllerImpl?(sgSettingsController(context: context))
-        },
         toggleFakePremium: { val in
             SGSimpleSettings.shared.fakePremium = val
+            let _ = context.account.postbox.transaction { transaction -> Void in
+                if let peer = transaction.getPeer(context.account.peerId) as? TelegramUser {
+                    var userFlags = peer.flags
+                    if val {
+                        userFlags.insert(.isPremium)
+                    } else {
+                        userFlags.remove(.isPremium)
+                    }
+                    updatePeersCustom(transaction: transaction, peers: [peer.withUpdatedFlags(userFlags)], update: { _, updated in
+                        return updated
+                    })
+                }
+            }.start()
+            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
             reloadPromise.set(true)
         },
         toggleGhostMode: { val in
@@ -354,9 +466,7 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
             reloadPromise.set(true)
         },
         selectFont: {
-            presentBurmalgramFontPicker(context: context, onSelect: { _ in
-                reloadPromise.set(true)
-            })
+            pushControllerImpl?(burmalgramFontSelectionController(context: context))
         }
     )
     
@@ -369,10 +479,9 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         var entries: [BurmalgramMainEntry] = []
         
         entries.append(.headerCategories(presentationData.theme, "РАЗДЕЛЫ НАСТРОЕК"))
-        entries.append(.customization(presentationData.theme, "Кастомизация и оформление", "Темы, Шрифты, Premium"))
-        entries.append(.privacy(presentationData.theme, "Конфиденциальность и Ghost", "Ghost Mode, Сообщения"))
-        entries.append(.tools(presentationData.theme, "Инструменты и подмена", "GPS, Устройства, Память"))
-        entries.append(.swiftgram(presentationData.theme, "Настройки Swiftgram", "Сетевые опции"))
+        entries.append(.customization(presentationData.theme, "Кастомизация и оформление", "Темы, Шрифты, Premium, Папки"))
+        entries.append(.privacy(presentationData.theme, "Конфиденциальность и Ghost", "Ghost Mode, Сообщения, Истории"))
+        entries.append(.tools(presentationData.theme, "Инструменты и функции", "Спуфинг, Меню, Сеть, Система"))
         
         entries.append(.headerQuick(presentationData.theme, "БЫСТРЫЙ ДОСТУП"))
         entries.append(.fakePremium(presentationData.theme, "Локальный Telegram Premium", SGSimpleSettings.shared.fakePremium))
@@ -411,7 +520,8 @@ private enum BurmalgramCustomizationSection: Int32 {
     case premium
     case themes
     case visuals
-    case chats
+    case tabsAndFolders
+    case chatList
 }
 
 private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
@@ -431,17 +541,29 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
     case customFont(PresentationTheme, String, String)
     case customPhone(PresentationTheme, String, String)
     case hidePhone(PresentationTheme, String, Bool)
+    case showProfileId(PresentationTheme, String, Bool)
+    case showDC(PresentationTheme, String, Bool)
+    case showRegDate(PresentationTheme, String, Bool)
+    case showCreationDate(PresentationTheme, String, Bool)
     
-    case headerChats(PresentationTheme, String)
-    case secondsInMessages(PresentationTheme, String, Bool)
-    case quickTranslate(PresentationTheme, String, Bool)
-    case hideRecording(PresentationTheme, String, Bool)
-    case rearCam(PresentationTheme, String, Bool)
+    case headerTabsAndFolders(PresentationTheme, String)
+    case foldersAtBottom(PresentationTheme, String, Bool)
+    case allChatsHidden(PresentationTheme, String, Bool)
+    case compactFolderNames(PresentationTheme, String, Bool)
+    case rememberLastFolder(PresentationTheme, String, Bool)
+    case wideTabBar(PresentationTheme, String, Bool)
+    case tabBarSearchEnabled(PresentationTheme, String, Bool)
+    case hideTabBar(PresentationTheme, String, Bool)
+    case showTabNames(PresentationTheme, String, Bool)
+    
+    case headerChatList(PresentationTheme, String)
     case compactChatList(PresentationTheme, String, Bool)
     case compactPreview(PresentationTheme, String, Bool)
-    case foldersAtBottom(PresentationTheme, String, Bool)
-    case wideTabBar(PresentationTheme, String, Bool)
-    case disableSnap(PresentationTheme, String, Bool)
+    case disableChatSwipeOptions(PresentationTheme, String, Bool)
+    case disableDeleteChatSwipeOption(PresentationTheme, String, Bool)
+    case hideReactions(PresentationTheme, String, Bool)
+    case wideChannelPosts(PresentationTheme, String, Bool)
+    case hideChannelBottomButton(PresentationTheme, String, Bool)
     
     var section: ItemListSectionId {
         switch self {
@@ -449,10 +571,12 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return BurmalgramCustomizationSection.premium.rawValue
         case .headerThemes, .themeMidnight, .themeSparkling, .themeNeon, .themeTitanium, .themeReset, .themeFooter:
             return BurmalgramCustomizationSection.themes.rawValue
-        case .headerVisuals, .customFont, .customPhone, .hidePhone:
+        case .headerVisuals, .customFont, .customPhone, .hidePhone, .showProfileId, .showDC, .showRegDate, .showCreationDate:
             return BurmalgramCustomizationSection.visuals.rawValue
-        case .headerChats, .secondsInMessages, .quickTranslate, .hideRecording, .rearCam, .compactChatList, .compactPreview, .foldersAtBottom, .wideTabBar, .disableSnap:
-            return BurmalgramCustomizationSection.chats.rawValue
+        case .headerTabsAndFolders, .foldersAtBottom, .allChatsHidden, .compactFolderNames, .rememberLastFolder, .wideTabBar, .tabBarSearchEnabled, .hideTabBar, .showTabNames:
+            return BurmalgramCustomizationSection.tabsAndFolders.rawValue
+        case .headerChatList, .compactChatList, .compactPreview, .disableChatSwipeOptions, .disableDeleteChatSwipeOption, .hideReactions, .wideChannelPosts, .hideChannelBottomButton:
+            return BurmalgramCustomizationSection.chatList.rawValue
         }
     }
     
@@ -461,6 +585,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case .headerPremium: return 0
         case .fakePremium: return 1
         case .fakePremiumInfo: return 2
+        
         case .headerThemes: return 10
         case .themeMidnight: return 11
         case .themeSparkling: return 12
@@ -468,20 +593,34 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case .themeTitanium: return 14
         case .themeReset: return 15
         case .themeFooter: return 16
+        
         case .headerVisuals: return 20
         case .customFont: return 21
         case .customPhone: return 22
         case .hidePhone: return 23
-        case .headerChats: return 30
-        case .secondsInMessages: return 31
-        case .quickTranslate: return 32
-        case .hideRecording: return 33
-        case .rearCam: return 34
-        case .compactChatList: return 35
-        case .compactPreview: return 36
-        case .foldersAtBottom: return 37
-        case .wideTabBar: return 38
-        case .disableSnap: return 39
+        case .showProfileId: return 24
+        case .showDC: return 25
+        case .showRegDate: return 26
+        case .showCreationDate: return 27
+        
+        case .headerTabsAndFolders: return 30
+        case .foldersAtBottom: return 31
+        case .allChatsHidden: return 32
+        case .compactFolderNames: return 33
+        case .rememberLastFolder: return 34
+        case .wideTabBar: return 35
+        case .tabBarSearchEnabled: return 36
+        case .hideTabBar: return 37
+        case .showTabNames: return 38
+        
+        case .headerChatList: return 40
+        case .compactChatList: return 41
+        case .compactPreview: return 42
+        case .disableChatSwipeOptions: return 43
+        case .disableDeleteChatSwipeOption: return 44
+        case .hideReactions: return 45
+        case .wideChannelPosts: return 46
+        case .hideChannelBottomButton: return 47
         }
     }
     
@@ -529,20 +668,47 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case let .hidePhone(lhsTheme, lhsText, lhsValue):
             if case let .hidePhone(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .headerChats(lhsTheme, lhsText):
-            if case let .headerChats(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+        case let .showProfileId(lhsTheme, lhsText, lhsValue):
+            if case let .showProfileId(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .secondsInMessages(lhsTheme, lhsText, lhsValue):
-            if case let .secondsInMessages(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+        case let .showDC(lhsTheme, lhsText, lhsValue):
+            if case let .showDC(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .quickTranslate(lhsTheme, lhsText, lhsValue):
-            if case let .quickTranslate(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+        case let .showRegDate(lhsTheme, lhsText, lhsValue):
+            if case let .showRegDate(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .hideRecording(lhsTheme, lhsText, lhsValue):
-            if case let .hideRecording(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+        case let .showCreationDate(lhsTheme, lhsText, lhsValue):
+            if case let .showCreationDate(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .rearCam(lhsTheme, lhsText, lhsValue):
-            if case let .rearCam(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+        case let .headerTabsAndFolders(lhsTheme, lhsText):
+            if case let .headerTabsAndFolders(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        case let .foldersAtBottom(lhsTheme, lhsText, lhsValue):
+            if case let .foldersAtBottom(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .allChatsHidden(lhsTheme, lhsText, lhsValue):
+            if case let .allChatsHidden(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .compactFolderNames(lhsTheme, lhsText, lhsValue):
+            if case let .compactFolderNames(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .rememberLastFolder(lhsTheme, lhsText, lhsValue):
+            if case let .rememberLastFolder(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .wideTabBar(lhsTheme, lhsText, lhsValue):
+            if case let .wideTabBar(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .tabBarSearchEnabled(lhsTheme, lhsText, lhsValue):
+            if case let .tabBarSearchEnabled(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .hideTabBar(lhsTheme, lhsText, lhsValue):
+            if case let .hideTabBar(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .showTabNames(lhsTheme, lhsText, lhsValue):
+            if case let .showTabNames(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .headerChatList(lhsTheme, lhsText):
+            if case let .headerChatList(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
             return false
         case let .compactChatList(lhsTheme, lhsText, lhsValue):
             if case let .compactChatList(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
@@ -550,14 +716,20 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case let .compactPreview(lhsTheme, lhsText, lhsValue):
             if case let .compactPreview(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .foldersAtBottom(lhsTheme, lhsText, lhsValue):
-            if case let .foldersAtBottom(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+        case let .disableChatSwipeOptions(lhsTheme, lhsText, lhsValue):
+            if case let .disableChatSwipeOptions(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .wideTabBar(lhsTheme, lhsText, lhsValue):
-            if case let .wideTabBar(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+        case let .disableDeleteChatSwipeOption(lhsTheme, lhsText, lhsValue):
+            if case let .disableDeleteChatSwipeOption(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .disableSnap(lhsTheme, lhsText, lhsValue):
-            if case let .disableSnap(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+        case let .hideReactions(lhsTheme, lhsText, lhsValue):
+            if case let .hideReactions(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .wideChannelPosts(lhsTheme, lhsText, lhsValue):
+            if case let .wideChannelPosts(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .hideChannelBottomButton(lhsTheme, lhsText, lhsValue):
+            if case let .hideChannelBottomButton(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         }
     }
@@ -615,24 +787,58 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleHidePhone(val)
             })
-        case let .headerChats(_, text):
+        case let .showProfileId(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleShowProfileId(val)
+            })
+        case let .showDC(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleShowDC(val)
+            })
+        case let .showRegDate(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleShowRegDate(val)
+            })
+        case let .showCreationDate(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleShowCreationDate(val)
+            })
+        case let .headerTabsAndFolders(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
-        case let .secondsInMessages(_, text, value):
+        case let .foldersAtBottom(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleSeconds(val)
+                args.toggleFoldersAtBottom(val)
             })
-        case let .quickTranslate(_, text, value):
+        case let .allChatsHidden(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleTranslate(val)
+                args.toggleAllChatsHidden(val)
             })
-        case let .hideRecording(_, text, value):
+        case let .compactFolderNames(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleHideRecording(val)
+                args.toggleCompactFolderNames(val)
             })
-        case let .rearCam(_, text, value):
+        case let .rememberLastFolder(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleRearCam(val)
+                args.toggleRememberLastFolder(val)
             })
+        case let .wideTabBar(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleWideTabBar(val)
+            })
+        case let .tabBarSearchEnabled(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleTabBarSearchEnabled(val)
+            })
+        case let .hideTabBar(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleHideTabBar(val)
+            })
+        case let .showTabNames(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleShowTabNames(val)
+            })
+        case let .headerChatList(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
         case let .compactChatList(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleCompactChatList(val)
@@ -641,17 +847,25 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleCompactPreview(val)
             })
-        case let .foldersAtBottom(_, text, value):
+        case let .disableChatSwipeOptions(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleFoldersAtBottom(val)
+                args.toggleDisableChatSwipeOptions(val)
             })
-        case let .wideTabBar(_, text, value):
+        case let .disableDeleteChatSwipeOption(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleWideTabBar(val)
+                args.toggleDisableDeleteChatSwipeOption(val)
             })
-        case let .disableSnap(_, text, value):
+        case let .hideReactions(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleDisableSnap(val)
+                args.toggleHideReactions(val)
+            })
+        case let .wideChannelPosts(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleWideChannelPosts(val)
+            })
+        case let .hideChannelBottomButton(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleHideChannelBottomButton(val)
             })
         }
     }
@@ -663,15 +877,25 @@ private final class BurmalgramCustomizationArguments {
     let selectFont: () -> Void
     let editCustomPhone: () -> Void
     let toggleHidePhone: (Bool) -> Void
-    let toggleSeconds: (Bool) -> Void
-    let toggleTranslate: (Bool) -> Void
-    let toggleHideRecording: (Bool) -> Void
-    let toggleRearCam: (Bool) -> Void
+    let toggleShowProfileId: (Bool) -> Void
+    let toggleShowDC: (Bool) -> Void
+    let toggleShowRegDate: (Bool) -> Void
+    let toggleShowCreationDate: (Bool) -> Void
+    let toggleFoldersAtBottom: (Bool) -> Void
+    let toggleAllChatsHidden: (Bool) -> Void
+    let toggleCompactFolderNames: (Bool) -> Void
+    let toggleRememberLastFolder: (Bool) -> Void
+    let toggleWideTabBar: (Bool) -> Void
+    let toggleTabBarSearchEnabled: (Bool) -> Void
+    let toggleHideTabBar: (Bool) -> Void
+    let toggleShowTabNames: (Bool) -> Void
     let toggleCompactChatList: (Bool) -> Void
     let toggleCompactPreview: (Bool) -> Void
-    let toggleFoldersAtBottom: (Bool) -> Void
-    let toggleWideTabBar: (Bool) -> Void
-    let toggleDisableSnap: (Bool) -> Void
+    let toggleDisableChatSwipeOptions: (Bool) -> Void
+    let toggleDisableDeleteChatSwipeOption: (Bool) -> Void
+    let toggleHideReactions: (Bool) -> Void
+    let toggleWideChannelPosts: (Bool) -> Void
+    let toggleHideChannelBottomButton: (Bool) -> Void
     
     init(
         toggleFakePremium: @escaping (Bool) -> Void,
@@ -679,39 +903,74 @@ private final class BurmalgramCustomizationArguments {
         selectFont: @escaping () -> Void,
         editCustomPhone: @escaping () -> Void,
         toggleHidePhone: @escaping (Bool) -> Void,
-        toggleSeconds: @escaping (Bool) -> Void,
-        toggleTranslate: @escaping (Bool) -> Void,
-        toggleHideRecording: @escaping (Bool) -> Void,
-        toggleRearCam: @escaping (Bool) -> Void,
+        toggleShowProfileId: @escaping (Bool) -> Void,
+        toggleShowDC: @escaping (Bool) -> Void,
+        toggleShowRegDate: @escaping (Bool) -> Void,
+        toggleShowCreationDate: @escaping (Bool) -> Void,
+        toggleFoldersAtBottom: @escaping (Bool) -> Void,
+        toggleAllChatsHidden: @escaping (Bool) -> Void,
+        toggleCompactFolderNames: @escaping (Bool) -> Void,
+        toggleRememberLastFolder: @escaping (Bool) -> Void,
+        toggleWideTabBar: @escaping (Bool) -> Void,
+        toggleTabBarSearchEnabled: @escaping (Bool) -> Void,
+        toggleHideTabBar: @escaping (Bool) -> Void,
+        toggleShowTabNames: @escaping (Bool) -> Void,
         toggleCompactChatList: @escaping (Bool) -> Void,
         toggleCompactPreview: @escaping (Bool) -> Void,
-        toggleFoldersAtBottom: @escaping (Bool) -> Void,
-        toggleWideTabBar: @escaping (Bool) -> Void,
-        toggleDisableSnap: @escaping (Bool) -> Void
+        toggleDisableChatSwipeOptions: @escaping (Bool) -> Void,
+        toggleDisableDeleteChatSwipeOption: @escaping (Bool) -> Void,
+        toggleHideReactions: @escaping (Bool) -> Void,
+        toggleWideChannelPosts: @escaping (Bool) -> Void,
+        toggleHideChannelBottomButton: @escaping (Bool) -> Void
     ) {
         self.toggleFakePremium = toggleFakePremium
         self.applyTheme = applyTheme
         self.selectFont = selectFont
         self.editCustomPhone = editCustomPhone
         self.toggleHidePhone = toggleHidePhone
-        self.toggleSeconds = toggleSeconds
-        self.toggleTranslate = toggleTranslate
-        self.toggleHideRecording = toggleHideRecording
-        self.toggleRearCam = toggleRearCam
+        self.toggleShowProfileId = toggleShowProfileId
+        self.toggleShowDC = toggleShowDC
+        self.toggleShowRegDate = toggleShowRegDate
+        self.toggleShowCreationDate = toggleShowCreationDate
+        self.toggleFoldersAtBottom = toggleFoldersAtBottom
+        self.toggleAllChatsHidden = toggleAllChatsHidden
+        self.toggleCompactFolderNames = toggleCompactFolderNames
+        self.toggleRememberLastFolder = toggleRememberLastFolder
+        self.toggleWideTabBar = toggleWideTabBar
+        self.toggleTabBarSearchEnabled = toggleTabBarSearchEnabled
+        self.toggleHideTabBar = toggleHideTabBar
+        self.toggleShowTabNames = toggleShowTabNames
         self.toggleCompactChatList = toggleCompactChatList
         self.toggleCompactPreview = toggleCompactPreview
-        self.toggleFoldersAtBottom = toggleFoldersAtBottom
-        self.toggleWideTabBar = toggleWideTabBar
-        self.toggleDisableSnap = toggleDisableSnap
+        self.toggleDisableChatSwipeOptions = toggleDisableChatSwipeOptions
+        self.toggleDisableDeleteChatSwipeOption = toggleDisableDeleteChatSwipeOption
+        self.toggleHideReactions = toggleHideReactions
+        self.toggleWideChannelPosts = toggleWideChannelPosts
+        self.toggleHideChannelBottomButton = toggleHideChannelBottomButton
     }
 }
 
 public func burmalgramCustomizationController(context: AccountContext) -> ViewController {
     let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
+    var pushControllerImpl: ((ViewController) -> Void)?
     
     let arguments = BurmalgramCustomizationArguments(
         toggleFakePremium: { val in
             SGSimpleSettings.shared.fakePremium = val
+            let _ = context.account.postbox.transaction { transaction -> Void in
+                if let peer = transaction.getPeer(context.account.peerId) as? TelegramUser {
+                    var userFlags = peer.flags
+                    if val {
+                        userFlags.insert(.isPremium)
+                    } else {
+                        userFlags.remove(.isPremium)
+                    }
+                    updatePeersCustom(transaction: transaction, peers: [peer.withUpdatedFlags(userFlags)], update: { _, updated in
+                        return updated
+                    })
+                }
+            }.start()
+            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
             reloadPromise.set(true)
         },
         applyTheme: { themeKey in
@@ -719,9 +978,7 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             reloadPromise.set(true)
         },
         selectFont: {
-            presentBurmalgramFontPicker(context: context, onSelect: { _ in
-                reloadPromise.set(true)
-            })
+            pushControllerImpl?(burmalgramFontSelectionController(context: context))
         },
         editCustomPhone: {
             presentBurmalgramPhoneEditor(context: context, onComplete: {
@@ -732,28 +989,20 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             SGSimpleSettings.shared.hidePhoneInSettings = val
             reloadPromise.set(true)
         },
-        toggleSeconds: { val in
-            SGSimpleSettings.shared.secondsInMessages = val
+        toggleShowProfileId: { val in
+            SGSimpleSettings.shared.showProfileId = val
             reloadPromise.set(true)
         },
-        toggleTranslate: { val in
-            SGSimpleSettings.shared.quickTranslateButton = val
+        toggleShowDC: { val in
+            SGSimpleSettings.shared.showDC = val
             reloadPromise.set(true)
         },
-        toggleHideRecording: { val in
-            SGSimpleSettings.shared.hideRecordingButton = val
+        toggleShowRegDate: { val in
+            SGSimpleSettings.shared.showRegDate = val
             reloadPromise.set(true)
         },
-        toggleRearCam: { val in
-            SGSimpleSettings.shared.startTelescopeWithRearCam = val
-            reloadPromise.set(true)
-        },
-        toggleCompactChatList: { val in
-            SGSimpleSettings.shared.compactChatList = val
-            reloadPromise.set(true)
-        },
-        toggleCompactPreview: { val in
-            SGSimpleSettings.shared.chatListLines = val ? SGSimpleSettings.ChatListLines.one.rawValue : SGSimpleSettings.ChatListLines.three.rawValue
+        toggleShowCreationDate: { val in
+            SGSimpleSettings.shared.showCreationDate = val
             reloadPromise.set(true)
         },
         toggleFoldersAtBottom: { val in
@@ -764,12 +1013,60 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             }).start()
             reloadPromise.set(true)
         },
+        toggleAllChatsHidden: { val in
+            SGSimpleSettings.shared.allChatsHidden = val
+            reloadPromise.set(true)
+        },
+        toggleCompactFolderNames: { val in
+            SGSimpleSettings.shared.compactFolderNames = val
+            reloadPromise.set(true)
+        },
+        toggleRememberLastFolder: { val in
+            SGSimpleSettings.shared.rememberLastFolder = val
+            reloadPromise.set(true)
+        },
         toggleWideTabBar: { val in
             SGSimpleSettings.shared.wideTabBar = val
             reloadPromise.set(true)
         },
-        toggleDisableSnap: { val in
-            SGSimpleSettings.shared.disableSnapDeletionEffect = val
+        toggleTabBarSearchEnabled: { val in
+            SGSimpleSettings.shared.tabBarSearchEnabled = val
+            reloadPromise.set(true)
+        },
+        toggleHideTabBar: { val in
+            SGSimpleSettings.shared.hideTabBar = val
+            reloadPromise.set(true)
+        },
+        toggleShowTabNames: { val in
+            SGSimpleSettings.shared.showTabNames = val
+            reloadPromise.set(true)
+        },
+        toggleCompactChatList: { val in
+            SGSimpleSettings.shared.compactChatList = val
+            reloadPromise.set(true)
+        },
+        toggleCompactPreview: { val in
+            SGSimpleSettings.shared.chatListLines = val ? SGSimpleSettings.ChatListLines.one.rawValue : SGSimpleSettings.ChatListLines.three.rawValue
+            reloadPromise.set(true)
+        },
+        toggleDisableChatSwipeOptions: { val in
+            SGSimpleSettings.shared.disableChatSwipeOptions = val
+            reloadPromise.set(true)
+        },
+        toggleDisableDeleteChatSwipeOption: { val in
+            SGSimpleSettings.shared.disableDeleteChatSwipeOption = val
+            reloadPromise.set(true)
+        },
+        toggleHideReactions: { val in
+            SGSimpleSettings.shared.hideReactions = val
+            reloadPromise.set(true)
+        },
+        toggleWideChannelPosts: { val in
+            SGSimpleSettings.shared.wideChannelPosts = val
+            reloadPromise.set(true)
+        },
+        toggleHideChannelBottomButton: { val in
+            SGSimpleSettings.shared.hideChannelBottomButton = val
             reloadPromise.set(true)
         }
     )
@@ -786,33 +1083,45 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         
         entries.append(.headerPremium(presentationData.theme, "ЛОКАЛЬНЫЙ TELEGRAM PREMIUM"))
         entries.append(.fakePremium(presentationData.theme, "Локальный Telegram Premium", SGSimpleSettings.shared.fakePremium))
-        entries.append(.fakePremiumInfo(presentationData.theme, "100% локальный режим: значок Premium в профиле, смену цветов профиля и имени без сетевых ошибок, доступ ко всем премиум-иконкам, расширенные лимиты, распознавание речи и премиум-реакции."))
+        entries.append(.fakePremiumInfo(presentationData.theme, "100% локальный режим: значок Premium в профиле, цвета профиля и имени сохраняются локально без ошибок сервера, премиум-иконки, расширенные лимиты, распознавание речи и премиум-реакции."))
         
         let currentTheme = SGSimpleSettings.shared.burmalgramTheme
         entries.append(.headerThemes(presentationData.theme, "ЭКСКЛЮЗИВНЫЕ ТЕМЫ BURMALGRAM"))
-        entries.append(.themeMidnight(presentationData.theme, "🌌 Тёмная (Midnight Black)", currentTheme == "midnight" ? "Активна" : ""))
-        entries.append(.themeSparkling(presentationData.theme, "✨ Сверкающая (Sparkling Star)", currentTheme == "sparkling" ? "Активна" : ""))
-        entries.append(.themeNeon(presentationData.theme, "⚡ Неон (Neon Blue)", currentTheme == "neon" ? "Активна" : ""))
-        entries.append(.themeTitanium(presentationData.theme, "🛡️ Титан (Titanium Metal)", currentTheme == "titanium" ? "Активна" : ""))
+        entries.append(.themeMidnight(presentationData.theme, "🌌 Тёмная (Midnight Black / Obsidian)", currentTheme == "midnight" ? "Активна" : ""))
+        entries.append(.themeSparkling(presentationData.theme, "✨ Сверкающая (Sparkling Star / Sapphire)", currentTheme == "sparkling" ? "Активна" : ""))
+        entries.append(.themeNeon(presentationData.theme, "⚡ Неон (Cyber Neon / Electric Aqua)", currentTheme == "neon" ? "Активна" : ""))
+        entries.append(.themeTitanium(presentationData.theme, "🛡️ Титан (Titanium Metal / Platinum)", currentTheme == "titanium" ? "Активна" : ""))
         entries.append(.themeReset(presentationData.theme, "🔄 Сбросить тему (По умолчанию)", ""))
-        entries.append(.themeFooter(presentationData.theme, "Эксклюзивные стили, вдохновлённые иконками приложения: стилизованные фоны, баблы сообщений и акценты."))
+        entries.append(.themeFooter(presentationData.theme, "Эксклюзивные стили в эстетике иконок приложения: градиентные обои с поворотом, многокомпонентные градиенты сообщений и акценты."))
         
         entries.append(.headerVisuals(presentationData.theme, "ШРИФТ И ПРОФИЛЬ"))
         entries.append(.customFont(presentationData.theme, "Шрифт интерфейса", burmalgramFontDisplayName(SGSimpleSettings.shared.customFont)))
         let phoneText = SGSimpleSettings.shared.customPhoneNumber.isEmpty ? "Не задан" : SGSimpleSettings.shared.customPhoneNumber
         entries.append(.customPhone(presentationData.theme, "Кастомный номер (визуальный)", phoneText))
         entries.append(.hidePhone(presentationData.theme, "Скрыть номер в настройках", SGSimpleSettings.shared.hidePhoneInSettings))
+        entries.append(.showProfileId(presentationData.theme, "Показывать ID в профиле", SGSimpleSettings.shared.showProfileId))
+        entries.append(.showDC(presentationData.theme, "Показывать Дата-центр (DC)", SGSimpleSettings.shared.showDC))
+        entries.append(.showRegDate(presentationData.theme, "Показывать дату регистрации", SGSimpleSettings.shared.showRegDate))
+        entries.append(.showCreationDate(presentationData.theme, "Показывать дату создания аккаунта", SGSimpleSettings.shared.showCreationDate))
         
-        entries.append(.headerChats(presentationData.theme, "ИНТЕРФЕЙС И ЧАТЫ"))
-        entries.append(.secondsInMessages(presentationData.theme, "Секунды в сообщениях", SGSimpleSettings.shared.secondsInMessages))
-        entries.append(.quickTranslate(presentationData.theme, "Кнопка быстрого перевода", SGSimpleSettings.shared.quickTranslateButton))
-        entries.append(.hideRecording(presentationData.theme, "Скрыть кнопку записи (микрофон)", SGSimpleSettings.shared.hideRecordingButton))
-        entries.append(.rearCam(presentationData.theme, "Видеокружки с задней камеры", SGSimpleSettings.shared.startTelescopeWithRearCam))
+        entries.append(.headerTabsAndFolders(presentationData.theme, "ВКЛАДКИ И ПАПКИ"))
+        entries.append(.foldersAtBottom(presentationData.theme, "Вкладки папок снизу", expSettings.foldersTabAtBottom))
+        entries.append(.allChatsHidden(presentationData.theme, "Скрыть вкладку «Все чаты»", SGSimpleSettings.shared.allChatsHidden))
+        entries.append(.compactFolderNames(presentationData.theme, "Компактные имена папок", SGSimpleSettings.shared.compactFolderNames))
+        entries.append(.rememberLastFolder(presentationData.theme, "Запоминать последнюю папку", SGSimpleSettings.shared.rememberLastFolder))
+        entries.append(.wideTabBar(presentationData.theme, "Широкая панель вкладок", SGSimpleSettings.shared.wideTabBar))
+        entries.append(.tabBarSearchEnabled(presentationData.theme, "Кнопка поиска на панели вкладок", SGSimpleSettings.shared.tabBarSearchEnabled))
+        entries.append(.hideTabBar(presentationData.theme, "Скрыть нижнюю панель вкладок", SGSimpleSettings.shared.hideTabBar))
+        entries.append(.showTabNames(presentationData.theme, "Показывать подписи вкладок", SGSimpleSettings.shared.showTabNames))
+        
+        entries.append(.headerChatList(presentationData.theme, "СПИСОК ЧАТОВ И СООБЩЕНИЯ"))
         entries.append(.compactChatList(presentationData.theme, "Компактный список чатов", SGSimpleSettings.shared.compactChatList))
         entries.append(.compactPreview(presentationData.theme, "Однострочный предпросмотр сообщений", SGSimpleSettings.shared.chatListLines != SGSimpleSettings.ChatListLines.three.rawValue))
-        entries.append(.foldersAtBottom(presentationData.theme, "Вкладки папок снизу", expSettings.foldersTabAtBottom))
-        entries.append(.wideTabBar(presentationData.theme, "Широкая панель вкладок", SGSimpleSettings.shared.wideTabBar))
-        entries.append(.disableSnap(presentationData.theme, "Отключить эффект сгорания (Snap)", SGSimpleSettings.shared.disableSnapDeletionEffect))
+        entries.append(.disableChatSwipeOptions(presentationData.theme, "Отключить свайпы чатов", SGSimpleSettings.shared.disableChatSwipeOptions))
+        entries.append(.disableDeleteChatSwipeOption(presentationData.theme, "Отключить свайп удаления чата", SGSimpleSettings.shared.disableDeleteChatSwipeOption))
+        entries.append(.hideReactions(presentationData.theme, "Скрыть реакции под сообщениями", SGSimpleSettings.shared.hideReactions))
+        entries.append(.wideChannelPosts(presentationData.theme, "Широкие посты в каналах", SGSimpleSettings.shared.wideChannelPosts))
+        entries.append(.hideChannelBottomButton(presentationData.theme, "Скрыть кнопку перехода вниз канала", SGSimpleSettings.shared.hideChannelBottomButton))
         
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
@@ -831,6 +1140,9 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
     }
     
     let controller = ItemListController(context: context, state: signal)
+    pushControllerImpl = { [weak controller] c in
+        (controller?.navigationController as? NavigationController)?.pushViewController(c)
+    }
     return controller
 }
 
@@ -840,7 +1152,7 @@ private enum BurmalgramPrivacySection: Int32 {
     case ghost
     case messages
     case stories
-    case calls
+    case callsAndSecurity
 }
 
 private enum BurmalgramPrivacyEntry: ItemListNodeEntry {
@@ -860,10 +1172,14 @@ private enum BurmalgramPrivacyEntry: ItemListNodeEntry {
     case headerStories(PresentationTheme, String)
     case hideStories(PresentationTheme, String, Bool)
     case warnStories(PresentationTheme, String, Bool)
+    case disableSwipeToRecordStory(PresentationTheme, String, Bool)
+    case showRepostToStory(PresentationTheme, String, Bool)
+    case storyStealthMode(PresentationTheme, String, Bool)
     
-    case headerCalls(PresentationTheme, String)
+    case headerCallsAndSecurity(PresentationTheme, String)
     case bypassCopy(PresentationTheme, String, Bool)
     case confirmCalls(PresentationTheme, String, Bool)
+    case enableVoipTcp(PresentationTheme, String, Bool)
     
     var section: ItemListSectionId {
         switch self {
@@ -871,10 +1187,10 @@ private enum BurmalgramPrivacyEntry: ItemListNodeEntry {
             return BurmalgramPrivacySection.ghost.rawValue
         case .headerMessages, .antiDelete, .antiDeleteMedia, .deletedHistory:
             return BurmalgramPrivacySection.messages.rawValue
-        case .headerStories, .hideStories, .warnStories:
+        case .headerStories, .hideStories, .warnStories, .disableSwipeToRecordStory, .showRepostToStory, .storyStealthMode:
             return BurmalgramPrivacySection.stories.rawValue
-        case .headerCalls, .bypassCopy, .confirmCalls:
-            return BurmalgramPrivacySection.calls.rawValue
+        case .headerCallsAndSecurity, .bypassCopy, .confirmCalls, .enableVoipTcp:
+            return BurmalgramPrivacySection.callsAndSecurity.rawValue
         }
     }
     
@@ -887,16 +1203,23 @@ private enum BurmalgramPrivacyEntry: ItemListNodeEntry {
         case .dontTyping: return 4
         case .anonStories: return 5
         case .ghostDetails: return 6
+        
         case .headerMessages: return 10
         case .antiDelete: return 11
         case .antiDeleteMedia: return 12
         case .deletedHistory: return 13
+        
         case .headerStories: return 20
         case .hideStories: return 21
         case .warnStories: return 22
-        case .headerCalls: return 30
+        case .disableSwipeToRecordStory: return 23
+        case .showRepostToStory: return 24
+        case .storyStealthMode: return 25
+        
+        case .headerCallsAndSecurity: return 30
         case .bypassCopy: return 31
         case .confirmCalls: return 32
+        case .enableVoipTcp: return 33
         }
     }
     
@@ -944,14 +1267,26 @@ private enum BurmalgramPrivacyEntry: ItemListNodeEntry {
         case let .warnStories(lhsTheme, lhsText, lhsValue):
             if case let .warnStories(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
-        case let .headerCalls(lhsTheme, lhsText):
-            if case let .headerCalls(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+        case let .disableSwipeToRecordStory(lhsTheme, lhsText, lhsValue):
+            if case let .disableSwipeToRecordStory(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .showRepostToStory(lhsTheme, lhsText, lhsValue):
+            if case let .showRepostToStory(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .storyStealthMode(lhsTheme, lhsText, lhsValue):
+            if case let .storyStealthMode(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .headerCallsAndSecurity(lhsTheme, lhsText):
+            if case let .headerCallsAndSecurity(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
             return false
         case let .bypassCopy(lhsTheme, lhsText, lhsValue):
             if case let .bypassCopy(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .confirmCalls(lhsTheme, lhsText, lhsValue):
             if case let .confirmCalls(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .enableVoipTcp(lhsTheme, lhsText, lhsValue):
+            if case let .enableVoipTcp(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         }
     }
@@ -1013,7 +1348,19 @@ private enum BurmalgramPrivacyEntry: ItemListNodeEntry {
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleWarnStories(val)
             })
-        case let .headerCalls(_, text):
+        case let .disableSwipeToRecordStory(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleDisableSwipeToRecordStory(val)
+            })
+        case let .showRepostToStory(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleShowRepostToStory(val)
+            })
+        case let .storyStealthMode(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleStoryStealthMode(val)
+            })
+        case let .headerCallsAndSecurity(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
         case let .bypassCopy(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
@@ -1022,6 +1369,10 @@ private enum BurmalgramPrivacyEntry: ItemListNodeEntry {
         case let .confirmCalls(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleConfirmCalls(val)
+            })
+        case let .enableVoipTcp(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleEnableVoipTcp(val)
             })
         }
     }
@@ -1039,8 +1390,12 @@ private final class BurmalgramPrivacyArguments {
     let openDeletedHistory: () -> Void
     let toggleHideStories: (Bool) -> Void
     let toggleWarnStories: (Bool) -> Void
+    let toggleDisableSwipeToRecordStory: (Bool) -> Void
+    let toggleShowRepostToStory: (Bool) -> Void
+    let toggleStoryStealthMode: (Bool) -> Void
     let toggleBypassCopy: (Bool) -> Void
     let toggleConfirmCalls: (Bool) -> Void
+    let toggleEnableVoipTcp: (Bool) -> Void
     
     init(
         toggleGhostMode: @escaping (Bool) -> Void,
@@ -1054,8 +1409,12 @@ private final class BurmalgramPrivacyArguments {
         openDeletedHistory: @escaping () -> Void,
         toggleHideStories: @escaping (Bool) -> Void,
         toggleWarnStories: @escaping (Bool) -> Void,
+        toggleDisableSwipeToRecordStory: @escaping (Bool) -> Void,
+        toggleShowRepostToStory: @escaping (Bool) -> Void,
+        toggleStoryStealthMode: @escaping (Bool) -> Void,
         toggleBypassCopy: @escaping (Bool) -> Void,
-        toggleConfirmCalls: @escaping (Bool) -> Void
+        toggleConfirmCalls: @escaping (Bool) -> Void,
+        toggleEnableVoipTcp: @escaping (Bool) -> Void
     ) {
         self.toggleGhostMode = toggleGhostMode
         self.toggleDontRead = toggleDontRead
@@ -1068,8 +1427,12 @@ private final class BurmalgramPrivacyArguments {
         self.openDeletedHistory = openDeletedHistory
         self.toggleHideStories = toggleHideStories
         self.toggleWarnStories = toggleWarnStories
+        self.toggleDisableSwipeToRecordStory = toggleDisableSwipeToRecordStory
+        self.toggleShowRepostToStory = toggleShowRepostToStory
+        self.toggleStoryStealthMode = toggleStoryStealthMode
         self.toggleBypassCopy = toggleBypassCopy
         self.toggleConfirmCalls = toggleConfirmCalls
+        self.toggleEnableVoipTcp = toggleEnableVoipTcp
     }
 }
 
@@ -1120,6 +1483,18 @@ public func burmalgramPrivacyController(context: AccountContext) -> ViewControll
             SGSimpleSettings.shared.warnOnStoriesOpen = val
             reloadPromise.set(true)
         },
+        toggleDisableSwipeToRecordStory: { val in
+            SGSimpleSettings.shared.disableSwipeToRecordStory = val
+            reloadPromise.set(true)
+        },
+        toggleShowRepostToStory: { val in
+            SGSimpleSettings.shared.showRepostToStoryV2 = val
+            reloadPromise.set(true)
+        },
+        toggleStoryStealthMode: { val in
+            SGSimpleSettings.shared.storyStealthMode = val
+            reloadPromise.set(true)
+        },
         toggleBypassCopy: { val in
             SGSimpleSettings.shared.disableForwardRestriction = val
             reloadPromise.set(true)
@@ -1127,15 +1502,25 @@ public func burmalgramPrivacyController(context: AccountContext) -> ViewControll
         toggleConfirmCalls: { val in
             SGSimpleSettings.shared.confirmCalls = val
             reloadPromise.set(true)
+        },
+        toggleEnableVoipTcp: { val in
+            let _ = updateExperimentalUISettingsInteractively(accountManager: context.sharedContext.accountManager, { settings in
+                var settings = settings
+                settings.enableVoipTcp = val
+                return settings
+            }).start()
+            reloadPromise.set(true)
         }
     )
     
     let signal = combineLatest(
         queue: .mainQueue(),
         context.sharedContext.presentationData,
+        context.sharedContext.accountManager.sharedData(keys: [ApplicationSpecificSharedDataKeys.experimentalUISettings]),
         reloadPromise.get()
     )
-    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, sharedData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        let expSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.experimentalUISettings]?.get(ExperimentalUISettings.self) ?? ExperimentalUISettings.defaultSettings
         var entries: [BurmalgramPrivacyEntry] = []
         
         entries.append(.headerGhost(presentationData.theme, "РЕЖИМ ПРИЗРАКА (GHOST MODE)"))
@@ -1151,13 +1536,17 @@ public func burmalgramPrivacyController(context: AccountContext) -> ViewControll
         entries.append(.antiDeleteMedia(presentationData.theme, "Сохранять удалённые медиа", AntiDeleteManager.shared.archiveMedia))
         entries.append(.deletedHistory(presentationData.theme, "Журнал удалённых сообщений", "Открыть"))
         
-        entries.append(.headerStories(presentationData.theme, "ИСТОРИИ"))
+        entries.append(.headerStories(presentationData.theme, "ИСТОРИИ (STORIES)"))
         entries.append(.hideStories(presentationData.theme, "Скрыть истории", SGSimpleSettings.shared.hideStories))
         entries.append(.warnStories(presentationData.theme, "Предупреждать при открытии историй", SGSimpleSettings.shared.warnOnStoriesOpen))
+        entries.append(.disableSwipeToRecordStory(presentationData.theme, "Запретить свайп для записи истории", SGSimpleSettings.shared.disableSwipeToRecordStory))
+        entries.append(.showRepostToStory(presentationData.theme, "Кнопка «Репост в историю»", SGSimpleSettings.shared.showRepostToStoryV2))
+        entries.append(.storyStealthMode(presentationData.theme, "Стелс-режим историй", SGSimpleSettings.shared.storyStealthMode))
         
-        entries.append(.headerCalls(presentationData.theme, "ЗАЩИТА КОНТЕНТА И ЗВОНКИ"))
+        entries.append(.headerCallsAndSecurity(presentationData.theme, "ЗАЩИТА КОНТЕНТА И ЗВОНКИ"))
         entries.append(.bypassCopy(presentationData.theme, "Запрет копирования (обход No-Save)", SGSimpleSettings.shared.disableForwardRestriction))
         entries.append(.confirmCalls(presentationData.theme, "Подтверждение перед звонком", SGSimpleSettings.shared.confirmCalls))
+        entries.append(.enableVoipTcp(presentationData.theme, "Принудительный TCP для звонков (VoIP TCP)", expSettings.enableVoipTcp))
         
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
@@ -1186,6 +1575,8 @@ public func burmalgramPrivacyController(context: AccountContext) -> ViewControll
 
 private enum BurmalgramToolsSection: Int32 {
     case spoofing
+    case messagingTools
+    case contextMenu
     case network
     case system
 }
@@ -1196,6 +1587,32 @@ private enum BurmalgramToolsEntry: ItemListNodeEntry {
     case geoSpoof(PresentationTheme, String, String)
     case voiceMorpher(PresentationTheme, String, String)
     case sendDelay(PresentationTheme, String, String)
+    
+    case headerMessagingTools(PresentationTheme, String)
+    case secondsInMessages(PresentationTheme, String, Bool)
+    case sendWithReturnKey(PresentationTheme, String, Bool)
+    case messageDoubleTapAction(PresentationTheme, String, Bool)
+    case defaultEmojisFirst(PresentationTheme, String, Bool)
+    case forceEmojiTab(PresentationTheme, String, Bool)
+    case quickTranslate(PresentationTheme, String, Bool)
+    case hideRecording(PresentationTheme, String, Bool)
+    case rearCam(PresentationTheme, String, Bool)
+    case disableSnap(PresentationTheme, String, Bool)
+    case disableSendAs(PresentationTheme, String, Bool)
+    case disableScrollToNextChannel(PresentationTheme, String, Bool)
+    case swipeForVideoPIP(PresentationTheme, String, Bool)
+    
+    case headerContextMenu(PresentationTheme, String)
+    case contextShowSaveToCloud(PresentationTheme, String, Bool)
+    case contextShowHideForwardName(PresentationTheme, String, Bool)
+    case contextShowSelectFromUser(PresentationTheme, String, Bool)
+    case contextShowRestrict(PresentationTheme, String, Bool)
+    case contextShowReport(PresentationTheme, String, Bool)
+    case contextShowReply(PresentationTheme, String, Bool)
+    case contextShowPin(PresentationTheme, String, Bool)
+    case contextShowSaveMedia(PresentationTheme, String, Bool)
+    case contextShowMessageReplies(PresentationTheme, String, Bool)
+    case contextShowJson(PresentationTheme, String, Bool)
     
     case headerNetwork(PresentationTheme, String)
     case downloadSpeed(PresentationTheme, String, String)
@@ -1212,6 +1629,10 @@ private enum BurmalgramToolsEntry: ItemListNodeEntry {
         switch self {
         case .headerSpoofing, .deviceSpoof, .geoSpoof, .voiceMorpher, .sendDelay:
             return BurmalgramToolsSection.spoofing.rawValue
+        case .headerMessagingTools, .secondsInMessages, .sendWithReturnKey, .messageDoubleTapAction, .defaultEmojisFirst, .forceEmojiTab, .quickTranslate, .hideRecording, .rearCam, .disableSnap, .disableSendAs, .disableScrollToNextChannel, .swipeForVideoPIP:
+            return BurmalgramToolsSection.messagingTools.rawValue
+        case .headerContextMenu, .contextShowSaveToCloud, .contextShowHideForwardName, .contextShowSelectFromUser, .contextShowRestrict, .contextShowReport, .contextShowReply, .contextShowPin, .contextShowSaveMedia, .contextShowMessageReplies, .contextShowJson:
+            return BurmalgramToolsSection.contextMenu.rawValue
         case .headerNetwork, .downloadSpeed, .uploadSpeed, .sendLargePhotos, .blockAds:
             return BurmalgramToolsSection.network.rawValue
         case .headerSystem, .filePickerFix, .clearCache, .resetSettings:
@@ -1226,15 +1647,43 @@ private enum BurmalgramToolsEntry: ItemListNodeEntry {
         case .geoSpoof: return 2
         case .voiceMorpher: return 3
         case .sendDelay: return 4
-        case .headerNetwork: return 10
-        case .downloadSpeed: return 11
-        case .uploadSpeed: return 12
-        case .sendLargePhotos: return 13
-        case .blockAds: return 14
-        case .headerSystem: return 20
-        case .filePickerFix: return 21
-        case .clearCache: return 22
-        case .resetSettings: return 23
+        
+        case .headerMessagingTools: return 10
+        case .secondsInMessages: return 11
+        case .sendWithReturnKey: return 12
+        case .messageDoubleTapAction: return 13
+        case .defaultEmojisFirst: return 14
+        case .forceEmojiTab: return 15
+        case .quickTranslate: return 16
+        case .hideRecording: return 17
+        case .rearCam: return 18
+        case .disableSnap: return 19
+        case .disableSendAs: return 20
+        case .disableScrollToNextChannel: return 21
+        case .swipeForVideoPIP: return 22
+        
+        case .headerContextMenu: return 30
+        case .contextShowSaveToCloud: return 31
+        case .contextShowHideForwardName: return 32
+        case .contextShowSelectFromUser: return 33
+        case .contextShowRestrict: return 34
+        case .contextShowReport: return 35
+        case .contextShowReply: return 36
+        case .contextShowPin: return 37
+        case .contextShowSaveMedia: return 38
+        case .contextShowMessageReplies: return 39
+        case .contextShowJson: return 40
+        
+        case .headerNetwork: return 50
+        case .downloadSpeed: return 51
+        case .uploadSpeed: return 52
+        case .sendLargePhotos: return 53
+        case .blockAds: return 54
+        
+        case .headerSystem: return 60
+        case .filePickerFix: return 61
+        case .clearCache: return 62
+        case .resetSettings: return 63
         }
     }
     
@@ -1254,6 +1703,78 @@ private enum BurmalgramToolsEntry: ItemListNodeEntry {
             return false
         case let .sendDelay(lhsTheme, lhsText, lhsValue):
             if case let .sendDelay(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .headerMessagingTools(lhsTheme, lhsText):
+            if case let .headerMessagingTools(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        case let .secondsInMessages(lhsTheme, lhsText, lhsValue):
+            if case let .secondsInMessages(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .sendWithReturnKey(lhsTheme, lhsText, lhsValue):
+            if case let .sendWithReturnKey(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .messageDoubleTapAction(lhsTheme, lhsText, lhsValue):
+            if case let .messageDoubleTapAction(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .defaultEmojisFirst(lhsTheme, lhsText, lhsValue):
+            if case let .defaultEmojisFirst(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .forceEmojiTab(lhsTheme, lhsText, lhsValue):
+            if case let .forceEmojiTab(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .quickTranslate(lhsTheme, lhsText, lhsValue):
+            if case let .quickTranslate(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .hideRecording(lhsTheme, lhsText, lhsValue):
+            if case let .hideRecording(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .rearCam(lhsTheme, lhsText, lhsValue):
+            if case let .rearCam(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .disableSnap(lhsTheme, lhsText, lhsValue):
+            if case let .disableSnap(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .disableSendAs(lhsTheme, lhsText, lhsValue):
+            if case let .disableSendAs(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .disableScrollToNextChannel(lhsTheme, lhsText, lhsValue):
+            if case let .disableScrollToNextChannel(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .swipeForVideoPIP(lhsTheme, lhsText, lhsValue):
+            if case let .swipeForVideoPIP(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .headerContextMenu(lhsTheme, lhsText):
+            if case let .headerContextMenu(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        case let .contextShowSaveToCloud(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowSaveToCloud(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowHideForwardName(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowHideForwardName(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowSelectFromUser(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowSelectFromUser(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowRestrict(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowRestrict(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowReport(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowReport(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowReply(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowReply(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowPin(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowPin(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowSaveMedia(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowSaveMedia(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowMessageReplies(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowMessageReplies(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .contextShowJson(lhsTheme, lhsText, lhsValue):
+            if case let .contextShowJson(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .headerNetwork(lhsTheme, lhsText):
             if case let .headerNetwork(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
@@ -1310,6 +1831,98 @@ private enum BurmalgramToolsEntry: ItemListNodeEntry {
             return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.recentActions, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.openSendDelay()
             })
+        case let .headerMessagingTools(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .secondsInMessages(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleSeconds(val)
+            })
+        case let .sendWithReturnKey(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleSendWithReturnKey(val)
+            })
+        case let .messageDoubleTapAction(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleMessageDoubleTapAction(val)
+            })
+        case let .defaultEmojisFirst(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleDefaultEmojisFirst(val)
+            })
+        case let .forceEmojiTab(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleForceEmojiTab(val)
+            })
+        case let .quickTranslate(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleTranslate(val)
+            })
+        case let .hideRecording(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleHideRecording(val)
+            })
+        case let .rearCam(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleRearCam(val)
+            })
+        case let .disableSnap(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleDisableSnap(val)
+            })
+        case let .disableSendAs(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleDisableSendAs(val)
+            })
+        case let .disableScrollToNextChannel(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleDisableScrollToNextChannel(val)
+            })
+        case let .swipeForVideoPIP(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleSwipeForVideoPIP(val)
+            })
+        case let .headerContextMenu(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .contextShowSaveToCloud(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextSaveToCloud(val)
+            })
+        case let .contextShowHideForwardName(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextHideForwardName(val)
+            })
+        case let .contextShowSelectFromUser(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextSelectFromUser(val)
+            })
+        case let .contextShowRestrict(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextRestrict(val)
+            })
+        case let .contextShowReport(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextReport(val)
+            })
+        case let .contextShowReply(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextReply(val)
+            })
+        case let .contextShowPin(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextPin(val)
+            })
+        case let .contextShowSaveMedia(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextSaveMedia(val)
+            })
+        case let .contextShowMessageReplies(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextMessageReplies(val)
+            })
+        case let .contextShowJson(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleContextJson(val)
+            })
         case let .headerNetwork(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
         case let .downloadSpeed(_, text, value):
@@ -1351,6 +1964,28 @@ private final class BurmalgramToolsArguments {
     let openGeoSpoof: () -> Void
     let openVoiceMorpher: () -> Void
     let openSendDelay: () -> Void
+    let toggleSeconds: (Bool) -> Void
+    let toggleSendWithReturnKey: (Bool) -> Void
+    let toggleMessageDoubleTapAction: (Bool) -> Void
+    let toggleDefaultEmojisFirst: (Bool) -> Void
+    let toggleForceEmojiTab: (Bool) -> Void
+    let toggleTranslate: (Bool) -> Void
+    let toggleHideRecording: (Bool) -> Void
+    let toggleRearCam: (Bool) -> Void
+    let toggleDisableSnap: (Bool) -> Void
+    let toggleDisableSendAs: (Bool) -> Void
+    let toggleDisableScrollToNextChannel: (Bool) -> Void
+    let toggleSwipeForVideoPIP: (Bool) -> Void
+    let toggleContextSaveToCloud: (Bool) -> Void
+    let toggleContextHideForwardName: (Bool) -> Void
+    let toggleContextSelectFromUser: (Bool) -> Void
+    let toggleContextRestrict: (Bool) -> Void
+    let toggleContextReport: (Bool) -> Void
+    let toggleContextReply: (Bool) -> Void
+    let toggleContextPin: (Bool) -> Void
+    let toggleContextSaveMedia: (Bool) -> Void
+    let toggleContextMessageReplies: (Bool) -> Void
+    let toggleContextJson: (Bool) -> Void
     let cycleDownloadSpeed: () -> Void
     let toggleUploadSpeed: (Bool) -> Void
     let toggleSendLargePhotos: (Bool) -> Void
@@ -1364,6 +1999,28 @@ private final class BurmalgramToolsArguments {
         openGeoSpoof: @escaping () -> Void,
         openVoiceMorpher: @escaping () -> Void,
         openSendDelay: @escaping () -> Void,
+        toggleSeconds: @escaping (Bool) -> Void,
+        toggleSendWithReturnKey: @escaping (Bool) -> Void,
+        toggleMessageDoubleTapAction: @escaping (Bool) -> Void,
+        toggleDefaultEmojisFirst: @escaping (Bool) -> Void,
+        toggleForceEmojiTab: @escaping (Bool) -> Void,
+        toggleTranslate: @escaping (Bool) -> Void,
+        toggleHideRecording: @escaping (Bool) -> Void,
+        toggleRearCam: @escaping (Bool) -> Void,
+        toggleDisableSnap: @escaping (Bool) -> Void,
+        toggleDisableSendAs: @escaping (Bool) -> Void,
+        toggleDisableScrollToNextChannel: @escaping (Bool) -> Void,
+        toggleSwipeForVideoPIP: @escaping (Bool) -> Void,
+        toggleContextSaveToCloud: @escaping (Bool) -> Void,
+        toggleContextHideForwardName: @escaping (Bool) -> Void,
+        toggleContextSelectFromUser: @escaping (Bool) -> Void,
+        toggleContextRestrict: @escaping (Bool) -> Void,
+        toggleContextReport: @escaping (Bool) -> Void,
+        toggleContextReply: @escaping (Bool) -> Void,
+        toggleContextPin: @escaping (Bool) -> Void,
+        toggleContextSaveMedia: @escaping (Bool) -> Void,
+        toggleContextMessageReplies: @escaping (Bool) -> Void,
+        toggleContextJson: @escaping (Bool) -> Void,
         cycleDownloadSpeed: @escaping () -> Void,
         toggleUploadSpeed: @escaping (Bool) -> Void,
         toggleSendLargePhotos: @escaping (Bool) -> Void,
@@ -1376,6 +2033,28 @@ private final class BurmalgramToolsArguments {
         self.openGeoSpoof = openGeoSpoof
         self.openVoiceMorpher = openVoiceMorpher
         self.openSendDelay = openSendDelay
+        self.toggleSeconds = toggleSeconds
+        self.toggleSendWithReturnKey = toggleSendWithReturnKey
+        self.toggleMessageDoubleTapAction = toggleMessageDoubleTapAction
+        self.toggleDefaultEmojisFirst = toggleDefaultEmojisFirst
+        self.toggleForceEmojiTab = toggleForceEmojiTab
+        self.toggleTranslate = toggleTranslate
+        self.toggleHideRecording = toggleHideRecording
+        self.toggleRearCam = toggleRearCam
+        self.toggleDisableSnap = toggleDisableSnap
+        self.toggleDisableSendAs = toggleDisableSendAs
+        self.toggleDisableScrollToNextChannel = toggleDisableScrollToNextChannel
+        self.toggleSwipeForVideoPIP = toggleSwipeForVideoPIP
+        self.toggleContextSaveToCloud = toggleContextSaveToCloud
+        self.toggleContextHideForwardName = toggleContextHideForwardName
+        self.toggleContextSelectFromUser = toggleContextSelectFromUser
+        self.toggleContextRestrict = toggleContextRestrict
+        self.toggleContextReport = toggleContextReport
+        self.toggleContextReply = toggleContextReply
+        self.toggleContextPin = toggleContextPin
+        self.toggleContextSaveMedia = toggleContextSaveMedia
+        self.toggleContextMessageReplies = toggleContextMessageReplies
+        self.toggleContextJson = toggleContextJson
         self.cycleDownloadSpeed = cycleDownloadSpeed
         self.toggleUploadSpeed = toggleUploadSpeed
         self.toggleSendLargePhotos = toggleSendLargePhotos
@@ -1402,6 +2081,94 @@ public func burmalgramToolsController(context: AccountContext) -> ViewController
         },
         openSendDelay: {
             pushControllerImpl?(sendDelayController(context: context))
+        },
+        toggleSeconds: { val in
+            SGSimpleSettings.shared.secondsInMessages = val
+            reloadPromise.set(true)
+        },
+        toggleSendWithReturnKey: { val in
+            SGSimpleSettings.shared.sendWithReturnKey = val
+            reloadPromise.set(true)
+        },
+        toggleMessageDoubleTapAction: { val in
+            SGSimpleSettings.shared.messageDoubleTapActionOutgoing = val ? SGSimpleSettings.MessageDoubleTapAction.edit.rawValue : SGSimpleSettings.MessageDoubleTapAction.default.rawValue
+            reloadPromise.set(true)
+        },
+        toggleDefaultEmojisFirst: { val in
+            SGSimpleSettings.shared.defaultEmojisFirst = val
+            reloadPromise.set(true)
+        },
+        toggleForceEmojiTab: { val in
+            SGSimpleSettings.shared.forceEmojiTab = val
+            reloadPromise.set(true)
+        },
+        toggleTranslate: { val in
+            SGSimpleSettings.shared.quickTranslateButton = val
+            reloadPromise.set(true)
+        },
+        toggleHideRecording: { val in
+            SGSimpleSettings.shared.hideRecordingButton = val
+            reloadPromise.set(true)
+        },
+        toggleRearCam: { val in
+            SGSimpleSettings.shared.startTelescopeWithRearCam = val
+            reloadPromise.set(true)
+        },
+        toggleDisableSnap: { val in
+            SGSimpleSettings.shared.disableSnapDeletionEffect = val
+            reloadPromise.set(true)
+        },
+        toggleDisableSendAs: { val in
+            SGSimpleSettings.shared.disableSendAsButton = val
+            reloadPromise.set(true)
+        },
+        toggleDisableScrollToNextChannel: { val in
+            SGSimpleSettings.shared.disableScrollToNextChannel = val
+            reloadPromise.set(true)
+        },
+        toggleSwipeForVideoPIP: { val in
+            SGSimpleSettings.shared.videoPIPSwipeDirection = val ? SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue : SGSimpleSettings.VideoPIPSwipeDirection.none.rawValue
+            reloadPromise.set(true)
+        },
+        toggleContextSaveToCloud: { val in
+            SGSimpleSettings.shared.contextShowSaveToCloud = val
+            reloadPromise.set(true)
+        },
+        toggleContextHideForwardName: { val in
+            SGSimpleSettings.shared.contextShowHideForwardName = val
+            reloadPromise.set(true)
+        },
+        toggleContextSelectFromUser: { val in
+            SGSimpleSettings.shared.contextShowSelectFromUser = val
+            reloadPromise.set(true)
+        },
+        toggleContextRestrict: { val in
+            SGSimpleSettings.shared.contextShowRestrict = val
+            reloadPromise.set(true)
+        },
+        toggleContextReport: { val in
+            SGSimpleSettings.shared.contextShowReport = val
+            reloadPromise.set(true)
+        },
+        toggleContextReply: { val in
+            SGSimpleSettings.shared.contextShowReply = val
+            reloadPromise.set(true)
+        },
+        toggleContextPin: { val in
+            SGSimpleSettings.shared.contextShowPin = val
+            reloadPromise.set(true)
+        },
+        toggleContextSaveMedia: { val in
+            SGSimpleSettings.shared.contextShowSaveMedia = val
+            reloadPromise.set(true)
+        },
+        toggleContextMessageReplies: { val in
+            SGSimpleSettings.shared.contextShowMessageReplies = val
+            reloadPromise.set(true)
+        },
+        toggleContextJson: { val in
+            SGSimpleSettings.shared.contextShowJson = val
+            reloadPromise.set(true)
         },
         cycleDownloadSpeed: {
             let current = SGSimpleSettings.shared.downloadSpeedBoost
@@ -1473,6 +2240,7 @@ public func burmalgramToolsController(context: AccountContext) -> ViewController
                 AntiDeleteManager.shared.isEnabled = false
                 DeviceSpoofManager.shared.isEnabled = false
                 GeoSpoofManager.shared.isEnabled = false
+                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
                 reloadPromise.set(true)
             }))
             alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
@@ -1491,11 +2259,37 @@ public func burmalgramToolsController(context: AccountContext) -> ViewController
     |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
         var entries: [BurmalgramToolsEntry] = []
         
-        entries.append(.headerSpoofing(presentationData.theme, "ПОДМЕНА ДАННЫХ"))
+        entries.append(.headerSpoofing(presentationData.theme, "ПОДМЕНА ДАННЫХ (SPOOFING)"))
         entries.append(.deviceSpoof(presentationData.theme, "Подмена устройства", DeviceSpoofManager.shared.isEnabled ? "Вкл" : "Выкл"))
         entries.append(.geoSpoof(presentationData.theme, "Фейковая геолокация (GPS)", GeoSpoofManager.shared.isEnabled ? GeoSpoofManager.shared.presetName : "Выкл"))
         entries.append(.voiceMorpher(presentationData.theme, "Голосовой морфер", VoiceMorpherManager.shared.isEnabled ? "Вкл" : "Выкл"))
         entries.append(.sendDelay(presentationData.theme, "Задержка отправки сообщений", SendDelayManager.shared.isEnabled ? "Вкл" : "Выкл"))
+        
+        entries.append(.headerMessagingTools(presentationData.theme, "СООБЩЕНИЯ И ВВОД"))
+        entries.append(.secondsInMessages(presentationData.theme, "Секунды в сообщениях", SGSimpleSettings.shared.secondsInMessages))
+        entries.append(.sendWithReturnKey(presentationData.theme, "Отправка по клавише Enter", SGSimpleSettings.shared.sendWithReturnKey))
+        entries.append(.messageDoubleTapAction(presentationData.theme, "Двойной тап: редактировать сообщение", SGSimpleSettings.shared.messageDoubleTapActionOutgoing == SGSimpleSettings.MessageDoubleTapAction.edit.rawValue))
+        entries.append(.defaultEmojisFirst(presentationData.theme, "Эмодзи первыми в панели", SGSimpleSettings.shared.defaultEmojisFirst))
+        entries.append(.forceEmojiTab(presentationData.theme, "Принудительная вкладка эмодзи", SGSimpleSettings.shared.forceEmojiTab))
+        entries.append(.quickTranslate(presentationData.theme, "Кнопка быстрого перевода", SGSimpleSettings.shared.quickTranslateButton))
+        entries.append(.hideRecording(presentationData.theme, "Скрыть кнопку записи (микрофон)", SGSimpleSettings.shared.hideRecordingButton))
+        entries.append(.rearCam(presentationData.theme, "Видеокружки с задней камеры", SGSimpleSettings.shared.startTelescopeWithRearCam))
+        entries.append(.disableSnap(presentationData.theme, "Отключить эффект сгорания (Snap)", SGSimpleSettings.shared.disableSnapDeletionEffect))
+        entries.append(.disableSendAs(presentationData.theme, "Отключить кнопку «Отправить как»", SGSimpleSettings.shared.disableSendAsButton))
+        entries.append(.disableScrollToNextChannel(presentationData.theme, "Отключить переход к след. каналу", SGSimpleSettings.shared.disableScrollToNextChannel))
+        entries.append(.swipeForVideoPIP(presentationData.theme, "PIP видео свайпом вверх", SGSimpleSettings.shared.videoPIPSwipeDirection == SGSimpleSettings.VideoPIPSwipeDirection.up.rawValue))
+        
+        entries.append(.headerContextMenu(presentationData.theme, "КОНТЕКСТНОЕ МЕНЮ СООБЩЕНИЙ"))
+        entries.append(.contextShowSaveToCloud(presentationData.theme, "Сохранить в Избранное", SGSimpleSettings.shared.contextShowSaveToCloud))
+        entries.append(.contextShowHideForwardName(presentationData.theme, "Переслать без имени автора", SGSimpleSettings.shared.contextShowHideForwardName))
+        entries.append(.contextShowSelectFromUser(presentationData.theme, "Сообщения от пользователя", SGSimpleSettings.shared.contextShowSelectFromUser))
+        entries.append(.contextShowRestrict(presentationData.theme, "Ограничить / Заблокировать", SGSimpleSettings.shared.contextShowRestrict))
+        entries.append(.contextShowReport(presentationData.theme, "Пожаловаться", SGSimpleSettings.shared.contextShowReport))
+        entries.append(.contextShowReply(presentationData.theme, "Ответить", SGSimpleSettings.shared.contextShowReply))
+        entries.append(.contextShowPin(presentationData.theme, "Закрепить", SGSimpleSettings.shared.contextShowPin))
+        entries.append(.contextShowSaveMedia(presentationData.theme, "Сохранить в файлы", SGSimpleSettings.shared.contextShowSaveMedia))
+        entries.append(.contextShowMessageReplies(presentationData.theme, "Показать ветку комментариев", SGSimpleSettings.shared.contextShowMessageReplies))
+        entries.append(.contextShowJson(presentationData.theme, "Показать JSON", SGSimpleSettings.shared.contextShowJson))
         
         entries.append(.headerNetwork(presentationData.theme, "СЕТЬ И ОПТИМИЗАЦИЯ"))
         let dlText: String
@@ -1507,7 +2301,7 @@ public func burmalgramToolsController(context: AccountContext) -> ViewController
         default:
             dlText = "Выкл"
         }
-        entries.append(.downloadSpeed(presentationData.theme, "Ускорение загрузки", dlText))
+        entries.append(.downloadSpeed(presentationData.theme, "Ускорение загрузки файлов", dlText))
         entries.append(.uploadSpeed(presentationData.theme, "Ускорение отдачи", SGSimpleSettings.shared.uploadSpeedBoost))
         entries.append(.sendLargePhotos(presentationData.theme, "Большие фото без сжатия (2560px)", SGSimpleSettings.shared.sendLargePhotos))
         entries.append(.blockAds(presentationData.theme, "Блокировка рекламы и промо-постов", MiscSettingsManager.shared.blockAds))

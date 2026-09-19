@@ -185,6 +185,7 @@ public class SGSimpleSettings {
         case fakeProfileBackgroundEmojiId
         case fakeNameColor
         case fakeBackgroundEmojiId
+        case fakeEmojiStatusFileId
         case burmalgramTheme
     }
     
@@ -348,6 +349,7 @@ public class SGSimpleSettings {
         Keys.fakeProfileBackgroundEmojiId.rawValue: 0 as Int64,
         Keys.fakeNameColor.rawValue: -1 as Int32,
         Keys.fakeBackgroundEmojiId.rawValue: 0 as Int64,
+        Keys.fakeEmojiStatusFileId.rawValue: 0 as Int64,
         Keys.burmalgramTheme.rawValue: "default"
     ]
     
@@ -385,6 +387,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.fakeBackgroundEmojiId.rawValue)
     public var fakeBackgroundEmojiId: Int64
+
+    @UserDefault(key: Keys.fakeEmojiStatusFileId.rawValue)
+    public var fakeEmojiStatusFileId: Int64
 
     @UserDefault(key: Keys.burmalgramTheme.rawValue)
     public var burmalgramTheme: String
