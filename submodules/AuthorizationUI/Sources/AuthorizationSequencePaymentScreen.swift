@@ -43,6 +43,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
     let premiumDays: Int32
     let supportEmailAddress: String
     let supportEmailSubject: String
+    let openQr: () -> Void
     
     init(
         sharedContext: SharedAccountContext,

@@ -866,10 +866,7 @@ final class QrOverlayNode: ASDisplayNode {
         self.subtitleNode.displaysAsynchronously = false
         self.subtitleNode.maximumNumberOfLines = 6
         let instructions = isRu ? "1. Откройте Telegram на другом устройстве\n2. Перейдите в Настройки → Устройства\n3. Нажмите «Подключить устройство» и наведите камеру на этот экран" : "1. Open Telegram on your other device\n2. Go to Settings → Devices\n3. Tap \"Link Desktop Device\" and scan this QR code"
-        let paragraphStyle = NSMutableParagraphStyle()
-        paragraphStyle.lineSpacing = 4.0
-        paragraphStyle.alignment = .center
-        self.subtitleNode.attributedText = NSAttributedString(string: instructions, font: Font.regular(15.0), textColor: theme.list.itemSecondaryTextColor, paragraphStyle: paragraphStyle)
+        self.subtitleNode.attributedText = NSAttributedString(string: instructions, font: Font.regular(15.0), textColor: theme.list.itemSecondaryTextColor, paragraphAlignment: .center)
         
         self.qrCardNode = ASDisplayNode()
         self.qrCardNode.backgroundColor = .white

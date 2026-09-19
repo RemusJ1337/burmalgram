@@ -174,7 +174,12 @@ public func sendAuthorizationCode(accountManager: AccountManager<TelegramAccount
         
         var flags: Int32 = 0
         flags |= 1 << 5 //allowMissedCall
-        flags |= 1 << 6 //tokens
+        
+        var logoutTokens: [Buffer]?
+        if !authTokens.isEmpty {
+            flags |= 1 << 6 //tokens
+            logoutTokens = authTokens.map { Buffer(data: $0) }
+        }
         
         var token: String?
         var appSandbox: Api.Bool?
@@ -185,7 +190,7 @@ public func sendAuthorizationCode(accountManager: AccountManager<TelegramAccount
             appSandbox = pushNotificationConfiguration.isSandbox ? .boolTrue : .boolFalse
         }
         
-        let sendCode = Api.functions.auth.sendCode(phoneNumber: phoneNumber, apiId: apiId, apiHash: apiHash, settings: .codeSettings(.init(flags: flags, logoutTokens: authTokens.map { Buffer(data: $0) }, token: token, appSandbox: appSandbox)))
+        let sendCode = Api.functions.auth.sendCode(phoneNumber: phoneNumber, apiId: apiId, apiHash: apiHash, settings: .codeSettings(.init(flags: flags, logoutTokens: logoutTokens, token: token, appSandbox: appSandbox)))
         
         enum SendCodeResult {
             case password(hint: String?)
