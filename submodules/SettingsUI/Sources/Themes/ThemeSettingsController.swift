@@ -1238,27 +1238,28 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
             }
             let contextController = makeContextController(presentationData: presentationData, source: .controller(ContextControllerContentSourceImpl(controller: themeController, sourceNode: node)), items: .single(ContextController.Items(content: .list(items))), gesture: gesture)
             presentInGlobalOverlayImpl?(contextController, nil)
-        },
-        toggleFoldersAtBottom: { value in
+        })
+    },
+        toggleFoldersAtBottom: { (value: Bool) in
             let _ = updateExperimentalUISettingsInteractively(accountManager: context.sharedContext.accountManager, { settings in
                 var settings = settings
                 settings.foldersTabAtBottom = value
                 return settings
             }).start()
         },
-        toggleCompactChatList: { value in
+        toggleCompactChatList: { (value: Bool) in
             SGSimpleSettings.shared.compactChatList = value
             reloadPromise.set(true)
         },
-        toggleCompactMessagePreview: { value in
+        toggleCompactMessagePreview: { (value: Bool) in
             SGSimpleSettings.shared.chatListLines = value ? SGSimpleSettings.ChatListLines.one.rawValue : SGSimpleSettings.ChatListLines.three.rawValue
             reloadPromise.set(true)
         },
-        toggleWideTabBar: { value in
+        toggleWideTabBar: { (value: Bool) in
             SGSimpleSettings.shared.wideTabBar = value
             reloadPromise.set(true)
         },
-        toggleDisableSnapDeletionEffect: { value in
+        toggleDisableSnapDeletionEffect: { (value: Bool) in
             SGSimpleSettings.shared.disableSnapDeletionEffect = value
             reloadPromise.set(true)
         },

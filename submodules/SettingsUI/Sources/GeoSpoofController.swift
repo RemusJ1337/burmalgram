@@ -214,7 +214,7 @@ public func geoSpoofController(context: AccountContext) -> ViewController {
     let statePromise = ValuePromise(initialState, ignoreRepeated: true)
     
     let updateState: ((inout GeoSpoofControllerState) -> Void) -> Void = { modifier in
-        stateValue.modify { state in
+        let _ = stateValue.modify { state in
             var updated = state
             modifier(&updated)
             statePromise.set(updated)
