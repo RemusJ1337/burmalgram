@@ -211,11 +211,8 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
 
     
     let sgWebSettings = context.currentAppConfiguration.with({ $0 }).sgWebSettings
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 2, text: "Настройки Burmalgram", icon: PresentationResourcesSettings.appearance, action: {
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Burmalgram", icon: PresentationResourcesSettings.swiftgram, action: {
         interaction.openSettings(.burmalgram)
-    }))
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Дополнительно", icon: PresentationResourcesSettings.swiftgram, action: {
-        interaction.openSettings(.swiftgram)
     }))
 
     var appIndex = 1000

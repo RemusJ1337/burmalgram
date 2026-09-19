@@ -28,6 +28,7 @@ private enum DeletedMessagesSection: Int32 {
 
 private enum DeletedMessagesEntry: ItemListNodeEntry {
     case enableToggle(PresentationTheme, String, Bool)
+    case editHistoryToggle(PresentationTheme, String, Bool)
     case archiveMediaToggle(PresentationTheme, String, Bool)
     case history(PresentationTheme, String, String)
     case transparencySlider(PresentationTheme, Int32, Bool)
@@ -41,14 +42,16 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
         switch self {
         case .enableToggle:
             return 0
-        case .archiveMediaToggle:
+        case .editHistoryToggle:
             return 1
-        case .history:
+        case .archiveMediaToggle:
             return 2
-        case .transparencySlider:
+        case .history:
             return 3
-        case .settingsInfo:
+        case .transparencySlider:
             return 4
+        case .settingsInfo:
+            return 5
         }
     }
     
@@ -56,6 +59,12 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
         switch lhs {
         case let .enableToggle(lhsTheme, lhsText, lhsValue):
             if case let .enableToggle(rhsTheme, rhsText, rhsValue) = rhs,
+               lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                return true
+            }
+            return false
+        case let .editHistoryToggle(lhsTheme, lhsText, lhsValue):
+            if case let .editHistoryToggle(rhsTheme, rhsText, rhsValue) = rhs,
                lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
                 return true
             }
@@ -104,6 +113,17 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
                     arguments.toggleEnabled(value)
                 }
             )
+        case let .editHistoryToggle(_, text, value):
+            return ItemListSwitchItem(
+                presentationData: presentationData,
+                title: text,
+                value: value,
+                sectionId: self.section,
+                style: .blocks,
+                updated: { value in
+                    arguments.toggleEditHistory(value)
+                }
+            )
         case let .archiveMediaToggle(_, text, value):
             return ItemListSwitchItem(
                 presentationData: presentationData,
@@ -146,17 +166,20 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
 
 private final class DeletedMessagesControllerArguments {
     let toggleEnabled: (Bool) -> Void
+    let toggleEditHistory: (Bool) -> Void
     let toggleArchiveMedia: (Bool) -> Void
     let openHistory: () -> Void
     let updateTransparency: (Int32) -> Void
     
     init(
         toggleEnabled: @escaping (Bool) -> Void,
+        toggleEditHistory: @escaping (Bool) -> Void,
         toggleArchiveMedia: @escaping (Bool) -> Void,
         openHistory: @escaping () -> Void,
         updateTransparency: @escaping (Int32) -> Void
     ) {
         self.toggleEnabled = toggleEnabled
+        self.toggleEditHistory = toggleEditHistory
         self.toggleArchiveMedia = toggleArchiveMedia
         self.openHistory = openHistory
         self.updateTransparency = updateTransparency
@@ -167,12 +190,14 @@ private final class DeletedMessagesControllerArguments {
 
 private struct DeletedMessagesControllerState: Equatable {
     var isEnabled: Bool
+    var editHistoryEnabled: Bool
     var archiveMedia: Bool
     var archivedCount: Int
     var transparencyPercent: Int32
     
     static func ==(lhs: DeletedMessagesControllerState, rhs: DeletedMessagesControllerState) -> Bool {
         return lhs.isEnabled == rhs.isEnabled &&
+               lhs.editHistoryEnabled == rhs.editHistoryEnabled &&
                lhs.archiveMedia == rhs.archiveMedia &&
                lhs.archivedCount == rhs.archivedCount &&
                lhs.transparencyPercent == rhs.transparencyPercent
@@ -188,6 +213,7 @@ private func deletedMessagesControllerEntries(
     var entries: [DeletedMessagesEntry] = []
     
     entries.append(.enableToggle(presentationData.theme, "Сохранять удалённые сообщения", state.isEnabled))
+    entries.append(.editHistoryToggle(presentationData.theme, "История изменений текста (Ghostgram)", state.editHistoryEnabled))
     entries.append(.archiveMediaToggle(presentationData.theme, "Архивировать медиа", state.archiveMedia))
     entries.append(.history(presentationData.theme, "История удалений", state.archivedCount == 0 ? "Пусто" : "\(state.archivedCount)"))
     entries.append(.transparencySlider(presentationData.theme, state.transparencyPercent, state.isEnabled))
@@ -203,6 +229,7 @@ public func deletedMessagesController(context: AccountContext) -> ViewController
     
     let initialState = DeletedMessagesControllerState(
         isEnabled: AntiDeleteManager.shared.isEnabled,
+        editHistoryEnabled: EditHistoryManager.shared.isEnabled,
         archiveMedia: AntiDeleteManager.shared.archiveMedia,
         archivedCount: AntiDeleteManager.shared.archivedCount,
         transparencyPercent: clampDeletedMessageTransparencyPercent(Int32(round(AntiDeleteManager.shared.deletedMessageTransparency * 100.0)))
@@ -220,6 +247,14 @@ public func deletedMessagesController(context: AccountContext) -> ViewController
             updateState { state in
                 var state = state
                 state.isEnabled = value
+                return state
+            }
+        },
+        toggleEditHistory: { value in
+            EditHistoryManager.shared.isEnabled = value
+            updateState { state in
+                var state = state
+                state.editHistoryEnabled = value
                 return state
             }
         },
@@ -276,6 +311,7 @@ public func deletedMessagesController(context: AccountContext) -> ViewController
         updateState { state in
             var state = state
             state.isEnabled = AntiDeleteManager.shared.isEnabled
+            state.editHistoryEnabled = EditHistoryManager.shared.isEnabled
             state.archiveMedia = AntiDeleteManager.shared.archiveMedia
             state.archivedCount = AntiDeleteManager.shared.archivedCount
             state.transparencyPercent = clampDeletedMessageTransparencyPercent(Int32(round(AntiDeleteManager.shared.deletedMessageTransparency * 100.0)))

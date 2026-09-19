@@ -21,6 +21,7 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
     case pluginIDE(PresentationTheme, String, String)
     case misc(PresentationTheme, String, String)
     case deviceSpoof(PresentationTheme, String, String)
+    case geoSpoof(PresentationTheme, String, String)
     case voiceMorpher(PresentationTheme, String, String)
     case sendDelay(PresentationTheme, String, String)
     case info(PresentationTheme, String)
@@ -43,12 +44,14 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
             return 4
         case .deviceSpoof:
             return 5
-        case .voiceMorpher:
+        case .geoSpoof:
             return 6
-        case .sendDelay:
+        case .voiceMorpher:
             return 7
-        case .info:
+        case .sendDelay:
             return 8
+        case .info:
+            return 9
         }
     }
     
@@ -86,6 +89,12 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
             return false
         case let .deviceSpoof(lhsTheme, lhsText, lhsValue):
             if case let .deviceSpoof(rhsTheme, rhsText, rhsValue) = rhs,
+               lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                return true
+            }
+            return false
+        case let .geoSpoof(lhsTheme, lhsText, lhsValue):
+            if case let .geoSpoof(rhsTheme, rhsText, rhsValue) = rhs,
                lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
                 return true
             }
@@ -183,6 +192,17 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
                     arguments.openDeviceSpoof()
                 }
             )
+        case let .geoSpoof(_, text, value):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                title: text,
+                label: value,
+                sectionId: self.section,
+                style: .blocks,
+                action: {
+                    arguments.openGeoSpoof()
+                }
+            )
         case let .voiceMorpher(_, text, value):
             return ItemListDisclosureItem(
                 presentationData: presentationData,
@@ -220,6 +240,7 @@ private final class BurmalgramSettingsControllerArguments {
     let openPluginIDE: () -> Void
     let openMisc: () -> Void
     let openDeviceSpoof: () -> Void
+    let openGeoSpoof: () -> Void
     let openVoiceMorpher: () -> Void
     let openSendDelay: () -> Void
     
@@ -230,6 +251,7 @@ private final class BurmalgramSettingsControllerArguments {
         openPluginIDE: @escaping () -> Void,
         openMisc: @escaping () -> Void,
         openDeviceSpoof: @escaping () -> Void,
+        openGeoSpoof: @escaping () -> Void,
         openVoiceMorpher: @escaping () -> Void,
         openSendDelay: @escaping () -> Void
     ) {
@@ -239,6 +261,7 @@ private final class BurmalgramSettingsControllerArguments {
         self.openPluginIDE = openPluginIDE
         self.openMisc = openMisc
         self.openDeviceSpoof = openDeviceSpoof
+        self.openGeoSpoof = openGeoSpoof
         self.openVoiceMorpher = openVoiceMorpher
         self.openSendDelay = openSendDelay
     }
@@ -254,6 +277,8 @@ private struct BurmalgramSettingsState: Equatable {
     var miscEnabled: Bool
     var miscActiveCount: Int
     var deviceSpoofEnabled: Bool
+    var geoSpoofEnabled: Bool
+    var geoSpoofPresetName: String
     var voiceMorpherEnabled: Bool
     var voiceMorpherPresetName: String
     var sendDelayEnabled: Bool
@@ -267,6 +292,8 @@ private struct BurmalgramSettingsState: Equatable {
             miscEnabled: MiscSettingsManager.shared.isEnabled,
             miscActiveCount: MiscSettingsManager.shared.activeFeatureCount,
             deviceSpoofEnabled: DeviceSpoofManager.shared.isEnabled,
+            geoSpoofEnabled: GeoSpoofManager.shared.isEnabled,
+            geoSpoofPresetName: GeoSpoofManager.shared.presetName,
             voiceMorpherEnabled: VoiceMorpherManager.shared.isEnabled,
             voiceMorpherPresetName: VoiceMorpherManager.shared.selectedPreset.name,
             sendDelayEnabled: SendDelayManager.shared.isEnabled
@@ -304,6 +331,10 @@ private func burmalgramSettingsControllerEntries(
     // Device Spoofing
     let deviceSpoofStatus = state.deviceSpoofEnabled ? "Вкл" : "Выкл"
     entries.append(.deviceSpoof(presentationData.theme, "Подмена устройства", deviceSpoofStatus))
+    
+    // Geo Spoofing
+    let geoSpoofStatus = state.geoSpoofEnabled ? state.geoSpoofPresetName : "Выкл"
+    entries.append(.geoSpoof(presentationData.theme, "Подмена геопозиции (GPS)", geoSpoofStatus))
     
     // Voice Morpher
     let voiceMorpherStatus = state.voiceMorpherEnabled ? state.voiceMorpherPresetName : "Выкл"
@@ -357,6 +388,9 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         },
         openDeviceSpoof: {
             pushControllerImpl?(deviceSpoofController(context: context), true)
+        },
+        openGeoSpoof: {
+            pushControllerImpl?(geoSpoofController(context: context), true)
         },
         openVoiceMorpher: {
             pushControllerImpl?(voiceMorpherController(context: context), true)

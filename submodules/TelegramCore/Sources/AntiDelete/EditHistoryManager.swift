@@ -7,8 +7,21 @@ public final class EditHistoryManager {
     public static let shared = EditHistoryManager()
     
     private let historyKey = "ghostgram_edit_history"
+    private let enabledKey = "ghostgram_edit_history_enabled"
     private var editHistory: [String: [EditRecord]] = [:]
     private let lock = NSLock()
+    
+    public var isEnabled: Bool {
+        get {
+            if UserDefaults.standard.object(forKey: enabledKey) == nil {
+                return true
+            }
+            return UserDefaults.standard.bool(forKey: enabledKey)
+        }
+        set {
+            UserDefaults.standard.set(newValue, forKey: enabledKey)
+        }
+    }
     
     public struct EditRecord: Codable, Equatable {
         public let text: String
@@ -32,6 +45,7 @@ public final class EditHistoryManager {
     /// Saves the original text before an edit
     /// Call this BEFORE the message is updated with new text
     public func saveOriginalText(peerId: Int64, messageId: Int32, originalText: String, editDate: Int32) {
+        guard isEnabled else { return }
         lock.lock()
         defer { lock.unlock() }
         

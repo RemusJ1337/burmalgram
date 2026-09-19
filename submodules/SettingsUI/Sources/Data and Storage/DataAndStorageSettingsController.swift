@@ -11,7 +11,7 @@ import PresentationDataUtils
 import AccountContext
 import ItemListPeerActionItem
 import StorageUsageScreen
-import PresentationDataUtils
+import SGSimpleSettings
 import FaceScanScreen
 
 public enum AutomaticSaveIncomingPeerType {
@@ -34,6 +34,10 @@ private final class DataAndStorageControllerArguments {
     let toggleDownloadInBackground: (Bool) -> Void
     let openIntents: () -> Void
     let toggleSensitiveContent: (Bool) -> Void
+    let cycleDownloadSpeedBoost: () -> Void
+    let toggleUploadSpeedBoost: (Bool) -> Void
+    let toggleSendLargePhotos: (Bool) -> Void
+    let toggleBlockAds: (Bool) -> Void
 
     init(
         openStorageUsage: @escaping () -> Void,
@@ -48,7 +52,11 @@ private final class DataAndStorageControllerArguments {
         toggleRaiseToListen: @escaping (Bool) -> Void,
         toggleDownloadInBackground: @escaping (Bool) -> Void,
         openIntents: @escaping () -> Void,
-        toggleSensitiveContent: @escaping (Bool) -> Void
+        toggleSensitiveContent: @escaping (Bool) -> Void,
+        cycleDownloadSpeedBoost: @escaping () -> Void,
+        toggleUploadSpeedBoost: @escaping (Bool) -> Void,
+        toggleSendLargePhotos: @escaping (Bool) -> Void,
+        toggleBlockAds: @escaping (Bool) -> Void
     ) {
         self.openStorageUsage = openStorageUsage
         self.openNetworkUsage = openNetworkUsage
@@ -63,6 +71,10 @@ private final class DataAndStorageControllerArguments {
         self.toggleDownloadInBackground = toggleDownloadInBackground
         self.openIntents = openIntents
         self.toggleSensitiveContent = toggleSensitiveContent
+        self.cycleDownloadSpeedBoost = cycleDownloadSpeedBoost
+        self.toggleUploadSpeedBoost = toggleUploadSpeedBoost
+        self.toggleSendLargePhotos = toggleSendLargePhotos
+        self.toggleBlockAds = toggleBlockAds
     }
 }
 
@@ -75,6 +87,7 @@ private enum DataAndStorageSection: Int32 {
     case other
     case connection
     case sensitiveContent
+    case burmalgramNetwork
 }
 
 public enum DataAndStorageEntryTag: ItemListItemTag, Equatable {
@@ -125,6 +138,12 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
     
     case connectionHeader(PresentationTheme, String)
     case connectionProxy(PresentationTheme, String, String)
+    case burmalgramHeader(PresentationTheme, String)
+    case downloadSpeedBoost(PresentationTheme, String, String)
+    case uploadSpeedBoost(PresentationTheme, String, Bool)
+    case sendLargePhotos(PresentationTheme, String, Bool)
+    case blockAds(PresentationTheme, String, Bool)
+    case burmalgramFooter(PresentationTheme, String)
     
     var section: ItemListSectionId {
         switch self {
@@ -144,6 +163,8 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
                 return DataAndStorageSection.sensitiveContent.rawValue
             case .connectionHeader, .connectionProxy:
                 return DataAndStorageSection.connection.rawValue
+            case .burmalgramHeader, .downloadSpeedBoost, .uploadSpeedBoost, .sendLargePhotos, .blockAds, .burmalgramFooter:
+                return DataAndStorageSection.burmalgramNetwork.rawValue
         }
     }
     
@@ -195,6 +216,18 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
                 return 38
             case .connectionProxy:
                 return 39
+            case .burmalgramHeader:
+                return 1000
+            case .downloadSpeedBoost:
+                return 1001
+            case .uploadSpeedBoost:
+                return 1002
+            case .sendLargePhotos:
+                return 1003
+            case .blockAds:
+                return 1004
+            case .burmalgramFooter:
+                return 1005
         }
     }
     
@@ -338,6 +371,42 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
                 } else {
                     return false
                 }
+            case let .burmalgramHeader(lhsTheme, lhsText):
+                if case let .burmalgramHeader(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText {
+                    return true
+                } else {
+                    return false
+                }
+            case let .downloadSpeedBoost(lhsTheme, lhsText, lhsValue):
+                if case let .downloadSpeedBoost(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .uploadSpeedBoost(lhsTheme, lhsText, lhsValue):
+                if case let .uploadSpeedBoost(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .sendLargePhotos(lhsTheme, lhsText, lhsValue):
+                if case let .sendLargePhotos(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .blockAds(lhsTheme, lhsText, lhsValue):
+                if case let .blockAds(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .burmalgramFooter(lhsTheme, lhsText):
+                if case let .burmalgramFooter(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText {
+                    return true
+                } else {
+                    return false
+                }
         }
     }
     
@@ -437,6 +506,26 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
                 return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                     arguments.openProxy()
                 })
+            case let .burmalgramHeader(_, text):
+                return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+            case let .downloadSpeedBoost(_, text, value):
+                return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                    arguments.cycleDownloadSpeedBoost()
+                })
+            case let .uploadSpeedBoost(_, text, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleUploadSpeedBoost(value)
+                })
+            case let .sendLargePhotos(_, text, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleSendLargePhotos(value)
+                })
+            case let .blockAds(_, text, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleBlockAds(value)
+                })
+            case let .burmalgramFooter(_, text):
+                return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         }
     }
 }
@@ -659,6 +748,22 @@ private func dataAndStorageControllerEntries(context: AccountContext, state: Dat
     }
     entries.append(.connectionHeader(presentationData.theme, presentationData.strings.ChatSettings_ConnectionType_Title.uppercased()))
     entries.append(.connectionProxy(presentationData.theme, presentationData.strings.SocksProxySetup_Title, proxyValue))
+        
+    entries.append(.burmalgramHeader(presentationData.theme, "BURMALGRAM: СЕТЬ И ЗАГРУЗКИ"))
+    let dlSpeedText: String
+    switch SGSimpleSettings.shared.downloadSpeedBoost {
+    case SGSimpleSettings.DownloadSpeedBoostValues.medium.rawValue:
+        dlSpeedText = "Среднее"
+    case SGSimpleSettings.DownloadSpeedBoostValues.maximum.rawValue:
+        dlSpeedText = "Максимум"
+    default:
+        dlSpeedText = "Выкл"
+    }
+    entries.append(.downloadSpeedBoost(presentationData.theme, "Ускорение загрузки", dlSpeedText))
+    entries.append(.uploadSpeedBoost(presentationData.theme, "Ускорение отдачи", SGSimpleSettings.shared.uploadSpeedBoost))
+    entries.append(.sendLargePhotos(presentationData.theme, "Большие фото без сжатия (2560px)", SGSimpleSettings.shared.sendLargePhotos))
+    entries.append(.blockAds(presentationData.theme, "Блокировка рекламы и промо-постов", MiscSettingsManager.shared.blockAds))
+    entries.append(.burmalgramFooter(presentationData.theme, "Оптимизация параллельных сетевых потоков, отключение рекламы и отправка фото высокого качества."))
         
     return entries
 }
@@ -911,6 +1016,29 @@ public func dataAndStorageController(context: AccountContext, focusOnItemTag: Da
         } else {
             update()
         }
+    }, cycleDownloadSpeedBoost: {
+        let current = SGSimpleSettings.shared.downloadSpeedBoost
+        let next: String
+        switch current {
+        case SGSimpleSettings.DownloadSpeedBoostValues.none.rawValue:
+            next = SGSimpleSettings.DownloadSpeedBoostValues.medium.rawValue
+        case SGSimpleSettings.DownloadSpeedBoostValues.medium.rawValue:
+            next = SGSimpleSettings.DownloadSpeedBoostValues.maximum.rawValue
+        default:
+            next = SGSimpleSettings.DownloadSpeedBoostValues.none.rawValue
+        }
+        SGSimpleSettings.shared.downloadSpeedBoost = next
+        statePromise.set(initialState)
+    }, toggleUploadSpeedBoost: { value in
+        SGSimpleSettings.shared.uploadSpeedBoost = value
+        statePromise.set(initialState)
+    }, toggleSendLargePhotos: { value in
+        SGSimpleSettings.shared.sendLargePhotos = value
+        statePromise.set(initialState)
+    }, toggleBlockAds: { value in
+        MiscSettingsManager.shared.blockAds = value
+        MiscSettingsManager.shared.isEnabled = true
+        statePromise.set(initialState)
     })
     
     let preferences = context.engine.data.subscribe(TelegramEngine.EngineData.Item.Configuration.ApplicationSpecificPreference(key: ApplicationSpecificPreferencesKeys.mediaAutoSaveSettings))

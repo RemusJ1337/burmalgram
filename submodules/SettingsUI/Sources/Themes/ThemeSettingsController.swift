@@ -12,6 +12,7 @@ import AlertUI
 import PresentationDataUtils
 import MediaResources
 import WallpaperResources
+import SGSimpleSettings
 
 import AccountContext
 import ContextUI
@@ -44,6 +45,12 @@ private final class ThemeSettingsControllerArguments {
     let editTheme: (PresentationCloudTheme) -> Void
     let themeContextAction: (Bool, PresentationThemeReference, ASDisplayNode, ContextGesture?) -> Void
     let colorContextAction: (Bool, PresentationThemeReference, ThemeSettingsColorOption?, ASDisplayNode, ContextGesture?) -> Void
+    let toggleFoldersAtBottom: (Bool) -> Void
+    let toggleCompactChatList: (Bool) -> Void
+    let toggleCompactMessagePreview: (Bool) -> Void
+    let toggleWideTabBar: (Bool) -> Void
+    let toggleDisableSnapDeletionEffect: (Bool) -> Void
+    let cycleNYStyle: () -> Void
     
     init(
         context: AccountContext,
@@ -64,7 +71,13 @@ private final class ThemeSettingsControllerArguments {
         selectAppIcon: @escaping (PresentationAppIcon) -> Void,
         editTheme: @escaping (PresentationCloudTheme) -> Void,
         themeContextAction: @escaping (Bool, PresentationThemeReference, ASDisplayNode, ContextGesture?) -> Void,
-        colorContextAction: @escaping (Bool, PresentationThemeReference, ThemeSettingsColorOption?, ASDisplayNode, ContextGesture?) -> Void
+        colorContextAction: @escaping (Bool, PresentationThemeReference, ThemeSettingsColorOption?, ASDisplayNode, ContextGesture?) -> Void,
+        toggleFoldersAtBottom: @escaping (Bool) -> Void,
+        toggleCompactChatList: @escaping (Bool) -> Void,
+        toggleCompactMessagePreview: @escaping (Bool) -> Void,
+        toggleWideTabBar: @escaping (Bool) -> Void,
+        toggleDisableSnapDeletionEffect: @escaping (Bool) -> Void,
+        cycleNYStyle: @escaping () -> Void
     ) {
         self.context = context
         self.selectTheme = selectTheme
@@ -85,6 +98,12 @@ private final class ThemeSettingsControllerArguments {
         self.editTheme = editTheme
         self.themeContextAction = themeContextAction
         self.colorContextAction = colorContextAction
+        self.toggleFoldersAtBottom = toggleFoldersAtBottom
+        self.toggleCompactChatList = toggleCompactChatList
+        self.toggleCompactMessagePreview = toggleCompactMessagePreview
+        self.toggleWideTabBar = toggleWideTabBar
+        self.toggleDisableSnapDeletionEffect = toggleDisableSnapDeletionEffect
+        self.cycleNYStyle = cycleNYStyle
     }
 }
 
@@ -95,6 +114,7 @@ private enum ThemeSettingsControllerSection: Int32 {
     case icon
     case powerSaving
     case other
+    case burmalgramAppearance
 }
 
 public enum ThemeSettingsEntryTag: ItemListItemTag {
@@ -139,6 +159,14 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
     case sendWithCmdEnter(PresentationTheme, String, Bool)
     case showNextMediaOnTap(PresentationTheme, String, Bool)
     case showNextMediaOnTapInfo(PresentationTheme, String)
+    case burmalgramHeader(PresentationTheme, String)
+    case foldersAtBottom(PresentationTheme, String, Bool)
+    case compactChatList(PresentationTheme, String, Bool)
+    case compactMessagePreview(PresentationTheme, String, Bool)
+    case wideTabBar(PresentationTheme, String, Bool)
+    case disableSnapDeletionEffect(PresentationTheme, String, Bool)
+    case nyStyle(PresentationTheme, String, String)
+    case burmalgramFooter(PresentationTheme, String)
     
     var section: ItemListSectionId {
         switch self {
@@ -154,6 +182,8 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
                 return ThemeSettingsControllerSection.message.rawValue
             case .otherHeader, .sendWithCmdEnter, .showNextMediaOnTap, .showNextMediaOnTapInfo:
                 return ThemeSettingsControllerSection.other.rawValue
+            case .burmalgramHeader, .foldersAtBottom, .compactChatList, .compactMessagePreview, .wideTabBar, .disableSnapDeletionEffect, .nyStyle, .burmalgramFooter:
+                return ThemeSettingsControllerSection.burmalgramAppearance.rawValue
         }
     }
     
@@ -195,6 +225,22 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
             return 16
         case .showNextMediaOnTapInfo:
             return 17
+        case .burmalgramHeader:
+            return 100
+        case .foldersAtBottom:
+            return 101
+        case .compactChatList:
+            return 102
+        case .compactMessagePreview:
+            return 103
+        case .wideTabBar:
+            return 104
+        case .disableSnapDeletionEffect:
+            return 105
+        case .nyStyle:
+            return 106
+        case .burmalgramFooter:
+            return 107
         }
     }
     
@@ -308,6 +354,54 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
                 } else {
                     return false
                 }
+            case let .burmalgramHeader(lhsTheme, lhsText):
+                if case let .burmalgramHeader(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText {
+                    return true
+                } else {
+                    return false
+                }
+            case let .foldersAtBottom(lhsTheme, lhsText, lhsValue):
+                if case let .foldersAtBottom(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .compactChatList(lhsTheme, lhsText, lhsValue):
+                if case let .compactChatList(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .compactMessagePreview(lhsTheme, lhsText, lhsValue):
+                if case let .compactMessagePreview(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .wideTabBar(lhsTheme, lhsText, lhsValue):
+                if case let .wideTabBar(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .disableSnapDeletionEffect(lhsTheme, lhsText, lhsValue):
+                if case let .disableSnapDeletionEffect(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .nyStyle(lhsTheme, lhsText, lhsValue):
+                if case let .nyStyle(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .burmalgramFooter(lhsTheme, lhsText):
+                if case let .burmalgramFooter(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText {
+                    return true
+                } else {
+                    return false
+                }
         }
     }
     
@@ -394,6 +488,34 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
                 }, tag: ThemeSettingsEntryTag.tapForNextMedia)
             case let .showNextMediaOnTapInfo(_, text):
                 return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+            case let .burmalgramHeader(_, text):
+                return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+            case let .foldersAtBottom(_, title, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleFoldersAtBottom(value)
+                })
+            case let .compactChatList(_, title, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleCompactChatList(value)
+                })
+            case let .compactMessagePreview(_, title, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleCompactMessagePreview(value)
+                })
+            case let .wideTabBar(_, title, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleWideTabBar(value)
+                })
+            case let .disableSnapDeletionEffect(_, title, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleDisableSnapDeletionEffect(value)
+                })
+            case let .nyStyle(_, title, value):
+                return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: nil, title: title, label: value, labelStyle: .text, sectionId: self.section, style: .blocks, disclosureStyle: .arrow, action: {
+                    arguments.cycleNYStyle()
+                })
+            case let .burmalgramFooter(_, text):
+                return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         }
     }
 }
@@ -411,7 +533,8 @@ private func themeSettingsControllerEntries(
     chatThemes: [PresentationThemeReference],
     animatedEmojiStickers: [String: [StickerPackItem]],
     accountPeer: EnginePeer?,
-    nameColors: PeerNameColors
+    nameColors: PeerNameColors,
+    experimentalUISettings: ExperimentalUISettings
 ) -> [ThemeSettingsControllerEntry] {
     var entries: [ThemeSettingsControllerEntry] = []
     
@@ -494,6 +617,24 @@ private func themeSettingsControllerEntries(
     entries.append(.showNextMediaOnTap(presentationData.theme, strings.Appearance_ShowNextMediaOnTap, mediaSettings.showNextMediaOnTap))
     entries.append(.showNextMediaOnTapInfo(presentationData.theme, strings.Appearance_ShowNextMediaOnTapInfo))
     
+    entries.append(.burmalgramHeader(presentationData.theme, "BURMALGRAM: ИНТЕРФЕЙС И КАСТОМИЗАЦИЯ"))
+    entries.append(.foldersAtBottom(presentationData.theme, "Вкладки папок снизу", experimentalUISettings.foldersTabAtBottom))
+    entries.append(.compactChatList(presentationData.theme, "Компактный список чатов", SGSimpleSettings.shared.compactChatList))
+    entries.append(.compactMessagePreview(presentationData.theme, "Однострочный предпросмотр сообщений", SGSimpleSettings.shared.chatListLines != SGSimpleSettings.ChatListLines.three.rawValue))
+    entries.append(.wideTabBar(presentationData.theme, "Широкая панель вкладок", SGSimpleSettings.shared.wideTabBar))
+    entries.append(.disableSnapDeletionEffect(presentationData.theme, "Отключить эффект распада (Snap)", SGSimpleSettings.shared.disableSnapDeletionEffect))
+    
+    let nyLabel: String
+    if SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.snow.rawValue {
+        nyLabel = "Снег"
+    } else if SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.lightning.rawValue {
+        nyLabel = "Молнии"
+    } else {
+        nyLabel = "Выключено"
+    }
+    entries.append(.nyStyle(presentationData.theme, "Новогодние эффекты", nyLabel))
+    entries.append(.burmalgramFooter(presentationData.theme, "Параметры расположения папок, плотности списка диалогов, панели вкладок и анимаций Burmalgram."))
+    
     return entries
 }
 
@@ -568,6 +709,8 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
         }
         return animatedEmojiStickers
     }
+    
+    let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
     
     let arguments = ThemeSettingsControllerArguments(context: context, selectTheme: { theme in
         selectThemeImpl?(theme)
@@ -1095,8 +1238,42 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
             }
             let contextController = makeContextController(presentationData: presentationData, source: .controller(ContextControllerContentSourceImpl(controller: themeController, sourceNode: node)), items: .single(ContextController.Items(content: .list(items))), gesture: gesture)
             presentInGlobalOverlayImpl?(contextController, nil)
-        })
-    })
+        },
+        toggleFoldersAtBottom: { value in
+            let _ = updateExperimentalUISettingsInteractively(accountManager: context.sharedContext.accountManager, { settings in
+                var settings = settings
+                settings.foldersTabAtBottom = value
+                return settings
+            }).start()
+        },
+        toggleCompactChatList: { value in
+            SGSimpleSettings.shared.compactChatList = value
+            reloadPromise.set(true)
+        },
+        toggleCompactMessagePreview: { value in
+            SGSimpleSettings.shared.chatListLines = value ? SGSimpleSettings.ChatListLines.one.rawValue : SGSimpleSettings.ChatListLines.three.rawValue
+            reloadPromise.set(true)
+        },
+        toggleWideTabBar: { value in
+            SGSimpleSettings.shared.wideTabBar = value
+            reloadPromise.set(true)
+        },
+        toggleDisableSnapDeletionEffect: { value in
+            SGSimpleSettings.shared.disableSnapDeletionEffect = value
+            reloadPromise.set(true)
+        },
+        cycleNYStyle: {
+            SGSimpleSettings.shared.canUseNY = true
+            if SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.default.rawValue {
+                SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.snow.rawValue
+            } else if SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.snow.rawValue {
+                SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.lightning.rawValue
+            } else {
+                SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.default.rawValue
+            }
+            reloadPromise.set(true)
+        }
+    )
 
     let signal = combineLatest(
         queue: .mainQueue(),
@@ -1105,6 +1282,7 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
             ApplicationSpecificSharedDataKeys.presentationThemeSettings,
             ApplicationSpecificSharedDataKeys.chatSettings,
             ApplicationSpecificSharedDataKeys.mediaDisplaySettings,
+            ApplicationSpecificSharedDataKeys.experimentalUISettings,
             SharedDataKeys.chatThemes,
             ApplicationSpecificSharedDataKeys.sgStatus // MARK: Swiftgram
         ]),
@@ -1114,12 +1292,14 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
         removedThemeIndexesPromise.get(),
         animatedEmojiStickers,
         context.account.postbox.peerView(id: context.account.peerId),
-        context.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId))
+        context.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: context.account.peerId)),
+        reloadPromise.get()
     )
-    |> map { presentationData, sharedData, cloudThemes, availableAppIcons, currentAppIconName, removedThemeIndexes, animatedEmojiStickers, peerView, accountPeer -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, sharedData, cloudThemes, availableAppIcons, currentAppIconName, removedThemeIndexes, animatedEmojiStickers, peerView, accountPeer, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
         let settings = sharedData.entries[ApplicationSpecificSharedDataKeys.presentationThemeSettings]?.get(PresentationThemeSettings.self) ?? PresentationThemeSettings.defaultSettings
         let chatSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.chatSettings]?.get(ChatSettings.self) ?? ChatSettings.defaultSettings
         let mediaSettings = sharedData.entries[ApplicationSpecificSharedDataKeys.mediaDisplaySettings]?.get(MediaDisplaySettings.self) ?? MediaDisplaySettings.defaultSettings
+        let experimentalUISettings = sharedData.entries[ApplicationSpecificSharedDataKeys.experimentalUISettings]?.get(ExperimentalUISettings.self) ?? ExperimentalUISettings.defaultSettings
         
         // MARK: Swiftgram
         let sgStatus = sharedData.entries[ApplicationSpecificSharedDataKeys.sgStatus]?.get(SGStatus.self) ?? SGStatus.default
@@ -1160,7 +1340,7 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
         chatThemes.insert(.builtin(.dayClassic), at: 0)
         
         let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text(presentationData.strings.Appearance_Title), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
-        let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: themeSettingsControllerEntries(presentationData: presentationData, presentationThemeSettings: settings, chatSettings: chatSettings, mediaSettings: mediaSettings, themeReference: themeReference, availableThemes: availableThemes, availableAppIcons: availableAppIcons, currentAppIconName: currentAppIconName, isPremium: isPremium, chatThemes: chatThemes, animatedEmojiStickers: animatedEmojiStickers, accountPeer: accountPeer, nameColors: context.peerNameColors), style: .blocks, ensureVisibleItemTag: focusOnItemTag, animateChanges: false)
+        let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: themeSettingsControllerEntries(presentationData: presentationData, presentationThemeSettings: settings, chatSettings: chatSettings, mediaSettings: mediaSettings, themeReference: themeReference, availableThemes: availableThemes, availableAppIcons: availableAppIcons, currentAppIconName: currentAppIconName, isPremium: isPremium, chatThemes: chatThemes, animatedEmojiStickers: animatedEmojiStickers, accountPeer: accountPeer, nameColors: context.peerNameColors, experimentalUISettings: experimentalUISettings), style: .blocks, ensureVisibleItemTag: focusOnItemTag, animateChanges: false)
         
         return (controllerState, (listState, arguments))
     }

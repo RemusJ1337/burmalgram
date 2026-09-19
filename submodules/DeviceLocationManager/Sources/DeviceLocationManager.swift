@@ -146,7 +146,17 @@ extension DeviceLocationManager: CLLocationManagerDelegate {
     public func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         assert(self.queue.isCurrent())
         
-        if let location = locations.first {
+        var effectiveLocations = locations
+        let defaults = UserDefaults.standard
+        if defaults.bool(forKey: "TGExtraFakeLocation") {
+            let lat = defaults.double(forKey: "TGExtraSavedLatitude")
+            let lon = defaults.double(forKey: "TGExtraSavedLongitude")
+            if lat != 0.0 || lon != 0.0 {
+                effectiveLocations = [CLLocation(latitude: lat, longitude: lon)]
+            }
+        }
+        
+        if let location = effectiveLocations.first {
             if self.currentTopMode != nil {
                 self.currentLocation = location
                 for subscriber in self.subscribers {

@@ -4488,6 +4488,9 @@ func replayFinalState(
             case let .EditMessage(id, message):
                 var generatedEvent: (reactionAuthor: Peer, reaction: MessageReaction.Reaction, message: Message, timestamp: Int32)?
                 transaction.updateMessage(id, update: { previousMessage in
+                    if previousMessage.text != message.text && !previousMessage.text.isEmpty {
+                        EditHistoryManager.shared.saveOriginalText(peerId: id.peerId.toInt64(), messageId: id.id, originalText: previousMessage.text, editDate: Int32(Date().timeIntervalSince1970))
+                    }
                     var updatedFlags = message.flags
                     var updatedLocalTags = message.localTags
                     var updatedAttributes = message.attributes
