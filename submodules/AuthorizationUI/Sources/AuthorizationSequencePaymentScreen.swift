@@ -54,7 +54,8 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
         storeProduct: String,
         premiumDays: Int32,
         supportEmailAddress: String,
-        supportEmailSubject: String
+        supportEmailSubject: String,
+        openQr: @escaping () -> Void
     ) {
         self.sharedContext = sharedContext
         self.engine = engine
@@ -66,6 +67,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
         self.premiumDays = premiumDays
         self.supportEmailAddress = supportEmailAddress
         self.supportEmailSubject = supportEmailSubject
+        self.openQr = openQr
     }
 
     static func ==(lhs: AuthorizationSequencePaymentScreenComponent, rhs: AuthorizationSequencePaymentScreenComponent) -> Bool {
@@ -81,6 +83,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
         private let list = ComponentView<Empty>()
         private let check = ComponentView<Empty>()
         private let button = ComponentView<Empty>()
+        private let qrButton = ComponentView<Empty>()
         private let helpButton = ComponentView<Empty>()
                 
         private var isUpdating: Bool = false
@@ -379,6 +382,24 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                 )
             )
             
+            let isRu = environment.strings.baseLanguageCode == "ru"
+            items.append(
+                AnyComponentWithIdentity(
+                    id: "qrLogin",
+                    component: AnyComponent(ParagraphComponent(
+                        title: isRu ? "Вход по QR-коду (без оплаты)" : "Log in with QR Code (Free)",
+                        titleColor: textColor,
+                        text: isRu ? "Если у вас есть другое устройство с Telegram (телефон или ПК), войдите бесплатно без SMS через Настройки → Устройства." : "If you have another device with Telegram, you can log in for free via Settings → Devices.",
+                        textColor: secondaryTextColor,
+                        iconName: "Settings/QrIcon",
+                        iconColor: linkColor,
+                        action: { [weak self] in
+                            self?.component?.openQr()
+                        }
+                    ))
+                )
+            )
+            
             let listSize = self.list.update(
                 transition: transition,
                 component: AnyComponent(List(items)),
@@ -416,8 +437,23 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                 listView.frame = CGRect(origin: CGPoint(x: floor((availableSize.width - listSize.width) / 2.0), y: originY), size: listSize)
             }
         
+            let qrButtonText = isRu ? "Войти с другого устройства (по QR-коду)" : "Log in with another device (QR code)"
+            let qrButtonSize = self.qrButton.update(
+                transition: transition,
+                component: AnyComponent(PlainButtonComponent(
+                    content: AnyComponent(MultilineTextComponent(
+                        text: .plain(NSAttributedString(string: qrButtonText, font: Font.regular(15.0), textColor: environment.theme.list.itemAccentColor, paragraphAlignment: .center))
+                    )),
+                    action: { [weak self] in
+                        self?.component?.openQr()
+                    }
+                )),
+                environment: {},
+                containerSize: CGSize(width: availableSize.width - 30.0 * 2.0, height: 36.0)
+            )
+            
             let bottomInset: CGFloat = environment.safeInsets.bottom > 0.0 ? environment.safeInsets.bottom + 10.0 : bottomPanelPadding
-            let bottomPanelHeight = bottomPanelPadding + buttonHeight + bottomInset
+            let bottomPanelHeight = bottomPanelPadding + buttonHeight + 8.0 + qrButtonSize.height + bottomInset
                                     
             let priceString: String
             if let product = self.products.first(where: { $0.id == component.storeProduct }) {
@@ -471,6 +507,12 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
                 }
                 buttonView.frame = CGRect(origin: CGPoint(x: floor((availableSize.width - buttonSize.width) / 2.0), y: availableSize.height - bottomPanelHeight + bottomPanelPadding), size: buttonSize)
             }
+            if let qrButtonView = self.qrButton.view {
+                if qrButtonView.superview == nil {
+                    self.addSubview(qrButtonView)
+                }
+                qrButtonView.frame = CGRect(origin: CGPoint(x: floor((availableSize.width - qrButtonSize.width) / 2.0), y: availableSize.height - bottomPanelHeight + bottomPanelPadding + buttonHeight + 8.0), size: qrButtonSize)
+            }
                           
             return availableSize
         }
@@ -487,6 +529,7 @@ final class AuthorizationSequencePaymentScreenComponent: Component {
 
 public final class AuthorizationSequencePaymentScreen: ViewControllerComponentContainer {
     private let backAction: () -> Void
+    private let openQrAction: () -> Void
 
     public init(
         sharedContext: SharedAccountContext,
@@ -499,9 +542,11 @@ public final class AuthorizationSequencePaymentScreen: ViewControllerComponentCo
         premiumDays: Int32,
         supportEmailAddress: String,
         supportEmailSubject: String,
-        back: @escaping () -> Void
+        back: @escaping () -> Void,
+        openQr: @escaping () -> Void
     ) {
         self.backAction = back
+        self.openQrAction = openQr
         super.init(component: AuthorizationSequencePaymentScreenComponent(
             sharedContext: sharedContext,
             engine: engine,
@@ -512,7 +557,8 @@ public final class AuthorizationSequencePaymentScreen: ViewControllerComponentCo
             storeProduct: storeProduct,
             premiumDays: premiumDays,
             supportEmailAddress: supportEmailAddress,
-            supportEmailSubject: supportEmailSubject
+            supportEmailSubject: supportEmailSubject,
+            openQr: openQr
         ), navigationBarAppearance: .transparent, theme: .default, updatedPresentationData: (initial: presentationData, signal: .single(presentationData)))
         
         loadServerCountryCodes(accountManager: sharedContext.accountManager, engine: engine, completion: { [weak self] in

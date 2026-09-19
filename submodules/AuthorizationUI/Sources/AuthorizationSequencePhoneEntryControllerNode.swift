@@ -319,8 +319,10 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
     private let phoneAndCountryNode: PhoneAndCountryNode
     private let contactSyncNode: ContactSyncNode
     private let proceedNode: SolidRoundedButtonNode
+    private let qrLoginButton: HighlightableButtonNode
     
-    private var qrNode: ASImageNode?
+    private var qrOverlayNode: QrOverlayNode?
+    private var validLayout: (ContainerViewLayout, CGFloat)?
     private let exportTokenDisposable = MetaDisposable()
     private let tokenEventsDisposable = MetaDisposable()
     var accountUpdated: ((UnauthorizedAccount) -> Void)?
@@ -429,6 +431,12 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
         self.proceedNode.isEnabled = false
         self.proceedNode.accessibilityIdentifier = "Auth.PhoneEntry.ContinueButton"
 
+        self.qrLoginButton = HighlightableButtonNode()
+        let isRu = strings.baseLanguageCode == "ru"
+        let qrButtonText = isRu ? "Быстрый вход по QR-коду" : "Quick Log In by QR Code"
+        self.qrLoginButton.setAttributedTitle(NSAttributedString(string: qrButtonText, font: Font.regular(17.0), textColor: theme.list.itemAccentColor), for: [])
+        self.qrLoginButton.displaysAsynchronously = false
+
         super.init()
         
         self.setViewBlock({
@@ -444,9 +452,12 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
         self.addSubnode(self.phoneAndCountryNode)
         self.addSubnode(self.contactSyncNode)
         self.addSubnode(self.proceedNode)
+        self.addSubnode(self.qrLoginButton)
         self.addSubnode(self.animationNode)
         self.addSubnode(self.managedAnimationNode)
         self.contactSyncNode.isHidden = true
+        
+        self.qrLoginButton.addTarget(self, action: #selector(self.qrLoginButtonPressed), forControlEvents: .touchUpInside)
         
         self.noticeNode.highlightAttributeAction = { attributes in
             if let _ = attributes[NSAttributedString.Key(rawValue: "URL")] {
@@ -639,12 +650,22 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
             self.managedAnimationNode.isHidden = true
         }
         
+        self.validLayout = (layout, navigationBarHeight)
+        
         let contactSyncSize = self.contactSyncNode.updateLayout(width: maximumWidth)
         if self.hasOtherAccounts || { return true }() {
             self.contactSyncNode.isHidden = false
             items.append(AuthorizationLayoutItem(node: self.contactSyncNode, size: contactSyncSize, spacingBefore: AuthorizationLayoutItemSpacing(weight: 14.0, maxValue: 14.0), spacingAfter: AuthorizationLayoutItemSpacing(weight: 0.0, maxValue: 0.0)))
         } else {
             self.contactSyncNode.isHidden = true
+        }
+        
+        if (layout.inputHeight ?? 0.0).isZero {
+            self.qrLoginButton.isHidden = false
+            let qrButtonSize = CGSize(width: maximumWidth, height: 44.0)
+            items.append(AuthorizationLayoutItem(node: self.qrLoginButton, size: qrButtonSize, spacingBefore: AuthorizationLayoutItemSpacing(weight: 16.0, maxValue: 16.0), spacingAfter: AuthorizationLayoutItemSpacing(weight: 0.0, maxValue: 0.0)))
+        } else {
+            self.qrLoginButton.isHidden = true
         }
         
         let buttonFrame: CGRect
@@ -665,6 +686,13 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
         self.titleActivateAreaNode.frame = self.titleNode.frame
         self.noticeActivateAreaNode.accessibilityLabel = self.noticeNode.attributedText?.string ?? ""
         self.noticeActivateAreaNode.frame = self.noticeNode.frame
+        
+        if let qrOverlayNode = self.qrOverlayNode {
+            var qrInsets = insets
+            qrInsets.top = max(insets.top, navigationBarHeight)
+            qrOverlayNode.frame = CGRect(origin: CGPoint(), size: layout.size)
+            qrOverlayNode.updateLayout(size: layout.size, insets: qrInsets, transition: transition)
+        }
     }
     
     func activateInput() {
@@ -698,19 +726,44 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
         }
     }
     
-    @objc private func debugQrTap(_ recognizer: UITapGestureRecognizer) {
-        if let qrNode = self.qrNode {
-            qrNode.removeFromSupernode()
-            self.qrNode = nil
-            self.exportTokenDisposable.set(nil)
+    @objc private func qrLoginButtonPressed() {
+        self.showQrOverlay(true)
+    }
+    
+    func showQrOverlay(_ show: Bool) {
+        if show {
+            if self.qrOverlayNode == nil {
+                self.view.endEditing(true)
+                let overlay = QrOverlayNode(theme: self.theme, strings: self.strings)
+                overlay.closePressed = { [weak self] in
+                    self?.showQrOverlay(false)
+                }
+                self.qrOverlayNode = overlay
+                self.addSubnode(overlay)
+                if let (layout, navigationBarHeight) = self.validLayout {
+                    var insets = layout.insets(options: [])
+                    insets.top = max(layout.statusBarHeight ?? 20.0, navigationBarHeight)
+                    overlay.frame = CGRect(origin: CGPoint(), size: layout.size)
+                    overlay.updateLayout(size: layout.size, insets: insets, transition: .immediate)
+                }
+                self.refreshQrToken()
+            }
         } else {
-            let qrNode = ASImageNode()
-            qrNode.frame = CGRect(origin: CGPoint(x: 16.0, y: 64.0 + 16.0), size: CGSize(width: 200.0, height: 200.0))
-            self.qrNode = qrNode
-            self.addSubnode(qrNode)
-            
-            self.refreshQrToken()
+            self.exportTokenDisposable.set(nil)
+            if let qrOverlayNode = self.qrOverlayNode {
+                qrOverlayNode.removeFromSupernode()
+                self.qrOverlayNode = nil
+            }
+            self.activateInput()
         }
+    }
+    
+    func toggleQrOverlay() {
+        self.showQrOverlay(self.qrOverlayNode == nil)
+    }
+    
+    @objc private func debugQrTap(_ recognizer: UITapGestureRecognizer) {
+        self.toggleQrOverlay()
     }
     
     private func refreshQrToken() {
@@ -750,9 +803,9 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
                         return
                     }
                     
-                    let context = generate(TransformImageArguments(corners: ImageCorners(), imageSize: CGSize(width: 200.0, height: 200.0), boundingSize: CGSize(width: 200.0, height: 200.0), intrinsicInsets: UIEdgeInsets()))
+                    let context = generate(TransformImageArguments(corners: ImageCorners(), imageSize: CGSize(width: 240.0, height: 240.0), boundingSize: CGSize(width: 240.0, height: 240.0), intrinsicInsets: UIEdgeInsets()))
                     if let image = context?.generateImage() {
-                        strongSelf.qrNode?.image = image
+                        strongSelf.qrOverlayNode?.qrImageNode.image = image
                     }
                 })
                 
@@ -776,8 +829,108 @@ final class AuthorizationSequencePhoneEntryControllerNode: ASDisplayNode {
                 strongSelf.refreshQrToken()
             case .loggedIn, .passwordRequested:
                 strongSelf.exportTokenDisposable.set(nil)
+                strongSelf.qrOverlayNode?.removeFromSupernode()
+                strongSelf.qrOverlayNode = nil
             }
         }))
+    }
+}
+
+final class QrOverlayNode: ASDisplayNode {
+    private let theme: PresentationTheme
+    private let strings: PresentationStrings
+    
+    let backgroundNode: ASDisplayNode
+    let titleNode: ASTextNode
+    let subtitleNode: ImmediateTextNode
+    let qrCardNode: ASDisplayNode
+    let qrImageNode: ASImageNode
+    let backButton: SolidRoundedButtonNode
+    
+    var closePressed: (() -> Void)?
+    
+    init(theme: PresentationTheme, strings: PresentationStrings) {
+        self.theme = theme
+        self.strings = strings
+        
+        self.backgroundNode = ASDisplayNode()
+        self.backgroundNode.backgroundColor = theme.list.plainBackgroundColor
+        
+        self.titleNode = ASTextNode()
+        self.titleNode.displaysAsynchronously = false
+        let isRu = strings.baseLanguageCode == "ru"
+        let title = isRu ? "Вход по QR-коду" : "Log in by QR Code"
+        self.titleNode.attributedText = NSAttributedString(string: title, font: Font.bold(26.0), textColor: theme.list.itemPrimaryTextColor, paragraphAlignment: .center)
+        
+        self.subtitleNode = ImmediateTextNode()
+        self.subtitleNode.displaysAsynchronously = false
+        self.subtitleNode.maximumNumberOfLines = 6
+        let instructions = isRu ? "1. Откройте Telegram на другом устройстве\n2. Перейдите в Настройки → Устройства\n3. Нажмите «Подключить устройство» и наведите камеру на этот экран" : "1. Open Telegram on your other device\n2. Go to Settings → Devices\n3. Tap \"Link Desktop Device\" and scan this QR code"
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineSpacing = 4.0
+        paragraphStyle.alignment = .center
+        self.subtitleNode.attributedText = NSAttributedString(string: instructions, font: Font.regular(15.0), textColor: theme.list.itemSecondaryTextColor, paragraphStyle: paragraphStyle)
+        
+        self.qrCardNode = ASDisplayNode()
+        self.qrCardNode.backgroundColor = .white
+        self.qrCardNode.cornerRadius = 20.0
+        self.qrCardNode.clipsToBounds = true
+        
+        self.qrImageNode = ASImageNode()
+        self.qrImageNode.displaysAsynchronously = false
+        self.qrImageNode.contentMode = .scaleAspectFit
+        
+        self.backButton = SolidRoundedButtonNode(title: isRu ? "Ввести номер телефона" : "Log in by Phone Number", theme: SolidRoundedButtonTheme(theme: theme), height: 50.0, cornerRadius: 25.0)
+        
+        super.init()
+        
+        self.addSubnode(self.backgroundNode)
+        self.addSubnode(self.titleNode)
+        self.addSubnode(self.subtitleNode)
+        self.addSubnode(self.qrCardNode)
+        self.qrCardNode.addSubnode(self.qrImageNode)
+        self.addSubnode(self.backButton)
+        
+        self.backButton.pressed = { [weak self] in
+            self?.closePressed?()
+        }
+    }
+    
+    func updateLayout(size: CGSize, insets: UIEdgeInsets, transition: ContainedViewLayoutTransition) {
+        transition.updateFrame(node: self.backgroundNode, frame: CGRect(origin: CGPoint(), size: size))
+        
+        let sideInset: CGFloat = 24.0
+        let contentWidth = min(size.width - sideInset * 2.0, 320.0)
+        
+        let titleSize = self.titleNode.measure(CGSize(width: contentWidth, height: .greatestFiniteMagnitude))
+        let subtitleSize = self.subtitleNode.updateLayout(CGSize(width: contentWidth, height: .greatestFiniteMagnitude))
+        
+        let qrCardSize: CGFloat = min(240.0, size.width - 64.0)
+        let qrCardOriginX = floor((size.width - qrCardSize) / 2.0)
+        
+        let buttonHeight: CGFloat = 50.0
+        let bottomInset = max(insets.bottom + 16.0, 24.0)
+        let buttonWidth = contentWidth
+        let buttonFrame = CGRect(origin: CGPoint(x: floor((size.width - buttonWidth) / 2.0), y: size.height - bottomInset - buttonHeight), size: CGSize(width: buttonWidth, height: buttonHeight))
+        transition.updateFrame(node: self.backButton, frame: buttonFrame)
+        let _ = self.backButton.updateLayout(width: buttonWidth, transition: transition)
+        
+        let totalContentHeight = titleSize.height + 12.0 + subtitleSize.height + 24.0 + qrCardSize
+        let availableHeight = size.height - insets.top - bottomInset - buttonHeight
+        let topOffset = insets.top + max(16.0, floor((availableHeight - totalContentHeight) / 2.0))
+        
+        let titleFrame = CGRect(origin: CGPoint(x: floor((size.width - titleSize.width) / 2.0), y: topOffset), size: titleSize)
+        transition.updateFrame(node: self.titleNode, frame: titleFrame)
+        
+        let subtitleFrame = CGRect(origin: CGPoint(x: floor((size.width - subtitleSize.width) / 2.0), y: titleFrame.maxY + 12.0), size: subtitleSize)
+        transition.updateFrame(node: self.subtitleNode, frame: subtitleFrame)
+        
+        let qrCardFrame = CGRect(origin: CGPoint(x: qrCardOriginX, y: subtitleFrame.maxY + 24.0), size: CGSize(width: qrCardSize, height: qrCardSize))
+        transition.updateFrame(node: self.qrCardNode, frame: qrCardFrame)
+        
+        let qrPadding: CGFloat = 16.0
+        let qrImageSize = qrCardSize - qrPadding * 2.0
+        transition.updateFrame(node: self.qrImageNode, frame: CGRect(origin: CGPoint(x: qrPadding, y: qrPadding), size: CGSize(width: qrImageSize, height: qrImageSize)))
     }
 }
 

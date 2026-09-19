@@ -58,6 +58,7 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
         return self._ready
     }
     private var didSetReady = false
+    private var pendingOpenQrOnPhoneEntry = false
     
     fileprivate var engine: TelegramEngineUnauthorized {
         return TelegramEngineUnauthorized(account: self.account)
@@ -821,6 +822,13 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
             }
             let countryCode = AuthorizationSequenceCountrySelectionController.defaultCountryCode()
             let _ = self.engine.auth.setState(state: UnauthorizedAccountState(isTestingEnvironment: self.account.testingEnvironment, masterDatacenterId: self.account.masterDatacenterId, contents: .phoneEntry(countryCode: countryCode, number: number))).startStandalone()
+        }, openQr: { [weak self] in
+            guard let self else {
+                return
+            }
+            self.pendingOpenQrOnPhoneEntry = true
+            let countryCode = AuthorizationSequenceCountrySelectionController.defaultCountryCode()
+            let _ = self.engine.auth.setState(state: UnauthorizedAccountState(isTestingEnvironment: self.account.testingEnvironment, masterDatacenterId: self.account.masterDatacenterId, contents: .phoneEntry(countryCode: countryCode, number: number))).startStandalone()
         })
         return controller
     }
@@ -1281,8 +1289,13 @@ public final class AuthorizationSequenceController: NavigationController, ASAuth
                         previousSplashController = nil
                     }
                 
-                    controllers.append(self.phoneEntryController(countryCode: countryCode, number: number, splashController: previousSplashController))
+                    let phoneEntryController = self.phoneEntryController(countryCode: countryCode, number: number, splashController: previousSplashController)
+                    controllers.append(phoneEntryController)
                     self.setViewControllers(controllers, animated: !self.viewControllers.isEmpty && (previousSplashController == nil || self.viewControllers.count > 2))
+                    if self.pendingOpenQrOnPhoneEntry {
+                        self.pendingOpenQrOnPhoneEntry = false
+                        phoneEntryController.openQrCode()
+                    }
                 case let .confirmationCodeEntry(number, type, phoneCodeHash, timeout, nextType, _, previousCodeEntry, usePrevious):
                     var controllers: [ViewController] = []
                     if !self.otherAccountPhoneNumbers.1.isEmpty {

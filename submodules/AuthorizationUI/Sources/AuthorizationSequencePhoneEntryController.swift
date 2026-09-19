@@ -111,16 +111,29 @@ public final class AuthorizationSequencePhoneEntryController: ViewController, MF
         self.back()
     }
     
+    public func openQrCode() {
+        self.controllerNode.showQrOverlay(true)
+    }
+    
+    @objc private func qrButtonPressed() {
+        self.controllerNode.toggleQrOverlay()
+    }
+
     func updateNavigationItems() {
-        guard let layout = self.validLayout, layout.size.width < 360.0 else {
-            return
-        }
-                
         if self.inProgress {
             let item = UIBarButtonItem(customDisplayNode: ProgressNavigationButtonNode(color: self.presentationData.theme.rootController.navigationBar.accentTextColor))
             self.navigationItem.rightBarButtonItem = item
         } else {
-            self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Next, style: .done, target: self, action: #selector(self.nextPressed))
+            if let layout = self.validLayout, layout.size.width < 360.0 {
+                self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: self.presentationData.strings.Common_Next, style: .done, target: self, action: #selector(self.nextPressed))
+            } else {
+                let qrImage = UIImage(bundleImageName: "Settings/QrButtonIcon")
+                if let qrImage = qrImage {
+                    self.navigationItem.rightBarButtonItem = UIBarButtonItem(image: qrImage, style: .plain, target: self, action: #selector(self.qrButtonPressed))
+                } else {
+                    self.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "QR", style: .plain, target: self, action: #selector(self.qrButtonPressed))
+                }
+            }
         }
     }
     
