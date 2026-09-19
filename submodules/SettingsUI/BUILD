@@ -3,7 +3,8 @@ load("@build_bazel_rules_swift//swift:swift.bzl", "swift_library")
 sgdeps = [
     "//submodules/BuildConfig:BuildConfig",
     "//Swiftgram/SGSimpleSettings:SGSimpleSettings",
-    "//Swiftgram/SGStrings:SGStrings"
+    "//Swiftgram/SGStrings:SGStrings",
+    "//Swiftgram/SGSettingsUI:SGSettingsUI"
 ]
 
 sgsrc = [

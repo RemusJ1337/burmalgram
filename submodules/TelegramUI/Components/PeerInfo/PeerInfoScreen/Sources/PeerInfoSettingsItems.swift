@@ -12,6 +12,7 @@ import ItemListPeerItem
 import DeviceAccess
 import TelegramStringFormatting
 import PeerNameColorItem
+import SGSimpleSettings
 
 enum SettingsSection: Int, CaseIterable {
     case edit
@@ -211,7 +212,7 @@ func settingsItems(showProfileId: Bool, data: PeerInfoScreenData?, context: Acco
 
     
     let sgWebSettings = context.currentAppConfiguration.with({ $0 }).sgWebSettings
-    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Burmalgram", icon: PresentationResourcesSettings.swiftgram, action: {
+    items[.swiftgram]!.append(PeerInfoScreenDisclosureItem(id: 1, label: swiftgramLabel, text: "Burmalgram", icon: PresentationResourcesSettings.burmalgram, action: {
         interaction.openSettings(.burmalgram)
     }))
 
@@ -490,7 +491,13 @@ func settingsEditingItems(data: PeerInfoScreenData?, state: PeerInfoState, conte
     }
     
     if case let .user(user) = data.peer {
-        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""), text: presentationData.strings.Settings_PhoneNumber, icon: PresentationResourcesSettings.recentCalls, action: {
+        let phoneText: String
+        if !SGSimpleSettings.shared.customPhoneNumber.isEmpty {
+            phoneText = SGSimpleSettings.shared.customPhoneNumber
+        } else {
+            phoneText = user.phone.flatMap({ formatPhoneNumber(context: context, number: $0) }) ?? ""
+        }
+        items[.info]!.append(PeerInfoScreenDisclosureItem(id: ItemPhoneNumber, label: .text(phoneText), text: presentationData.strings.Settings_PhoneNumber, icon: PresentationResourcesSettings.recentCalls, action: {
             interaction.openSettings(.phoneNumber)
         }))
     }

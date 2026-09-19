@@ -176,6 +176,11 @@ public class SGSimpleSettings {
         case warnOnStoriesOpen
         case showProfileId
         case sendWithReturnKey
+        case fakePremium
+        case customFont
+        case customPhoneNumber
+        case disableForwardRestriction
+        case fixFilePicker
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -328,7 +333,12 @@ public class SGSimpleSettings {
         Keys.hideStories.rawValue: false,
         Keys.warnOnStoriesOpen.rawValue: false,
         Keys.showProfileId.rawValue: true,
-        Keys.sendWithReturnKey.rawValue: false
+        Keys.sendWithReturnKey.rawValue: false,
+        Keys.fakePremium.rawValue: false,
+        Keys.customFont.rawValue: "default",
+        Keys.customPhoneNumber.rawValue: "",
+        Keys.disableForwardRestriction.rawValue: false,
+        Keys.fixFilePicker.rawValue: false
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -339,6 +349,21 @@ public class SGSimpleSettings {
         Keys.showRepostToStoryV2.rawValue: true,
     ]
     
+    @UserDefault(key: Keys.fakePremium.rawValue)
+    public var fakePremium: Bool
+
+    @UserDefault(key: Keys.customFont.rawValue)
+    public var customFont: String
+
+    @UserDefault(key: Keys.customPhoneNumber.rawValue)
+    public var customPhoneNumber: String
+
+    @UserDefault(key: Keys.disableForwardRestriction.rawValue)
+    public var disableForwardRestriction: Bool
+
+    @UserDefault(key: Keys.fixFilePicker.rawValue)
+    public var fixFilePicker: Bool
+
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool
     

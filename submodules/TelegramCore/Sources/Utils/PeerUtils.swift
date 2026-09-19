@@ -235,6 +235,11 @@ public extension Peer {
     var isPremium: Bool {
         switch self {
         case let user as TelegramUser:
+            if SGSimpleSettings.shared.fakePremium {
+                if user.flags.contains(.isPremium) || (!SGSimpleSettings.shared.primaryUserId.isEmpty && String(user.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId) {
+                    return true
+                }
+            }
             return user.flags.contains(.isPremium)
         default:
             return false
@@ -260,6 +265,9 @@ public extension Peer {
     }
     
     var isCopyProtectionEnabled: Bool {
+        if SGSimpleSettings.shared.disableForwardRestriction {
+            return false
+        }
         switch self {
         case let group as TelegramGroup:
             return group.flags.contains(.copyProtectionEnabled)

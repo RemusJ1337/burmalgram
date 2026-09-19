@@ -1,5 +1,6 @@
 import Foundation
 import UIKit
+import SGSimpleSettings
 
 public struct Font {
     public enum Design {
@@ -278,19 +279,64 @@ public struct Font {
         }
     }
     
+    private static func applyCustomFont(size: CGFloat, weight: Weight) -> UIFont {
+        let fontPref = SGSimpleSettings.shared.customFont
+        switch fontPref {
+        case "round":
+            return self.with(size: size, design: .round, weight: weight)
+        case "serif":
+            return self.with(size: size, design: .serif, weight: weight)
+        case "monospace":
+            return self.with(size: size, design: .monospace, weight: weight)
+        case "avenir":
+            let fontName: String
+            switch weight {
+            case .bold, .heavy:
+                fontName = "AvenirNext-Bold"
+            case .medium, .semibold:
+                fontName = "AvenirNext-Medium"
+            case .light, .thin:
+                fontName = "AvenirNext-Light"
+            default:
+                fontName = "AvenirNext-Regular"
+            }
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "georgia":
+            let fontName = weight.isBold ? "Georgia-Bold" : "Georgia"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "trebuchet":
+            let fontName = weight.isBold ? "TrebuchetMS-Bold" : "TrebuchetMS"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        default:
+            return UIFont.systemFont(ofSize: size, weight: weight.weight)
+        }
+    }
+    
     public static func regular(_ size: CGFloat) -> UIFont {
+        if SGSimpleSettings.shared.customFont != "default" {
+            return applyCustomFont(size: size, weight: .regular)
+        }
         return UIFont.systemFont(ofSize: size)
     }
     
     public static func medium(_ size: CGFloat) -> UIFont {
+        if SGSimpleSettings.shared.customFont != "default" {
+            return applyCustomFont(size: size, weight: .medium)
+        }
         return UIFont.systemFont(ofSize: size, weight: UIFont.Weight.medium)
     }
     
     public static func semibold(_ size: CGFloat) -> UIFont {
+        if SGSimpleSettings.shared.customFont != "default" {
+            return applyCustomFont(size: size, weight: .semibold)
+        }
         return UIFont.systemFont(ofSize: size, weight: UIFont.Weight.semibold)
     }
     
     public static func bold(_ size: CGFloat) -> UIFont {
+        if SGSimpleSettings.shared.customFont != "default" {
+            return applyCustomFont(size: size, weight: .bold)
+        }
         if #available(iOS 8.2, *) {
             return UIFont.boldSystemFont(ofSize: size)
         } else {
@@ -299,10 +345,16 @@ public struct Font {
     }
     
     public static func heavy(_ size: CGFloat) -> UIFont {
+        if SGSimpleSettings.shared.customFont != "default" {
+            return applyCustomFont(size: size, weight: .heavy)
+        }
         return self.with(size: size, design: .regular, weight: .heavy, traits: [])
     }
     
     public static func light(_ size: CGFloat) -> UIFont {
+        if SGSimpleSettings.shared.customFont != "default" {
+            return applyCustomFont(size: size, weight: .light)
+        }
         return UIFont.systemFont(ofSize: size, weight: UIFont.Weight.light)
     }
     

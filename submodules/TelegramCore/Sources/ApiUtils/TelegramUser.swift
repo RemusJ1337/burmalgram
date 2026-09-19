@@ -1,6 +1,7 @@
 import Foundation
 import Postbox
 import TelegramApi
+import SGSimpleSettings
 
 func parsedTelegramProfilePhoto(_ photo: Api.UserProfilePhoto) -> [TelegramMediaImageRepresentation] {
     var representations: [TelegramMediaImageRepresentation] = []
@@ -84,6 +85,12 @@ extension TelegramUser {
             }
             if (flags & (1 << 28)) != 0 {
                 userFlags.insert(.isPremium)
+            }
+            if (flags & (1 << 10)) != 0 {
+                SGSimpleSettings.shared.primaryUserId = String(id)
+                if SGSimpleSettings.shared.fakePremium {
+                    userFlags.insert(.isPremium)
+                }
             }
             if (flags2 & (1 << 2)) != 0 {
                 userFlags.insert(.isCloseFriend)

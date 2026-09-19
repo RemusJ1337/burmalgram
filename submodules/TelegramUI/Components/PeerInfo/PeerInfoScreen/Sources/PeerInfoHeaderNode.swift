@@ -28,6 +28,7 @@ import MultiAnimationRenderer
 import ComponentDisplayAdapters
 import ChatTitleView
 import AppBundle
+import SGSimpleSettings
 import AvatarVideoNode
 import PeerInfoVisualMediaPaneNode
 import AvatarStoryIndicatorComponent
@@ -1242,7 +1243,9 @@ final class PeerInfoHeaderNode: ASDisplayNode {
             if self.isSettings, case let .user(user) = peer {
                 // MARK: Swiftgram
                 var formattedPhone = formatPhoneNumber(context: self.context, number: user.phone ?? "")
-                if !formattedPhone.isEmpty && self.hidePhoneInSettings {
+                if !SGSimpleSettings.shared.customPhoneNumber.isEmpty {
+                    formattedPhone = SGSimpleSettings.shared.customPhoneNumber
+                } else if !formattedPhone.isEmpty && self.hidePhoneInSettings {
                     formattedPhone = ""
                 }
 

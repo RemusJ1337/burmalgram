@@ -51,6 +51,9 @@ private final class ThemeSettingsControllerArguments {
     let toggleWideTabBar: (Bool) -> Void
     let toggleDisableSnapDeletionEffect: (Bool) -> Void
     let cycleNYStyle: () -> Void
+    let selectCustomFont: () -> Void
+    let toggleSecondsInMessages: (Bool) -> Void
+    let toggleQuickTranslateButton: (Bool) -> Void
     
     init(
         context: AccountContext,
@@ -77,7 +80,10 @@ private final class ThemeSettingsControllerArguments {
         toggleCompactMessagePreview: @escaping (Bool) -> Void,
         toggleWideTabBar: @escaping (Bool) -> Void,
         toggleDisableSnapDeletionEffect: @escaping (Bool) -> Void,
-        cycleNYStyle: @escaping () -> Void
+        cycleNYStyle: @escaping () -> Void,
+        selectCustomFont: @escaping () -> Void,
+        toggleSecondsInMessages: @escaping (Bool) -> Void,
+        toggleQuickTranslateButton: @escaping (Bool) -> Void
     ) {
         self.context = context
         self.selectTheme = selectTheme
@@ -104,6 +110,9 @@ private final class ThemeSettingsControllerArguments {
         self.toggleWideTabBar = toggleWideTabBar
         self.toggleDisableSnapDeletionEffect = toggleDisableSnapDeletionEffect
         self.cycleNYStyle = cycleNYStyle
+        self.selectCustomFont = selectCustomFont
+        self.toggleSecondsInMessages = toggleSecondsInMessages
+        self.toggleQuickTranslateButton = toggleQuickTranslateButton
     }
 }
 
@@ -160,11 +169,14 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
     case showNextMediaOnTap(PresentationTheme, String, Bool)
     case showNextMediaOnTapInfo(PresentationTheme, String)
     case burmalgramHeader(PresentationTheme, String)
+    case customFont(PresentationTheme, String, String)
     case foldersAtBottom(PresentationTheme, String, Bool)
     case compactChatList(PresentationTheme, String, Bool)
     case compactMessagePreview(PresentationTheme, String, Bool)
     case wideTabBar(PresentationTheme, String, Bool)
     case disableSnapDeletionEffect(PresentationTheme, String, Bool)
+    case secondsInMessages(PresentationTheme, String, Bool)
+    case quickTranslateButton(PresentationTheme, String, Bool)
     case nyStyle(PresentationTheme, String, String)
     case burmalgramFooter(PresentationTheme, String)
     
@@ -182,7 +194,7 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
                 return ThemeSettingsControllerSection.message.rawValue
             case .otherHeader, .sendWithCmdEnter, .showNextMediaOnTap, .showNextMediaOnTapInfo:
                 return ThemeSettingsControllerSection.other.rawValue
-            case .burmalgramHeader, .foldersAtBottom, .compactChatList, .compactMessagePreview, .wideTabBar, .disableSnapDeletionEffect, .nyStyle, .burmalgramFooter:
+            case .burmalgramHeader, .customFont, .foldersAtBottom, .compactChatList, .compactMessagePreview, .wideTabBar, .disableSnapDeletionEffect, .secondsInMessages, .quickTranslateButton, .nyStyle, .burmalgramFooter:
                 return ThemeSettingsControllerSection.burmalgramAppearance.rawValue
         }
     }
@@ -227,20 +239,26 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
             return 17
         case .burmalgramHeader:
             return 100
-        case .foldersAtBottom:
+        case .customFont:
             return 101
-        case .compactChatList:
+        case .foldersAtBottom:
             return 102
-        case .compactMessagePreview:
+        case .compactChatList:
             return 103
-        case .wideTabBar:
+        case .compactMessagePreview:
             return 104
-        case .disableSnapDeletionEffect:
+        case .wideTabBar:
             return 105
-        case .nyStyle:
+        case .disableSnapDeletionEffect:
             return 106
-        case .burmalgramFooter:
+        case .secondsInMessages:
             return 107
+        case .quickTranslateButton:
+            return 108
+        case .nyStyle:
+            return 109
+        case .burmalgramFooter:
+            return 110
         }
     }
     
@@ -384,8 +402,26 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
                 } else {
                     return false
                 }
+            case let .customFont(lhsTheme, lhsText, lhsValue):
+                if case let .customFont(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
             case let .disableSnapDeletionEffect(lhsTheme, lhsText, lhsValue):
                 if case let .disableSnapDeletionEffect(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .secondsInMessages(lhsTheme, lhsText, lhsValue):
+                if case let .secondsInMessages(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .quickTranslateButton(lhsTheme, lhsText, lhsValue):
+                if case let .quickTranslateButton(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
                     return true
                 } else {
                     return false
@@ -490,6 +526,10 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
                 return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
             case let .burmalgramHeader(_, text):
                 return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+            case let .customFont(_, title, value):
+                return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: nil, title: title, label: value, labelStyle: .text, sectionId: self.section, style: .blocks, disclosureStyle: .arrow, action: {
+                    arguments.selectCustomFont()
+                })
             case let .foldersAtBottom(_, title, value):
                 return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
                     arguments.toggleFoldersAtBottom(value)
@@ -509,6 +549,14 @@ private enum ThemeSettingsControllerEntry: ItemListNodeEntry {
             case let .disableSnapDeletionEffect(_, title, value):
                 return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
                     arguments.toggleDisableSnapDeletionEffect(value)
+                })
+            case let .secondsInMessages(_, title, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleSecondsInMessages(value)
+                })
+            case let .quickTranslateButton(_, title, value):
+                return ItemListSwitchItem(presentationData: presentationData, systemStyle: .glass, title: title, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleQuickTranslateButton(value)
                 })
             case let .nyStyle(_, title, value):
                 return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: nil, title: title, label: value, labelStyle: .text, sectionId: self.section, style: .blocks, disclosureStyle: .arrow, action: {
@@ -618,11 +666,31 @@ private func themeSettingsControllerEntries(
     entries.append(.showNextMediaOnTapInfo(presentationData.theme, strings.Appearance_ShowNextMediaOnTapInfo))
     
     entries.append(.burmalgramHeader(presentationData.theme, "BURMALGRAM: ИНТЕРФЕЙС И КАСТОМИЗАЦИЯ"))
+    let fontLabel: String
+    switch SGSimpleSettings.shared.customFont {
+    case "round":
+        fontLabel = "SF Rounded"
+    case "serif":
+        fontLabel = "New York (Serif)"
+    case "monospace":
+        fontLabel = "SF Mono"
+    case "avenir":
+        fontLabel = "Avenir Next"
+    case "georgia":
+        fontLabel = "Georgia"
+    case "trebuchet":
+        fontLabel = "Trebuchet MS"
+    default:
+        fontLabel = "По умолчанию"
+    }
+    entries.append(.customFont(presentationData.theme, "Шрифт приложения", fontLabel))
     entries.append(.foldersAtBottom(presentationData.theme, "Вкладки папок снизу", experimentalUISettings.foldersTabAtBottom))
     entries.append(.compactChatList(presentationData.theme, "Компактный список чатов", SGSimpleSettings.shared.compactChatList))
     entries.append(.compactMessagePreview(presentationData.theme, "Однострочный предпросмотр сообщений", SGSimpleSettings.shared.chatListLines != SGSimpleSettings.ChatListLines.three.rawValue))
     entries.append(.wideTabBar(presentationData.theme, "Широкая панель вкладок", SGSimpleSettings.shared.wideTabBar))
     entries.append(.disableSnapDeletionEffect(presentationData.theme, "Отключить эффект распада (Snap)", SGSimpleSettings.shared.disableSnapDeletionEffect))
+    entries.append(.secondsInMessages(presentationData.theme, "Секунды в сообщениях", SGSimpleSettings.shared.secondsInMessages))
+    entries.append(.quickTranslateButton(presentationData.theme, "Кнопка быстрого перевода", SGSimpleSettings.shared.quickTranslateButton))
     
     let nyLabel: String
     if SGSimpleSettings.shared.nyStyle == SGSimpleSettings.NYStyle.snow.rawValue {
@@ -633,7 +701,7 @@ private func themeSettingsControllerEntries(
         nyLabel = "Выключено"
     }
     entries.append(.nyStyle(presentationData.theme, "Новогодние эффекты", nyLabel))
-    entries.append(.burmalgramFooter(presentationData.theme, "Параметры расположения папок, плотности списка диалогов, панели вкладок и анимаций Burmalgram."))
+    entries.append(.burmalgramFooter(presentationData.theme, "Параметры шрифтов, расположения папок, плотности списка диалогов, панели вкладок, секунд и анимаций Burmalgram."))
     
     return entries
 }
@@ -672,7 +740,7 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
     }
     
     let premiumConfiguration = PremiumConfiguration.with(appConfiguration: context.currentAppConfiguration.with { $0 })
-    if premiumConfiguration.isPremiumDisabled || context.account.testingEnvironment {
+    if (premiumConfiguration.isPremiumDisabled || context.account.testingEnvironment) && !SGSimpleSettings.shared.fakePremium {
         appIcons = appIcons.filter { !$0.isPremium } 
     }
     
@@ -1273,6 +1341,43 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
                 SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.default.rawValue
             }
             reloadPromise.set(true)
+        },
+        selectCustomFont: {
+            let fontOptions: [(String, String)] = [
+                ("default", "По умолчанию (San Francisco)"),
+                ("round", "Скруглённый (SF Rounded)"),
+                ("serif", "С засечками (New York)"),
+                ("monospace", "Моноширинный (SF Mono)"),
+                ("avenir", "Avenir Next"),
+                ("georgia", "Georgia"),
+                ("trebuchet", "Trebuchet MS")
+            ]
+            let current = SGSimpleSettings.shared.customFont
+            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+            let actionSheet = ActionSheetController(presentationData: presentationData)
+            var items: [ActionSheetItem] = [
+                ActionSheetTextItem(title: "Шрифт приложения")
+            ]
+            for (key, title) in fontOptions {
+                items.append(ActionSheetButtonItem(title: title, color: key == current ? .accent : .default, action: { [weak actionSheet] in
+                    actionSheet?.dismissAnimated()
+                    SGSimpleSettings.shared.customFont = key
+                    reloadPromise.set(true)
+                }))
+            }
+            items.append(ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .default, action: { [weak actionSheet] in
+                actionSheet?.dismissAnimated()
+            }))
+            actionSheet.setItemGroups([ActionSheetItemGroup(items: items)])
+            presentControllerImpl?(actionSheet, nil)
+        },
+        toggleSecondsInMessages: { (value: Bool) in
+            SGSimpleSettings.shared.secondsInMessages = value
+            reloadPromise.set(true)
+        },
+        toggleQuickTranslateButton: { (value: Bool) in
+            SGSimpleSettings.shared.quickTranslateButton = value
+            reloadPromise.set(true)
         }
     )
 
@@ -1341,7 +1446,7 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
         chatThemes.insert(.builtin(.dayClassic), at: 0)
         
         let controllerState = ItemListControllerState(presentationData: ItemListPresentationData(presentationData), title: .text(presentationData.strings.Appearance_Title), leftNavigationButton: nil, rightNavigationButton: nil, backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back))
-        let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: themeSettingsControllerEntries(presentationData: presentationData, presentationThemeSettings: settings, chatSettings: chatSettings, mediaSettings: mediaSettings, themeReference: themeReference, availableThemes: availableThemes, availableAppIcons: availableAppIcons, currentAppIconName: currentAppIconName, isPremium: isPremium, chatThemes: chatThemes, animatedEmojiStickers: animatedEmojiStickers, accountPeer: accountPeer, nameColors: context.peerNameColors, experimentalUISettings: experimentalUISettings), style: .blocks, ensureVisibleItemTag: focusOnItemTag, animateChanges: false)
+        let listState = ItemListNodeState(presentationData: ItemListPresentationData(presentationData), entries: themeSettingsControllerEntries(presentationData: presentationData, presentationThemeSettings: settings, chatSettings: chatSettings, mediaSettings: mediaSettings, themeReference: themeReference, availableThemes: availableThemes, availableAppIcons: availableAppIcons, currentAppIconName: currentAppIconName, isPremium: isPremium || SGSimpleSettings.shared.fakePremium, chatThemes: chatThemes, animatedEmojiStickers: animatedEmojiStickers, accountPeer: accountPeer, nameColors: context.peerNameColors, experimentalUISettings: experimentalUISettings), style: .blocks, ensureVisibleItemTag: focusOnItemTag, animateChanges: false)
         
         return (controllerState, (listState, arguments))
     }

@@ -55,8 +55,12 @@ private final class PrivacyAndSecurityControllerArguments {
     let openGeoSpoof: () -> Void
     let toggleHidePhoneInSettings: (Bool) -> Void
     let toggleBypassCopyProtection: (Bool) -> Void
+    let editCustomPhoneNumber: () -> Void
+    let toggleHideStories: (Bool) -> Void
+    let toggleWarnOnStoriesOpen: (Bool) -> Void
+    let toggleConfirmCalls: (Bool) -> Void
     
-    init(account: Account, openBlockedUsers: @escaping () -> Void, openLastSeenPrivacy: @escaping () -> Void, openGroupsPrivacy: @escaping () -> Void, openVoiceCallPrivacy: @escaping () -> Void, openProfilePhotoPrivacy: @escaping () -> Void, openForwardPrivacy: @escaping () -> Void, openPhoneNumberPrivacy: @escaping () -> Void, openVoiceMessagePrivacy: @escaping () -> Void, openBioPrivacy: @escaping () -> Void, openBirthdayPrivacy: @escaping () -> Void, openSavedMusicPrivacy: @escaping () -> Void, openPasscode: @escaping () -> Void, openTwoStepVerification: @escaping (TwoStepVerificationAccessConfiguration?) -> Void, openPasskeys: @escaping () -> Void, openActiveSessions: @escaping () -> Void, toggleArchiveAndMuteNonContacts: @escaping (Bool) -> Void, setupAccountAutoremove: @escaping () -> Void, setupMessageAutoremove: @escaping () -> Void, openDataSettings: @escaping () -> Void, openBrowserSelection: @escaping () -> Void, openEmailSettings: @escaping (String?) -> Void, openMessagePrivacy: @escaping () -> Void, openGiftsPrivacy: @escaping () -> Void, openGhostMode: @escaping () -> Void, openDeletedMessages: @escaping () -> Void, openDeviceSpoof: @escaping () -> Void, openGeoSpoof: @escaping () -> Void, toggleHidePhoneInSettings: @escaping (Bool) -> Void, toggleBypassCopyProtection: @escaping (Bool) -> Void) {
+    init(account: Account, openBlockedUsers: @escaping () -> Void, openLastSeenPrivacy: @escaping () -> Void, openGroupsPrivacy: @escaping () -> Void, openVoiceCallPrivacy: @escaping () -> Void, openProfilePhotoPrivacy: @escaping () -> Void, openForwardPrivacy: @escaping () -> Void, openPhoneNumberPrivacy: @escaping () -> Void, openVoiceMessagePrivacy: @escaping () -> Void, openBioPrivacy: @escaping () -> Void, openBirthdayPrivacy: @escaping () -> Void, openSavedMusicPrivacy: @escaping () -> Void, openPasscode: @escaping () -> Void, openTwoStepVerification: @escaping (TwoStepVerificationAccessConfiguration?) -> Void, openPasskeys: @escaping () -> Void, openActiveSessions: @escaping () -> Void, toggleArchiveAndMuteNonContacts: @escaping (Bool) -> Void, setupAccountAutoremove: @escaping () -> Void, setupMessageAutoremove: @escaping () -> Void, openDataSettings: @escaping () -> Void, openBrowserSelection: @escaping () -> Void, openEmailSettings: @escaping (String?) -> Void, openMessagePrivacy: @escaping () -> Void, openGiftsPrivacy: @escaping () -> Void, openGhostMode: @escaping () -> Void, openDeletedMessages: @escaping () -> Void, openDeviceSpoof: @escaping () -> Void, openGeoSpoof: @escaping () -> Void, toggleHidePhoneInSettings: @escaping (Bool) -> Void, toggleBypassCopyProtection: @escaping (Bool) -> Void, editCustomPhoneNumber: @escaping () -> Void, toggleHideStories: @escaping (Bool) -> Void, toggleWarnOnStoriesOpen: @escaping (Bool) -> Void, toggleConfirmCalls: @escaping (Bool) -> Void) {
         self.account = account
         self.openBlockedUsers = openBlockedUsers
         self.openLastSeenPrivacy = openLastSeenPrivacy
@@ -87,6 +91,10 @@ private final class PrivacyAndSecurityControllerArguments {
         self.openGeoSpoof = openGeoSpoof
         self.toggleHidePhoneInSettings = toggleHidePhoneInSettings
         self.toggleBypassCopyProtection = toggleBypassCopyProtection
+        self.editCustomPhoneNumber = editCustomPhoneNumber
+        self.toggleHideStories = toggleHideStories
+        self.toggleWarnOnStoriesOpen = toggleWarnOnStoriesOpen
+        self.toggleConfirmCalls = toggleConfirmCalls
     }
 }
 
@@ -157,6 +165,10 @@ private enum PrivacyAndSecurityEntry: ItemListNodeEntry {
     case geoSpoof(PresentationTheme, String, String)
     case hidePhoneInSettings(PresentationTheme, String, Bool)
     case bypassCopyProtection(PresentationTheme, String, Bool)
+    case customPhoneNumber(PresentationTheme, String, String)
+    case hideStories(PresentationTheme, String, Bool)
+    case warnOnStoriesOpen(PresentationTheme, String, Bool)
+    case confirmCalls(PresentationTheme, String, Bool)
     case burmalgramFooter(PresentationTheme, String)
     
     var section: ItemListSectionId {
@@ -175,7 +187,7 @@ private enum PrivacyAndSecurityEntry: ItemListNodeEntry {
             return PrivacyAndSecuritySection.dataSettings.rawValue
         case .openLinksIn:
             return PrivacyAndSecuritySection.linkHandling.rawValue
-        case .burmalgramHeader, .ghostMode, .deletedMessages, .deviceSpoof, .geoSpoof, .hidePhoneInSettings, .bypassCopyProtection, .burmalgramFooter:
+        case .burmalgramHeader, .ghostMode, .deletedMessages, .deviceSpoof, .geoSpoof, .hidePhoneInSettings, .bypassCopyProtection, .customPhoneNumber, .hideStories, .warnOnStoriesOpen, .confirmCalls, .burmalgramFooter:
             return PrivacyAndSecuritySection.burmalgramPrivacy.rawValue
         }
     }
@@ -262,6 +274,14 @@ private enum PrivacyAndSecurityEntry: ItemListNodeEntry {
                 return 105
             case .bypassCopyProtection:
                 return 106
+            case .customPhoneNumber:
+                return 108
+            case .hideStories:
+                return 109
+            case .warnOnStoriesOpen:
+                return 110
+            case .confirmCalls:
+                return 111
             case .burmalgramFooter:
                 return 107
         }
@@ -509,6 +529,30 @@ private enum PrivacyAndSecurityEntry: ItemListNodeEntry {
                 } else {
                     return false
                 }
+            case let .customPhoneNumber(lhsTheme, lhsText, lhsValue):
+                if case let .customPhoneNumber(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .hideStories(lhsTheme, lhsText, lhsValue):
+                if case let .hideStories(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .warnOnStoriesOpen(lhsTheme, lhsText, lhsValue):
+                if case let .warnOnStoriesOpen(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
+            case let .confirmCalls(lhsTheme, lhsText, lhsValue):
+                if case let .confirmCalls(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
             case let .burmalgramFooter(lhsTheme, lhsText):
                 if case let .burmalgramFooter(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText {
                     return true
@@ -663,6 +707,22 @@ private enum PrivacyAndSecurityEntry: ItemListNodeEntry {
             case let .bypassCopyProtection(_, text, value):
                 return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
                     arguments.toggleBypassCopyProtection(value)
+                })
+            case let .customPhoneNumber(_, text, value):
+                return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, icon: PresentationResourcesSettings.recentCalls, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                    arguments.editCustomPhoneNumber()
+                })
+            case let .hideStories(_, text, value):
+                return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleHideStories(value)
+                })
+            case let .warnOnStoriesOpen(_, text, value):
+                return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleWarnOnStoriesOpen(value)
+                })
+            case let .confirmCalls(_, text, value):
+                return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { value in
+                    arguments.toggleConfirmCalls(value)
                 })
             case let .burmalgramFooter(_, text):
                 return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
@@ -950,8 +1010,13 @@ private func privacyAndSecurityControllerEntries(
     entries.append(.deviceSpoof(presentationData.theme, "Подмена устройства", spoofStatus))
     let geoStatus = GeoSpoofManager.shared.isEnabled ? GeoSpoofManager.shared.presetName : "Выкл"
     entries.append(.geoSpoof(presentationData.theme, "Фейковая геолокация (GPS)", geoStatus))
+    let customPhoneText = SGSimpleSettings.shared.customPhoneNumber.isEmpty ? "Не задан" : SGSimpleSettings.shared.customPhoneNumber
+    entries.append(.customPhoneNumber(presentationData.theme, "Кастомный номер (визуальный)", customPhoneText))
     entries.append(.hidePhoneInSettings(presentationData.theme, "Скрыть номер в настройках", SGSimpleSettings.shared.hidePhoneInSettings))
-    entries.append(.bypassCopyProtection(presentationData.theme, "Запрет копирования (обход No-Save)", MiscSettingsManager.shared.bypassCopyProtection))
+    entries.append(.hideStories(presentationData.theme, "Скрыть истории", SGSimpleSettings.shared.hideStories))
+    entries.append(.warnOnStoriesOpen(presentationData.theme, "Предупреждать при открытии историй", SGSimpleSettings.shared.warnOnStoriesOpen))
+    entries.append(.confirmCalls(presentationData.theme, "Подтверждение звонков", SGSimpleSettings.shared.confirmCalls))
+    entries.append(.bypassCopyProtection(presentationData.theme, "Запрет копирования (обход No-Save)", SGSimpleSettings.shared.disableForwardRestriction))
     entries.append(.burmalgramFooter(presentationData.theme, "Расширенные функции конфиденциальности Burmalgram, Ghostgram и твиков TGExtra."))
 
     return entries
@@ -1699,8 +1764,40 @@ public func privacyAndSecurityController(
         SGSimpleSettings.shared.hidePhoneInSettings = value
         updateState { $0 }
     }, toggleBypassCopyProtection: { value in
+        SGSimpleSettings.shared.disableForwardRestriction = value
         MiscSettingsManager.shared.bypassCopyProtection = value
         MiscSettingsManager.shared.isEnabled = true
+        updateState { $0 }
+    }, editCustomPhoneNumber: {
+        let alert = UIAlertController(title: "Кастомный номер", message: "Введите желаемый номер (отображается только на вашем устройстве):", preferredStyle: .alert)
+        alert.addTextField { textField in
+            textField.placeholder = "+7 (999) 000-00-00"
+            textField.text = SGSimpleSettings.shared.customPhoneNumber
+            textField.keyboardType = .phonePad
+        }
+        alert.addAction(UIAlertAction(title: "Сбросить", style: .destructive, handler: { _ in
+            SGSimpleSettings.shared.customPhoneNumber = ""
+            updateState { $0 }
+        }))
+        alert.addAction(UIAlertAction(title: "Сохранить", style: .default, handler: { _ in
+            if let text = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) {
+                SGSimpleSettings.shared.customPhoneNumber = text
+                updateState { $0 }
+            }
+        }))
+        alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.keyWindow,
+           let rootVC = window.rootViewController {
+            rootVC.present(alert, animated: true, completion: nil)
+        }
+    }, toggleHideStories: { value in
+        SGSimpleSettings.shared.hideStories = value
+        updateState { $0 }
+    }, toggleWarnOnStoriesOpen: { value in
+        SGSimpleSettings.shared.warnOnStoriesOpen = value
+        updateState { $0 }
+    }, toggleConfirmCalls: { value in
+        SGSimpleSettings.shared.confirmCalls = value
         updateState { $0 }
     })
     

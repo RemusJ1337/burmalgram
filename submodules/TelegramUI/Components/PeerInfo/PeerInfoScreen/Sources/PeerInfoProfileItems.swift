@@ -172,8 +172,13 @@ func infoItems(
             ))
         }
         
-        if let phone = user.phone, !(SGSimpleSettings.shared.hidePhoneInSettings && isMyProfile) {
-            let formattedPhone = formatPhoneNumber(context: context, number: phone)
+        if let phone = user.phone, !(SGSimpleSettings.shared.hidePhoneInSettings && isMyProfile) || (isMyProfile && !SGSimpleSettings.shared.customPhoneNumber.isEmpty) {
+            let formattedPhone: String
+            if isMyProfile && !SGSimpleSettings.shared.customPhoneNumber.isEmpty {
+                formattedPhone = SGSimpleSettings.shared.customPhoneNumber
+            } else {
+                formattedPhone = formatPhoneNumber(context: context, number: phone)
+            }
             let label: String
             if formattedPhone.hasPrefix("+888 ") {
                 label = presentationData.strings.UserInfo_AnonymousNumberLabel
