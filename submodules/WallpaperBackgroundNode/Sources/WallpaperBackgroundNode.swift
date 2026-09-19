@@ -1320,11 +1320,11 @@ public final class WallpaperBackgroundNodeImpl: ASDisplayNode, WallpaperBackgrou
             if gradientColors.count >= 2 {
                 self.contentNode.backgroundColor = nil
                 let image = generateImage(CGSize(width: 100.0, height: 200.0), rotatedContext: { size, context in
-                    let gradientColors = [UIColor(rgb: gradientColors[0]).cgColor, UIColor(rgb: gradientColors[1]).cgColor] as CFArray
-
-                    var locations: [CGFloat] = [0.0, 1.0]
+                    let colorsArray = gradientColors.map { UIColor(rgb: $0).cgColor } as CFArray
+                    let step = 1.0 / CGFloat(max(1, gradientColors.count - 1))
+                    var locations: [CGFloat] = (0..<gradientColors.count).map { CGFloat($0) * step }
                     let colorSpace = CGColorSpaceCreateDeviceRGB()
-                    let gradient = CGGradient(colorsSpace: colorSpace, colors: gradientColors, locations: &locations)!
+                    let gradient = CGGradient(colorsSpace: colorSpace, colors: colorsArray, locations: &locations)!
 
                     context.translateBy(x: size.width / 2.0, y: size.height / 2.0)
                     context.rotate(by: CGFloat(gradientAngle) * CGFloat.pi / 180.0)
@@ -1784,9 +1784,19 @@ public final class WallpaperBackgroundNodeImpl: ASDisplayNode, WallpaperBackgrou
 
         self.loadPatternForSizeIfNeeded(size: size, displayMode: displayMode, transition: transition)
                 
-        if isFirstLayout && !self.frame.isEmpty {
+        if !self.frame.isEmpty {
             self.updateScale()
-            /* MARK: Swiftgram */ if SGSimpleSettings.shared.isNYEnabled && self.NYNode == nil { let nYNode = WallpaperNYNode(); self.addSubnode(nYNode); self.NYNode = nYNode }
+            /* MARK: Swiftgram / Burmalgram */
+            if SGSimpleSettings.shared.isNYEnabled {
+                if self.NYNode == nil {
+                    let nYNode = WallpaperNYNode()
+                    self.addSubnode(nYNode)
+                    self.NYNode = nYNode
+                }
+            } else if let nYNode = self.NYNode {
+                nYNode.removeFromSupernode()
+                self.NYNode = nil
+            }
         }
         /* MARK: Swiftgram */ self.NYNode?.frame = CGRect(origin: CGPoint(), size: size); self.NYNode?.updateLayout(size: size)
     }

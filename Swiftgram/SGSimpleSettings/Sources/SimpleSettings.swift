@@ -260,6 +260,9 @@ public class SGSimpleSettings {
         case `default`
         case snow
         case lightning
+        case stars
+        case sparks
+        case metal
     }
     
     public static let defaultValues: [String: Any] = [

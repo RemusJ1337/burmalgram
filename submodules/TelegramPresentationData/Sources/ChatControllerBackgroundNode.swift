@@ -45,9 +45,10 @@ public func chatControllerBackgroundImage(theme: PresentationTheme?, wallpaper i
                 })
             case let .gradient(gradient):
                 backgroundImage = generateImage(CGSize(width: 640.0, height: 1280.0), rotatedContext: { size, context in
-                    let gradientColors = [UIColor(argb: gradient.colors.count >= 1 ? gradient.colors[0] : 0).cgColor, UIColor(argb: gradient.colors.count >= 2 ? gradient.colors[1] : 0).cgColor] as CFArray
-                       
-                    var locations: [CGFloat] = [0.0, 1.0]
+                    let colors = gradient.colors.isEmpty ? [0, 0] : (gradient.colors.count == 1 ? [gradient.colors[0], gradient.colors[0]] : gradient.colors)
+                    let gradientColors = colors.map { UIColor(argb: $0).cgColor } as CFArray
+                    let step = 1.0 / CGFloat(max(1, colors.count - 1))
+                    var locations: [CGFloat] = (0..<colors.count).map { CGFloat($0) * step }
                     let colorSpace = CGColorSpaceCreateDeviceRGB()
                     let cgGradient = CGGradient(colorsSpace: colorSpace, colors: gradientColors, locations: &locations)!
 
@@ -131,9 +132,10 @@ public func chatControllerBackgroundImageSignal(wallpaper: TelegramWallpaper, me
                 }
             case let .gradient(gradient):
                 return .single((generateImage(CGSize(width: 640.0, height: 1280.0).fitted(CGSize(width: 100.0, height: 100.0)), rotatedContext: { size, context in
-                    let gradientColors = [UIColor(rgb: gradient.colors.count >= 1 ? gradient.colors[0] : 0).cgColor, UIColor(rgb: gradient.colors.count >= 2 ? gradient.colors[1] : 0).cgColor] as CFArray
-                       
-                    var locations: [CGFloat] = [0.0, 1.0]
+                    let colors = gradient.colors.isEmpty ? [0, 0] : (gradient.colors.count == 1 ? [gradient.colors[0], gradient.colors[0]] : gradient.colors)
+                    let gradientColors = colors.map { UIColor(rgb: $0).cgColor } as CFArray
+                    let step = 1.0 / CGFloat(max(1, colors.count - 1))
+                    var locations: [CGFloat] = (0..<colors.count).map { CGFloat($0) * step }
                     let colorSpace = CGColorSpaceCreateDeviceRGB()
                     let cgGradient = CGGradient(colorsSpace: colorSpace, colors: gradientColors, locations: &locations)!
 

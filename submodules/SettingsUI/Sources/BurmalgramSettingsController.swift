@@ -192,32 +192,17 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
         var current = current
         
         switch themeKey {
-        case "midnight": // Тёмная (Obsidian AMOLED / Midnight Black)
-            let baseThemeRef: PresentationThemeReference = .builtin(.night)
-            let accentColor: UInt32 = 0x00a8ff
-            let bubbleColors: [UInt32] = [0x0b1e36, 0x103459, 0x154b7d, 0x1a62a1]
-            let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
-                id: nil,
-                colors: [0x04070c, 0x080f1a, 0x0c1626, 0x060a12],
-                settings: WallpaperSettings(rotation: 45)
-            ))
-            var accents = current.themeSpecificAccentColors
-            accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
-            var wallpapers = current.themeSpecificChatWallpapers
-            wallpapers[baseThemeRef.index] = wallpaper
-            current.theme = baseThemeRef
-            current.themeSpecificAccentColors = accents
-            current.themeSpecificChatWallpapers = wallpapers
-            
-        case "sparkling": // Сверкающая (Sparkling Star / Cosmic Sapphire)
+        case "neon": // ⚡ Cyber Neon (Неон) - neon.jpg
             let baseThemeRef: PresentationThemeReference = .builtin(.nightAccent)
-            let accentColor: UInt32 = 0x8a2be2
-            let bubbleColors: [UInt32] = [0x2e0854, 0x4d1282, 0x6e1cb2, 0x8e24e3]
+            let accentColor: UInt32 = 0x00E5FF
+            let bubbleColors: [UInt32] = [0x00A8D6, 0x00BCE5, 0x01C1E6, 0x18E5FF]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x0d031a, 0x1c0638, 0x2e0a5c, 0x140326],
-                settings: WallpaperSettings(rotation: 55)
+                colors: [0x00165F, 0x00256B, 0x003A72, 0x002058],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x00165F, 0x00256B, 0x003A72, 0x002058], rotation: 45)
             ))
+            SGSimpleSettings.shared.canUseNY = true
+            SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.sparks.rawValue
             var accents = current.themeSpecificAccentColors
             accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             var wallpapers = current.themeSpecificChatWallpapers
@@ -226,15 +211,17 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
-        case "neon": // Неон (Cyber Neon / Electric Aqua)
+        case "titanium": // 🛡️ Titanium Metal (Титан) - titanium.jpg
             let baseThemeRef: PresentationThemeReference = .builtin(.night)
-            let accentColor: UInt32 = 0x00f5d4
-            let bubbleColors: [UInt32] = [0x002b42, 0x004e75, 0x0077a8, 0x00a8e8]
+            let accentColor: UInt32 = 0xD5D5D5
+            let bubbleColors: [UInt32] = [0x8A8A8A, 0xACACAC, 0xD5D5D5, 0xEBEBF0]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x010811, 0x021626, 0x03243d, 0x01101d],
-                settings: WallpaperSettings(rotation: 40)
+                colors: [0x121212, 0x1F2024, 0x2E2F36, 0x18181B],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x121212, 0x1F2024, 0x2E2F36, 0x18181B], rotation: 90)
             ))
+            SGSimpleSettings.shared.canUseNY = true
+            SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.metal.rawValue
             var accents = current.themeSpecificAccentColors
             accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             var wallpapers = current.themeSpecificChatWallpapers
@@ -243,15 +230,17 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
-        case "titanium": // Титан (Titanium Metal / Space Gray & Platinum)
-            let baseThemeRef: PresentationThemeReference = .builtin(.night)
-            let accentColor: UInt32 = 0xd1d5db
-            let bubbleColors: [UInt32] = [0x1f242d, 0x303846, 0x434e61, 0x56647c]
+        case "space", "midnight": // 🌌 Deep Space (Космос) - space.jpg
+            let baseThemeRef: PresentationThemeReference = .builtin(.nightAccent)
+            let accentColor: UInt32 = 0xA855F7
+            let bubbleColors: [UInt32] = [0x26374D, 0x314660, 0x3A4F6C, 0x465E82]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x0d0e12, 0x16181f, 0x1f222b, 0x121318],
-                settings: WallpaperSettings(rotation: 45)
+                colors: [0x030409, 0x060B1E, 0x0D1127, 0x07081A],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x030409, 0x060B1E, 0x0D1127, 0x07081A], rotation: 120)
             ))
+            SGSimpleSettings.shared.canUseNY = true
+            SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.stars.rawValue
             var accents = current.themeSpecificAccentColors
             accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             var wallpapers = current.themeSpecificChatWallpapers
@@ -260,7 +249,28 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
-        default: // Reset to default
+        case "sparkling": // ✨ Sparkling Star (Сверкающая) - sparkling.jpg
+            let baseThemeRef: PresentationThemeReference = .builtin(.nightAccent)
+            let accentColor: UInt32 = 0x00A6FF
+            let bubbleColors: [UInt32] = [0x0238FD, 0x0545FE, 0x0B94FE, 0x00D2FF]
+            let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
+                id: nil,
+                colors: [0x05041A, 0x0B0837, 0x120C4D, 0x000E3A],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x05041A, 0x0B0837, 0x120C4D, 0x000E3A], rotation: 60)
+            ))
+            SGSimpleSettings.shared.canUseNY = true
+            SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.stars.rawValue
+            var accents = current.themeSpecificAccentColors
+            accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            var wallpapers = current.themeSpecificChatWallpapers
+            wallpapers[baseThemeRef.index] = wallpaper
+            current.theme = baseThemeRef
+            current.themeSpecificAccentColors = accents
+            current.themeSpecificChatWallpapers = wallpapers
+            
+        default: // Reset to default Telegram
+            SGSimpleSettings.shared.canUseNY = false
+            SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.default.rawValue
             current.theme = .builtin(.dayClassic)
         }
         
@@ -530,10 +540,11 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
     case fakePremiumInfo(PresentationTheme, String)
     
     case headerThemes(PresentationTheme, String)
-    case themeMidnight(PresentationTheme, String, String)
-    case themeSparkling(PresentationTheme, String, String)
     case themeNeon(PresentationTheme, String, String)
     case themeTitanium(PresentationTheme, String, String)
+    case themeSpace(PresentationTheme, String, String)
+    case themeSparkling(PresentationTheme, String, String)
+    case themeStandardPicker(PresentationTheme, String)
     case themeReset(PresentationTheme, String, String)
     case themeFooter(PresentationTheme, String)
     
@@ -569,7 +580,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         switch self {
         case .headerPremium, .fakePremium, .fakePremiumInfo:
             return BurmalgramCustomizationSection.premium.rawValue
-        case .headerThemes, .themeMidnight, .themeSparkling, .themeNeon, .themeTitanium, .themeReset, .themeFooter:
+        case .headerThemes, .themeNeon, .themeTitanium, .themeSpace, .themeSparkling, .themeStandardPicker, .themeReset, .themeFooter:
             return BurmalgramCustomizationSection.themes.rawValue
         case .headerVisuals, .customFont, .customPhone, .hidePhone, .showProfileId, .showDC, .showRegDate, .showCreationDate:
             return BurmalgramCustomizationSection.visuals.rawValue
@@ -587,12 +598,13 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case .fakePremiumInfo: return 2
         
         case .headerThemes: return 10
-        case .themeMidnight: return 11
-        case .themeSparkling: return 12
-        case .themeNeon: return 13
-        case .themeTitanium: return 14
-        case .themeReset: return 15
-        case .themeFooter: return 16
+        case .themeNeon: return 11
+        case .themeTitanium: return 12
+        case .themeSpace: return 13
+        case .themeSparkling: return 14
+        case .themeStandardPicker: return 15
+        case .themeReset: return 16
+        case .themeFooter: return 17
         
         case .headerVisuals: return 20
         case .customFont: return 21
@@ -638,17 +650,20 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case let .headerThemes(lhsTheme, lhsText):
             if case let .headerThemes(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
             return false
-        case let .themeMidnight(lhsTheme, lhsText, lhsValue):
-            if case let .themeMidnight(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
-            return false
-        case let .themeSparkling(lhsTheme, lhsText, lhsValue):
-            if case let .themeSparkling(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
-            return false
         case let .themeNeon(lhsTheme, lhsText, lhsValue):
             if case let .themeNeon(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .themeTitanium(lhsTheme, lhsText, lhsValue):
             if case let .themeTitanium(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .themeSpace(lhsTheme, lhsText, lhsValue):
+            if case let .themeSpace(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .themeSparkling(lhsTheme, lhsText, lhsValue):
+            if case let .themeSparkling(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .themeStandardPicker(lhsTheme, lhsText):
+            if case let .themeStandardPicker(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
             return false
         case let .themeReset(lhsTheme, lhsText, lhsValue):
             if case let .themeReset(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
@@ -751,14 +766,6 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         case let .headerThemes(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
-        case let .themeMidnight(_, text, value):
-            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
-                args.applyTheme("midnight")
-            })
-        case let .themeSparkling(_, text, value):
-            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
-                args.applyTheme("sparkling")
-            })
         case let .themeNeon(_, text, value):
             return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.applyTheme("neon")
@@ -766,6 +773,18 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case let .themeTitanium(_, text, value):
             return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.applyTheme("titanium")
+            })
+        case let .themeSpace(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyTheme("space")
+            })
+        case let .themeSparkling(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyTheme("sparkling")
+            })
+        case let .themeStandardPicker(_, text):
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.chatAppearance, title: text, label: "", sectionId: self.section, style: .blocks, action: {
+                args.openStandardThemes()
             })
         case let .themeReset(_, text, value):
             return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
@@ -874,6 +893,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
 private final class BurmalgramCustomizationArguments {
     let toggleFakePremium: (Bool) -> Void
     let applyTheme: (String) -> Void
+    let openStandardThemes: () -> Void
     let selectFont: () -> Void
     let editCustomPhone: () -> Void
     let toggleHidePhone: (Bool) -> Void
@@ -900,6 +920,7 @@ private final class BurmalgramCustomizationArguments {
     init(
         toggleFakePremium: @escaping (Bool) -> Void,
         applyTheme: @escaping (String) -> Void,
+        openStandardThemes: @escaping () -> Void,
         selectFont: @escaping () -> Void,
         editCustomPhone: @escaping () -> Void,
         toggleHidePhone: @escaping (Bool) -> Void,
@@ -925,6 +946,7 @@ private final class BurmalgramCustomizationArguments {
     ) {
         self.toggleFakePremium = toggleFakePremium
         self.applyTheme = applyTheme
+        self.openStandardThemes = openStandardThemes
         self.selectFont = selectFont
         self.editCustomPhone = editCustomPhone
         self.toggleHidePhone = toggleHidePhone
@@ -976,6 +998,9 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         applyTheme: { themeKey in
             applyBurmalgramTheme(context: context, themeKey: themeKey)
             reloadPromise.set(true)
+        },
+        openStandardThemes: {
+            pushControllerImpl?(themePickerController(context: context))
         },
         selectFont: {
             pushControllerImpl?(burmalgramFontSelectionController(context: context))
@@ -1086,13 +1111,14 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         entries.append(.fakePremiumInfo(presentationData.theme, "100% локальный режим: значок Premium в профиле, цвета профиля и имени сохраняются локально без ошибок сервера, премиум-иконки, расширенные лимиты, распознавание речи и премиум-реакции."))
         
         let currentTheme = SGSimpleSettings.shared.burmalgramTheme
-        entries.append(.headerThemes(presentationData.theme, "ЭКСКЛЮЗИВНЫЕ ТЕМЫ BURMALGRAM"))
-        entries.append(.themeMidnight(presentationData.theme, "🌌 Тёмная (Midnight Black / Obsidian)", currentTheme == "midnight" ? "Активна" : ""))
-        entries.append(.themeSparkling(presentationData.theme, "✨ Сверкающая (Sparkling Star / Sapphire)", currentTheme == "sparkling" ? "Активна" : ""))
-        entries.append(.themeNeon(presentationData.theme, "⚡ Неон (Cyber Neon / Electric Aqua)", currentTheme == "neon" ? "Активна" : ""))
-        entries.append(.themeTitanium(presentationData.theme, "🛡️ Титан (Titanium Metal / Platinum)", currentTheme == "titanium" ? "Активна" : ""))
+        entries.append(.headerThemes(presentationData.theme, "ЭКСКЛЮЗИВНЫЕ ТЕМЫ BURMALGRAM (ИЗ ДИЗАЙНА)"))
+        entries.append(.themeNeon(presentationData.theme, "⚡ Неон (Cyber Neon)", currentTheme == "neon" ? "Активна" : ""))
+        entries.append(.themeTitanium(presentationData.theme, "🛡️ Титан (Titanium Metal)", currentTheme == "titanium" ? "Активна" : ""))
+        entries.append(.themeSpace(presentationData.theme, "🌌 Космос (Deep Space)", (currentTheme == "space" || currentTheme == "midnight") ? "Активна" : ""))
+        entries.append(.themeSparkling(presentationData.theme, "✨ Сверкающая (Sparkling Star)", currentTheme == "sparkling" ? "Активна" : ""))
+        entries.append(.themeStandardPicker(presentationData.theme, "🎨 Все стандартные темы Telegram..."))
         entries.append(.themeReset(presentationData.theme, "🔄 Сбросить тему (По умолчанию)", ""))
-        entries.append(.themeFooter(presentationData.theme, "Эксклюзивные стили в эстетике иконок приложения: градиентные обои с поворотом, многокомпонентные градиенты сообщений и акценты."))
+        entries.append(.themeFooter(presentationData.theme, "Анимированные частицы (мерцающие звезды, искры, переливы платины), гироскопный параллакс 3D и многоточечные градиенты сообщений и фона."))
         
         entries.append(.headerVisuals(presentationData.theme, "ШРИФТ И ПРОФИЛЬ"))
         entries.append(.customFont(presentationData.theme, "Шрифт интерфейса", burmalgramFontDisplayName(SGSimpleSettings.shared.customFont)))
