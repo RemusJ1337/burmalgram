@@ -181,6 +181,11 @@ public class SGSimpleSettings {
         case customPhoneNumber
         case disableForwardRestriction
         case fixFilePicker
+        case fakeProfileColor
+        case fakeProfileBackgroundEmojiId
+        case fakeNameColor
+        case fakeBackgroundEmojiId
+        case burmalgramTheme
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -338,7 +343,12 @@ public class SGSimpleSettings {
         Keys.customFont.rawValue: "default",
         Keys.customPhoneNumber.rawValue: "",
         Keys.disableForwardRestriction.rawValue: false,
-        Keys.fixFilePicker.rawValue: false
+        Keys.fixFilePicker.rawValue: false,
+        Keys.fakeProfileColor.rawValue: -1 as Int32,
+        Keys.fakeProfileBackgroundEmojiId.rawValue: 0 as Int64,
+        Keys.fakeNameColor.rawValue: -1 as Int32,
+        Keys.fakeBackgroundEmojiId.rawValue: 0 as Int64,
+        Keys.burmalgramTheme.rawValue: "default"
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -363,6 +373,21 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.fixFilePicker.rawValue)
     public var fixFilePicker: Bool
+
+    @UserDefault(key: Keys.fakeProfileColor.rawValue)
+    public var fakeProfileColor: Int32
+
+    @UserDefault(key: Keys.fakeProfileBackgroundEmojiId.rawValue)
+    public var fakeProfileBackgroundEmojiId: Int64
+
+    @UserDefault(key: Keys.fakeNameColor.rawValue)
+    public var fakeNameColor: Int32
+
+    @UserDefault(key: Keys.fakeBackgroundEmojiId.rawValue)
+    public var fakeBackgroundEmojiId: Int64
+
+    @UserDefault(key: Keys.burmalgramTheme.rawValue)
+    public var burmalgramTheme: String
 
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool

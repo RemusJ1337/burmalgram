@@ -307,6 +307,36 @@ public struct Font {
         case "trebuchet":
             let fontName = weight.isBold ? "TrebuchetMS-Bold" : "TrebuchetMS"
             return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "helvetica":
+            let fontName = weight.isBold ? "HelveticaNeue-Bold" : (weight == .medium || weight == .semibold ? "HelveticaNeue-Medium" : "HelveticaNeue")
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "futura":
+            let fontName = weight.isBold ? "Futura-Bold" : "Futura-Medium"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "palatino":
+            let fontName = weight.isBold ? "Palatino-Bold" : "Palatino-Roman"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "menlo":
+            let fontName = weight.isBold ? "Menlo-Bold" : "Menlo-Regular"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "optima":
+            let fontName = weight.isBold ? "Optima-Bold" : "Optima-Regular"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "baskerville":
+            let fontName = weight.isBold ? "Baskerville-Bold" : "Baskerville"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "copperplate":
+            let fontName = weight.isBold ? "Copperplate-Bold" : "Copperplate"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "gill":
+            let fontName = weight.isBold ? "GillSans-Bold" : "GillSans"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "snell":
+            let fontName = weight.isBold ? "SnellRoundhand-Bold" : "SnellRoundhand"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
+        case "markerfelt":
+            let fontName = weight.isBold ? "MarkerFelt-Wide" : "MarkerFelt-Thin"
+            return UIFont(name: fontName, size: size) ?? UIFont.systemFont(ofSize: size, weight: weight.weight)
         default:
             return UIFont.systemFont(ofSize: size, weight: weight.weight)
         }

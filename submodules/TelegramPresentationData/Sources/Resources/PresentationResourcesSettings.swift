@@ -118,7 +118,7 @@ let colorViolet = UIColor(rgb: 0x5E5CE6)
 
 public struct PresentationResourcesSettings {
     public static let burmalgram: UIImage? = {
-        if let appIcon = UIImage(named: "AppIconLLC60x60", in: getAppBundle(), compatibleWith: nil) ?? UIImage(named: "AppIcon60x60", in: getAppBundle(), compatibleWith: nil) {
+        if let appIcon = UIImage(named: "BurmalgrammIcon", in: getAppBundle(), compatibleWith: nil) ?? UIImage(named: "AppIconLLC60x60", in: getAppBundle(), compatibleWith: nil) ?? UIImage(named: "AppIcon60x60", in: getAppBundle(), compatibleWith: nil) {
             return renderAttachAppIcon(iconImage: appIcon)
         }
         return renderSettingsIcon(name: "Item List/Icons/SavedMessages", backgroundColors: [colorBlue])

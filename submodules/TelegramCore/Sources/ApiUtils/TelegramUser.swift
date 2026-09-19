@@ -188,6 +188,19 @@ extension TelegramUser {
                 default:
                     break
                 }
+            if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
+                if SGSimpleSettings.shared.fakeProfileColor >= 0 {
+                    profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
+                }
+                if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
+                    profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
+                }
+                if SGSimpleSettings.shared.fakeNameColor >= 0 {
+                    nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
+                }
+                if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
+                    backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
+                }
             }
             
             self.init(id: PeerId(namespace: Namespaces.Peer.CloudUser, id: PeerId.Id._internalFromInt64Value(id)), accessHash: accessHashValue, firstName: firstName, lastName: lastName, username: username, phone: phone, photo: representations, botInfo: botInfo, restrictionInfo: restrictionInfo, flags: userFlags, emojiStatus: emojiStatus.flatMap(PeerEmojiStatus.init(apiStatus:)), usernames: usernames?.map(TelegramPeerUsername.init(apiUsername:)) ?? [], storiesHidden: storiesHidden, nameColor: nameColor, backgroundEmojiId: backgroundEmojiId, profileColor: profileColorIndex.flatMap { PeerNameColor(rawValue: $0) }, profileBackgroundEmojiId: profileBackgroundEmojiId, subscriberCount: subscriberCount, verificationIconFileId: verificationIconFileId, linkedCommunityId: linkedCommunityId)
@@ -318,6 +331,19 @@ extension TelegramUser {
                                 profileBackgroundEmojiId = backgroundEmojiIdValue
                             default:
                                 break
+                            }
+                        if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
+                            if SGSimpleSettings.shared.fakeProfileColor >= 0 {
+                                profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
+                            }
+                            if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
+                                profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
+                            }
+                            if SGSimpleSettings.shared.fakeNameColor >= 0 {
+                                nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
+                            }
+                            if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
+                                backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
                             }
                         }
 
