@@ -395,7 +395,7 @@ extension TelegramUser {
             if rhs.flags.contains(.isPremium) {
                 userFlags.insert(.isPremium)
             }
-            let isSelf = (!SGSimpleSettings.shared.primaryUserId.isEmpty && (String(rhs.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId || (lhs != nil && String(lhs!.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId)))
+            let isSelf = (!SGSimpleSettings.shared.primaryUserId.isEmpty && (String(rhs.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId || String(lhs.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId))
             if isSelf && SGSimpleSettings.shared.fakePremium {
                 userFlags.insert(.isPremium)
             }
