@@ -5,7 +5,7 @@ import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
 import ItemListUI
-import AlertUI
+import PresentationDataUtils
 import AccountContext
 
 // MARK: - Entry Definition
