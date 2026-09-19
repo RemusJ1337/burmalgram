@@ -1785,7 +1785,9 @@ public final class WallpaperBackgroundNodeImpl: ASDisplayNode, WallpaperBackgrou
         self.loadPatternForSizeIfNeeded(size: size, displayMode: displayMode, transition: transition)
                 
         if !self.frame.isEmpty {
-            self.updateScale()
+            if isFirstLayout {
+                self.updateScale()
+            }
             /* MARK: Swiftgram / Burmalgram */
             if SGSimpleSettings.shared.isNYEnabled {
                 if self.NYNode == nil {
