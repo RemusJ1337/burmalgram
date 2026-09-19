@@ -1,0 +1,1290 @@
+{
+  "name": "GGAPI",
+  "version": "4.1.0",
+  "legend": {
+    "available": "Works from the plugin runtime now.",
+    "bridge": "Runtime method exists; it needs a TelegramUI bridge to affect live UI.",
+    "promise": "Returns a Promise because the Telegram engine operation is asynchronous.",
+    "permissions": "API v2 plugins can declare // @api 2 and // @permissions chat,messages,media,ui,events,network,account,settings,proxy,unsafe."
+  },
+  "namespaces": [
+    {
+      "name": "app",
+      "description": "Application UI and app state.",
+      "methods": [
+        {
+          "signature": "toast(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.app.toast(\"Saved\")"
+        },
+        {
+          "signature": "alert(title, text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.app.alert(\"GGPlugin\", \"Hello\")"
+        },
+        {
+          "signature": "confirm(title, text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const ok = await GGAPI.app.confirm(\"Run\", \"Continue?\")"
+        },
+        {
+          "signature": "openSettings()",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "GGAPI.app.openSettings()"
+        },
+        {
+          "signature": "restartHint()",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "GGAPI.app.restartHint()"
+        },
+        {
+          "signature": "state()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.log(GGAPI.app.state())"
+        },
+        {
+          "signature": "clientInfo()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const info = GGAPI.app.clientInfo()"
+        }
+      ]
+    },
+    {
+      "name": "account",
+      "description": "Current account and subscription bridge.",
+      "methods": [
+        {
+          "signature": "current()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.account.current()"
+        },
+        {
+          "signature": "all()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.account.all()"
+        },
+        {
+          "signature": "subscription()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.account.subscription()"
+        }
+      ]
+    },
+    {
+      "name": "proxy",
+      "description": "Telegram proxy settings bridge. Requires // @permissions proxy.",
+      "methods": [
+        {
+          "signature": "get()",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const state = await GGAPI.proxy.get()",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "list()",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const servers = await GGAPI.proxy.list()",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "current()",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const active = await GGAPI.proxy.current()",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "add({ type, host, port, username, password, secret, activate })",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.add({ type: \"socks5\", host: \"127.0.0.1\", port: 1080, activate: true })",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "activate(idOrConfig)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.activate(server.id)",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "remove(idOrConfig)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.remove(server.id)",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "enable() / disable() / setEnabled(value)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.disable()",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "setUseForCalls(value)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.setUseForCalls(true)",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "clear()",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.clear()",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "importLink(link)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.importLink(\"tg://socks?server=127.0.0.1&port=1080\")",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "check()",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const state = await GGAPI.proxy.check()",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "best({ maxPingMs })",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const server = await GGAPI.proxy.best({ maxPingMs: 500 })",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "activateBest({ maxPingMs, onlyIfBetter })",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.proxy.activateBest({ maxPingMs: 500, onlyIfBetter: true })",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "startAutoSwitch({ intervalMs, maxPingMs, onlyIfBetter })",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const id = GGAPI.proxy.startAutoSwitch({ intervalMs: 60000, onlyIfBetter: true })",
+          "permissions": [
+            "proxy"
+          ]
+        },
+        {
+          "signature": "stopAutoSwitch(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.proxy.stopAutoSwitch(id)",
+          "permissions": [
+            "proxy"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "chat",
+      "description": "Current chat bridge.",
+      "methods": [
+        {
+          "signature": "currentPeerId()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.currentPeerId()"
+        },
+        {
+          "signature": "currentChatInfo()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.currentChatInfo()"
+        },
+        {
+          "signature": "sendText(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.sendText({ text: \"TON 💎\", entities: [{ type: \"custom_emoji\", offset: 4, length: 2, customEmojiId: \"...\" }] })",
+          "formatting": "Accepts an options object { entities, parseMode } or an object form { text, entities, parseMode }. parseMode: 'markdown' | 'html'."
+        },
+        {
+          "signature": "insertText(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.insertText(\"text\", { entities: [...] })",
+          "formatting": "Accepts an options object { entities, parseMode } or an object form { text, entities, parseMode }. parseMode: 'markdown' | 'html'."
+        },
+        {
+          "signature": "clearInput()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.clearInput()"
+        },
+        {
+          "signature": "draftText()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const draft = GGAPI.chat.draftText()"
+        },
+        {
+          "signature": "setDraftText(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.setDraftText(\"text\", { parseMode: \"markdown\" })",
+          "formatting": "Accepts an options object { entities, parseMode } or an object form { text, entities, parseMode }. parseMode: 'markdown' | 'html'."
+        },
+        {
+          "signature": "setTyping(enabled)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.setTyping(true)"
+        },
+        {
+          "signature": "replyText(messageId, text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.replyText(messageId, \"**bold**\", { parseMode: \"markdown\" })",
+          "formatting": "Accepts an options object { entities, parseMode } or an object form { text, entities, parseMode }. parseMode: 'markdown' | 'html'."
+        },
+        {
+          "signature": "sendSilent(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.sendSilent(\"text\", { parseMode: \"html\" })",
+          "permissions": [
+            "chat"
+          ],
+          "formatting": "Accepts an options object { entities, parseMode } or an object form { text, entities, parseMode }. parseMode: 'markdown' | 'html'."
+        },
+        {
+          "signature": "scheduleText(text, timestamp)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.scheduleText(\"text\", timestamp, { entities: [...] })",
+          "permissions": [
+            "chat"
+          ],
+          "formatting": "Accepts an options object { entities, parseMode } or an object form { text, entities, parseMode }. parseMode: 'markdown' | 'html'."
+        },
+        {
+          "signature": "markRead()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.markRead()"
+        },
+        {
+          "signature": "scrollToMessage(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.scrollToMessage(message.id)"
+        },
+        {
+          "signature": "onMessage(handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.onMessage((message) => GGAPI.log(message))"
+        },
+        {
+          "signature": "onInputChange(handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.onInputChange((text) => GGAPI.log(text))"
+        },
+        {
+          "signature": "onBeforeSend(handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.onBeforeSend((payload) => payload)"
+        },
+        {
+          "signature": "off(eventId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.off(id)"
+        }
+      ]
+    },
+    {
+      "name": "messages",
+      "description": "Message actions and local annotations.",
+      "methods": [
+        {
+          "signature": "getSelectedMessage()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.getSelectedMessage()"
+        },
+        {
+          "signature": "current(limit)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.current(30)"
+        },
+        {
+          "signature": "get(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.get(message.id)"
+        },
+        {
+          "signature": "visible(limit)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.visible(30)"
+        },
+        {
+          "signature": "copyText(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.copyText(message.id)"
+        },
+        {
+          "signature": "reply(messageId, text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.reply(message.id, \"ok\")"
+        },
+        {
+          "signature": "react(messageId, emoji)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.react(message.id, \"🔥\")"
+        },
+        {
+          "signature": "forward(messageId, peerId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.forward(message.id, peerId)"
+        },
+        {
+          "signature": "pin(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.pin(message.id)"
+        },
+        {
+          "signature": "unpin(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.unpin(message.id)"
+        },
+        {
+          "signature": "deleteLocal(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.deleteLocal(message.id)"
+        },
+        {
+          "signature": "editLocal(messageId, text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.editLocal(message.id, \"local override\")"
+        },
+        {
+          "signature": "getReactions(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.getReactions(message.id)"
+        },
+        {
+          "signature": "localTag(messageId, tag)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.localTag(message.id, \"todo\")"
+        },
+        {
+          "signature": "removeLocalTag(messageId, tag)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.removeLocalTag(message.id, \"todo\")"
+        },
+        {
+          "signature": "localNote(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.localNote(message.id)"
+        },
+        {
+          "signature": "setLocalNote(messageId, note)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messages.setLocalNote(message.id, \"check later\")"
+        }
+      ]
+    },
+    {
+      "name": "ui",
+      "description": "Plugin-controlled local UI registrations.",
+      "methods": [
+        {
+          "signature": "addChatMenuButton(config, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.addChatMenuButton({ title: \"Ping\" }, () => GGAPI.toast(\"pong\"))"
+        },
+        {
+          "signature": "removeChatMenuButton(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.removeChatMenuButton(id)"
+        },
+        {
+          "signature": "addMessageContextAction(config, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.addMessageContextAction({ title: \"Tag\" }, () => {})"
+        },
+        {
+          "signature": "removeMessageContextAction(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.removeMessageContextAction(id)"
+        },
+        {
+          "signature": "addFloatingButton(config, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.addFloatingButton({ title: \"+\", position: \"bottomRight\", offsetY: -120, draggable: true }, () => {})",
+          "config": {
+            "x": "Absolute x coordinate in the chat view.",
+            "y": "Absolute y coordinate in the chat view.",
+            "position": "topLeft, topRight, bottomLeft, bottomRight, centerRight, center.",
+            "offsetX": "Offset from the chosen position.",
+            "offsetY": "Offset from the chosen position.",
+            "width": "Optional fixed width.",
+            "height": "Optional fixed height.",
+            "draggable": "When true, long-press and drag saves the button position."
+          }
+        },
+        {
+          "signature": "removeFloatingButton(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.removeFloatingButton(id)"
+        },
+        {
+          "signature": "addChatListHeaderButton(config, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.addChatListHeaderButton({ title: \"TON\", icon: \"diamond\", color: \"#0098EA\", placement: \"trailing\", after: \"proxy\" }, handler)"
+        },
+        {
+          "signature": "removeChatListHeaderButton(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.removeChatListHeaderButton(id)"
+        },
+        {
+          "signature": "addInputAccessory(config, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.addInputAccessory({ title: \"AI\" }, () => {})"
+        },
+        {
+          "signature": "addChatPanel(config)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.addChatPanel({ title: \"Panel\" })"
+        },
+        {
+          "signature": "updateChatPanel(id, patch)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.updateChatPanel(id, { title: \"Updated\" })"
+        },
+        {
+          "signature": "removeChatPanel(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.removeChatPanel(id)"
+        },
+        {
+          "signature": "showSheet(config)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.showSheet({ title: \"GG\", text: \"Hello\" })"
+        },
+        {
+          "signature": "showToast(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.showToast(\"Done\")"
+        },
+        {
+          "signature": "setChatHeaderBadge(text, color)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.setChatHeaderBadge(\"LIVE\", \"#37ff8b\")"
+        },
+        {
+          "signature": "clearChatHeaderBadge()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.ui.clearChatHeaderBadge()"
+        }
+      ],
+      "buttonConfig": "Unified button config (flat fields): title, icon (SF Symbol name), color, backgroundColor, textColor, cornerRadius, borderColor, borderWidth, alpha, fontSize, shadow, displayMode ('icon'|'text'|'icon-text'), width, height, position, offsetX, offsetY, draggable. addChatListHeaderButton also supports placement ('leading'|'trailing'), before/after (proxy|compose|story|accountSwitcher) and order. Note: custom (animated) emoji renders in sent text but not inside native button titles."
+    },
+    {
+      "name": "profile",
+      "description": "Profile screen actions.",
+      "methods": [
+        {
+          "signature": "addProfileAction(config, handler)",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "GGAPI.profile.addProfileAction({ title: \"Open\" }, () => {})"
+        },
+        {
+          "signature": "removeProfileAction(id)",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "GGAPI.profile.removeProfileAction(id)"
+        },
+        {
+          "signature": "openProfile(peerId)",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "GGAPI.profile.openProfile(peerId)"
+        }
+      ]
+    },
+    {
+      "name": "navigation",
+      "description": "Open app locations and links.",
+      "methods": [
+        {
+          "signature": "openChat(peerId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.navigation.openChat(peerId)"
+        },
+        {
+          "signature": "openProfile(peerId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.navigation.openProfile(peerId)"
+        },
+        {
+          "signature": "openSettingsTab(id)",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "GGAPI.navigation.openSettingsTab(\"customization\")"
+        },
+        {
+          "signature": "openMedia(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.navigation.openMedia(message.id)"
+        },
+        {
+          "signature": "openUrl(url)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.navigation.openUrl(\"https://example.com\")"
+        }
+      ]
+    },
+    {
+      "name": "media",
+      "description": "Message media bridge.",
+      "methods": [
+        {
+          "signature": "selected()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.media.selected()"
+        },
+        {
+          "signature": "forMessage(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.media.forMessage(message.id)"
+        },
+        {
+          "signature": "save(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.media.save(message.id)"
+        },
+        {
+          "signature": "download(messageId)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "GGAPI.media.download(message.id).then((file) => GGAPI.log(file))"
+        },
+        {
+          "signature": "saveToFiles(messageId)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "GGAPI.media.saveToFiles(message.id).then((result) => GGAPI.toast(result.requested ? \"Opened\" : \"No file\"))"
+        },
+        {
+          "signature": "info(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.media.info(message.id)"
+        },
+        {
+          "signature": "share(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.media.share(message.id)"
+        }
+      ]
+    },
+    {
+      "name": "storage",
+      "description": "Persistent isolated plugin storage.",
+      "methods": [
+        {
+          "signature": "get(key)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.get(\"counter\")"
+        },
+        {
+          "signature": "set(key, value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.set(\"counter\", 1)"
+        },
+        {
+          "signature": "has(key)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.has(\"counter\")"
+        },
+        {
+          "signature": "getJSON(key, fallbackValue)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.getJSON(\"items\", [])"
+        },
+        {
+          "signature": "setJSON(key, value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.setJSON(\"items\", [1, 2])"
+        },
+        {
+          "signature": "push(key, value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.push(\"events\", { time: Date.now() })"
+        },
+        {
+          "signature": "remove(key)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.remove(\"counter\")"
+        },
+        {
+          "signature": "clear()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.storage.clear()"
+        }
+      ]
+    },
+    {
+      "name": "files",
+      "description": "Per-plugin local files.",
+      "methods": [
+        {
+          "signature": "writeText(name, text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.files.writeText(\"note.txt\", \"hello\")"
+        },
+        {
+          "signature": "readText(name)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.files.readText(\"note.txt\")"
+        },
+        {
+          "signature": "writeJSON(name, value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.files.writeJSON(\"state.json\", { ok: true })"
+        },
+        {
+          "signature": "readJSON(name)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.files.readJSON(\"state.json\")"
+        },
+        {
+          "signature": "list()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.files.list()"
+        },
+        {
+          "signature": "remove(name)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.files.remove(\"note.txt\")"
+        },
+        {
+          "signature": "pick()",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "const file = await GGAPI.files.pick()"
+        },
+        {
+          "signature": "share(path)",
+          "availability": "bridge",
+          "availableNow": false,
+          "example": "GGAPI.files.share(path)"
+        }
+      ]
+    },
+    {
+      "name": "network",
+      "description": "Trusted plugin networking with fixed app stability limits.",
+      "methods": [
+        {
+          "signature": "fetch(url, options)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.network.fetch(url, { method: \"GET\", proxy: \"telegram\" })",
+          "proxy": "options.proxy: 'telegram' | 'active' | proxy id | { type:'socks5', host, port, username?, password? }. SOCKS5 only; MTProxy returns an error."
+        },
+        {
+          "signature": "fetchViaTelegramProxy(url, options)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "GGAPI.network.fetchViaTelegramProxy(url, { method: \"GET\" })",
+          "description": "Like fetch but routes through the current Telegram SOCKS5 proxy."
+        },
+        {
+          "signature": "setDefaultProxy(proxy)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.network.setDefaultProxy(\"telegram\")",
+          "description": "Set a default proxy (string keyword/id or {socks5} object) applied to all subsequent fetches; pass null to clear."
+        },
+        {
+          "signature": "getProxyState()",
+          "availability": "promise",
+          "availableNow": true,
+          "permissions": [
+            "proxy"
+          ],
+          "example": "GGAPI.network.getProxyState().then(s => console.log(s.active))",
+          "description": "Resolve the current proxy settings snapshot (requires the proxy permission)."
+        }
+      ]
+    },
+    {
+      "name": "theme",
+      "description": "Local theme helpers.",
+      "methods": [
+        {
+          "signature": "getTheme()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.theme.getTheme()"
+        },
+        {
+          "signature": "setAccentColor(hex)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.theme.setAccentColor(\"#00ff88\")"
+        },
+        {
+          "signature": "resetAccentColor()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.theme.resetAccentColor()"
+        }
+      ]
+    },
+    {
+      "name": "clipboard",
+      "description": "Clipboard bridge with local fallback.",
+      "methods": [
+        {
+          "signature": "getText()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.clipboard.getText()"
+        },
+        {
+          "signature": "setText(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.clipboard.setText(\"copied\")"
+        }
+      ]
+    },
+    {
+      "name": "settings",
+      "description": "Ghostgram settings bridge and local plugin settings.",
+      "methods": [
+        {
+          "signature": "snapshot()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.settings.snapshot()"
+        },
+        {
+          "signature": "get(key)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.settings.get(\"myToggle\")"
+        },
+        {
+          "signature": "set(key, value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.settings.set(\"myToggle\", true)"
+        },
+        {
+          "signature": "remove(key)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.settings.remove(\"myToggle\")"
+        },
+        {
+          "signature": "define({ title, items })",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.settings.define({ title: \"Auto Proxy\", items: [{ key: \"enabled\", title: \"Автопереключение\", default: true }] })",
+          "permissions": [
+            "settings"
+          ]
+        },
+        {
+          "signature": "getPlugin(key, fallbackValue)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const enabled = GGAPI.settings.getPlugin(\"enabled\", true)"
+        },
+        {
+          "signature": "setPlugin(key, value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.settings.setPlugin(\"enabled\", false)"
+        },
+        {
+          "signature": "toggle(key, fallbackValue)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "if (GGAPI.settings.toggle(\"enabled\", true)) { GGAPI.log(\"on\") }"
+        }
+      ]
+    },
+    {
+      "name": "events",
+      "description": "Plugin event bus.",
+      "methods": [
+        {
+          "signature": "on(event, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.events.on(\"ready\", GGAPI.log)"
+        },
+        {
+          "signature": "once(event, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.events.once(\"ready\", GGAPI.log)"
+        },
+        {
+          "signature": "emit(event, payload)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.events.emit(\"ready\", { ok: true })"
+        },
+        {
+          "signature": "off(eventId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.events.off(id)"
+        }
+      ]
+    },
+    {
+      "name": "plugins",
+      "description": "Cross-plugin event bus and runtime metadata.",
+      "methods": [
+        {
+          "signature": "emit(channel, payload)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.plugins.emit(\"plugin:test\", { ok: true })"
+        },
+        {
+          "signature": "on(channel, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.plugins.on(\"plugin:test\", (event) => GGAPI.log(event.payload))"
+        },
+        {
+          "signature": "once(channel, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.plugins.once(\"system:ready\", GGAPI.log)"
+        },
+        {
+          "signature": "off(eventId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.plugins.off(id)"
+        },
+        {
+          "signature": "list()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.plugins.list()"
+        },
+        {
+          "signature": "info(pluginId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.plugins.info(pluginId)"
+        }
+      ]
+    },
+    {
+      "name": "console",
+      "description": "Plugin console control.",
+      "methods": [
+        {
+          "signature": "log(value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.console.log({ ok: true })"
+        },
+        {
+          "signature": "info(value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.console.info(\"info\")"
+        },
+        {
+          "signature": "warn(value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.console.warn(\"warn\")"
+        },
+        {
+          "signature": "error(value)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.console.error(\"error\")"
+        },
+        {
+          "signature": "history()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.console.history()"
+        },
+        {
+          "signature": "clear()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.console.clear()"
+        }
+      ]
+    },
+    {
+      "name": "timers",
+      "description": "Timer helpers cleaned on plugin stop.",
+      "methods": [
+        {
+          "signature": "setTimeout(handler, delay)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.timers.setTimeout(() => GGAPI.toast(\"later\"), 1000)"
+        },
+        {
+          "signature": "setInterval(handler, delay)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const id = GGAPI.timers.setInterval(() => GGAPI.log(Date.now()), 1000)"
+        },
+        {
+          "signature": "clear(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.timers.clear(id)"
+        }
+      ]
+    },
+    {
+      "name": "users",
+      "description": "Safe local user and peer lookup. Requires users.read-basic, users.read-profile, or peer.read.",
+      "methods": [
+        {
+          "signature": "me()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const me = GGAPI.users.me()",
+          "permissions": [
+            "users.read-basic"
+          ]
+        },
+        {
+          "signature": "current()",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const peer = GGAPI.users.current()",
+          "permissions": [
+            "peer.read"
+          ]
+        },
+        {
+          "signature": "get(peerId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "const peer = GGAPI.users.get(123)",
+          "permissions": [
+            "peer.read"
+          ]
+        },
+        {
+          "signature": "resolve(usernameOrLink)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const peer = await GGAPI.users.resolve(\"@durov\")",
+          "permissions": [
+            "users.read-basic"
+          ]
+        },
+        {
+          "signature": "search(query, { limit })",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const peers = await GGAPI.users.search(\"alex\", { limit: 10 })",
+          "permissions": [
+            "users.read-basic"
+          ]
+        },
+        {
+          "signature": "selectUser(options)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "const peer = await GGAPI.users.selectUser({ title: \"Pick user\", includeBots: true })",
+          "permissions": [
+            "users.read-basic"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "profile",
+      "description": "Local profile UI extensions.",
+      "methods": [
+        {
+          "signature": "addSection({ id, title, placement, peerTypes, items }, handler)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.profile.addSection({ title: \"Plugin\", peerTypes: [\"user\"], items: [{ id: \"id\", title: \"ID\", value: \"123\" }] })",
+          "permissions": [
+            "profile.sections"
+          ]
+        },
+        {
+          "signature": "removeSection(id)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.profile.removeSection(sectionId)",
+          "permissions": [
+            "profile.sections"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "messageStyle",
+      "description": "Local-only message decorations. Does not alter server messages or copy-protection.",
+      "methods": [
+        {
+          "signature": "set(messageId, style)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messageStyle.set(id, { badge: { label: \"!\", color: \"#ff453a\" } })",
+          "permissions": [
+            "ui.message-style"
+          ]
+        },
+        {
+          "signature": "setLocalBadge(messageId, badge)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messageStyle.setLocalBadge(id, { icon: \"trash\" })",
+          "permissions": [
+            "ui.message-style"
+          ]
+        },
+        {
+          "signature": "clear(messageId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.messageStyle.clear(id)",
+          "permissions": [
+            "ui.message-style"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "text",
+      "description": "Rich-text builders. Produce { text, entities } payloads (incl. Telegram Premium / custom emoji) for chat.sendText / replyText / sendSilent / scheduleText / setDraftText / insertText.",
+      "methods": [
+        {
+          "signature": "customEmoji(emoji, customEmojiId)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.customEmoji(\"💎\", \"5234567890\")",
+          "description": "A custom-emoji part for text.compose()."
+        },
+        {
+          "signature": "compose(parts)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.chat.sendText(GGAPI.text.compose([\"TON \", GGAPI.text.customEmoji(\"💎\", id), \" \", GGAPI.text.bold(\"ready\")]))",
+          "description": "Build { text, entities } from strings / styled parts / custom-emoji parts, computing UTF-16 offsets automatically."
+        },
+        {
+          "signature": "bold(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.bold(\"x\")"
+        },
+        {
+          "signature": "italic(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.italic(\"x\")"
+        },
+        {
+          "signature": "underline(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.underline(\"x\")"
+        },
+        {
+          "signature": "strikethrough(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.strikethrough(\"x\")"
+        },
+        {
+          "signature": "spoiler(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.spoiler(\"x\")"
+        },
+        {
+          "signature": "code(text)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.code(\"x\")"
+        },
+        {
+          "signature": "pre(text, language)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.pre(\"x\", \"swift\")"
+        },
+        {
+          "signature": "link(text, url)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.link(\"site\", \"https://example.com\")"
+        },
+        {
+          "signature": "entity(type, offset, length, extra)",
+          "availability": "available",
+          "availableNow": true,
+          "example": "GGAPI.text.entity(\"bold\", 0, 5)",
+          "description": "Low-level explicit-offset entity descriptor."
+        }
+      ]
+    },
+    {
+      "name": "moderation",
+      "description": "TelegramEngine-backed moderation with normal admin checks and confirmation.",
+      "methods": [
+        {
+          "signature": "block(peerId, options)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.moderation.block(peerId)",
+          "permissions": [
+            "peers.moderate"
+          ]
+        },
+        {
+          "signature": "ban(peerId, { chatPeerId })",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.moderation.ban(userId, { chatPeerId })",
+          "permissions": [
+            "peers.moderate"
+          ]
+        },
+        {
+          "signature": "restrict(peerId, options)",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.moderation.restrict(userId, { sendMessages: false })",
+          "permissions": [
+            "peers.moderate"
+          ]
+        },
+        {
+          "signature": "report(peerId, { reason, message })",
+          "availability": "promise",
+          "availableNow": true,
+          "example": "await GGAPI.moderation.report(peerId, { reason: \"spam\" })",
+          "permissions": [
+            "peers.moderate"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -570,11 +570,20 @@ private func opportunisticallyTransformOutgoingMedia(network: Network, postbox: 
 }
 
 public func enqueueMessages(account: Account, peerId: PeerId, messages: [EnqueueMessage]) -> Signal<[MessageId?], NoError> {
+    let transformedMessages = messages.map { msg -> EnqueueMessage in
+        switch msg {
+        case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets):
+            let newText = GGPluginManager.shared.transformBeforeSendText(text)
+            return .message(text: newText, attributes: attributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)
+        case .forward:
+            return msg
+        }
+    }
     let signal: Signal<[(Bool, EnqueueMessage)], NoError>
     if let transformOutgoingMessageMedia = account.transformOutgoingMessageMedia {
-        signal = opportunisticallyTransformOutgoingMedia(network: account.network, postbox: account.postbox, transformOutgoingMessageMedia: transformOutgoingMessageMedia, messages: messages, userInteractive: true)
+        signal = opportunisticallyTransformOutgoingMedia(network: account.network, postbox: account.postbox, transformOutgoingMessageMedia: transformOutgoingMessageMedia, messages: transformedMessages, userInteractive: true)
     } else {
-        signal = .single(messages.map { (false, $0) })
+        signal = .single(transformedMessages.map { (false, $0) })
     }
     return signal
     |> mapToSignal { messages -> Signal<[MessageId?], NoError> in

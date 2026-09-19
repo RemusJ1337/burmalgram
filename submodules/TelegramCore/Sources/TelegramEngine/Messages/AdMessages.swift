@@ -482,6 +482,12 @@ private class AdMessagesHistoryContextImpl {
         }
         self.isActivated = true
         
+        if MiscSettingsManager.shared.shouldBlockAds {
+            self.stateValue = State(interPostInterval: nil, messages: [])
+            self.state.set(.single(State(interPostInterval: nil, messages: [])))
+            return
+        }
+        
         let peerId = self.peerId
         let accountPeerId = self.account.peerId
         let account = self.account

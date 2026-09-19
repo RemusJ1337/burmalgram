@@ -110,6 +110,38 @@ jobs:
           echo "Burmalgram.ipa successfully built:"
           ls -lh build/artifacts/Burmalgram.ipa
 
+      - name: Inject TGExtra Tweak into Burmalgram IPA
+        run: |
+          set +e
+          echo "Installing Cyan CLI for tweak injection..."
+          brew install cyan || pipx install --force https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip || python3 -m pip install --break-system-packages --force-reinstall https://github.com/asdfzxcvbn/pyzule-rw/archive/main.zip || true
+          
+          IPA_PATH="/Users/Shared/telegram-ios/build/artifacts/Burmalgram.ipa"
+          OUT_IPA="/Users/Shared/telegram-ios/build/artifacts/Burmalgram-TGExtra.ipa"
+          DYLIB_PATH="/Users/Shared/telegram-ios/build-system/tweaks/TGExtra.dylib"
+          DEB_PATH="/Users/Shared/telegram-ios/build-system/tweaks/com.choco.tg_1.2.1_iphoneos-arm64.deb"
+          BUNDLE_PATH="/Users/Shared/telegram-ios/build-system/tweaks/TGExtra.bundle"
+          
+          if command -v cyan >/dev/null 2>&1 && [ -f "$IPA_PATH" ]; then
+            if [ -f "$DYLIB_PATH" ] && [ -d "$BUNDLE_PATH" ]; then
+              echo "Injecting TGExtra.dylib and TGExtra.bundle into IPA via Cyan..."
+              cyan -i "$IPA_PATH" -o "$OUT_IPA" -u -w -s -g -f "$DYLIB_PATH" "$BUNDLE_PATH"
+            elif [ -f "$DEB_PATH" ]; then
+              echo "Injecting TGExtra deb into IPA via Cyan..."
+              cyan -i "$IPA_PATH" -o "$OUT_IPA" -u -w -s -g -f "$DEB_PATH"
+            fi
+            
+            if [ -f "$OUT_IPA" ]; then
+              echo "TGExtra tweak successfully injected into Burmalgram.ipa!"
+              mv "$OUT_IPA" "$IPA_PATH"
+            else
+              echo "Cyan injection produced no output file; keeping compiled Burmalgram.ipa"
+            fi
+          else
+            echo "Cyan CLI not available or IPA missing, skipping tweak injection."
+          fi
+          ls -lh "$IPA_PATH"
+
       - name: Save Bazel Cache
         uses: actions/cache/save@v4
         if: always()
@@ -136,12 +168,13 @@ jobs:
           body: |
             Clean Burmalgram build for iOS (Telegram ${{ env.APP_VERSION }}).
             Features:
-            - Ghost Mode (hide online, read receipts, typing status)
+            - TGExtra integration (Location spoofing, Ghost mode, Anti-ads, Saving protected media, Language selector)
+            - GGPlugin system (IDE, JS runtime, GGAPI scripts, custom plugins)
+            - Ghost Mode (hide online, read receipts, typing status, story views)
             - Anti-Delete (deleted messages retention)
-            - Device Spoofing
-            - Voice Morpher
+            - Device Spoofing & Voice Morpher
             - No-Save bypass (download restricted media)
-            - Channel ad-block (kGetSponsoredMessages blocked)
+            - Channel ad-block (sponsored messages blocked)
             - Custom icons: Default Cat Icon + Dark Premium Stars
           files: /Users/Shared/telegram-ios/build/artifacts/Burmalgram.ipa
         env:

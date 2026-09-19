@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>GGPlugin IDE</title>
+  <link rel="stylesheet" href="ide.css">
+</head>
+<body>
+  <main class="appShell">
+    <header class="titlebar">
+      <div class="brand">
+        <div class="brandMark">GG</div>
+        <div class="brandText">
+          <div id="pluginName" class="pluginName">GGPlugin</div>
+          <div id="pluginMeta" class="pluginMeta"></div>
+        </div>
+      </div>
+      <div class="titleActions">
+        <button class="ghostButton" data-command="palette">Command</button>
+        <button class="primaryButton" data-action="save">Save</button>
+        <button class="runButton" data-action="run">Run</button>
+        <button class="ghostButton" data-action="stop">Stop</button>
+        <div id="runtimeState" class="runtimeState stopped">stopped</div>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <aside class="activity">
+        <button class="activityButton active" data-panel="explorer" title="Explorer">E</button>
+        <button class="activityButton" data-panel="api" title="GGAPI">A</button>
+        <button class="activityButton" data-panel="snippets" title="Snippets">S</button>
+        <button class="activityButton" data-panel="outline" title="Outline">O</button>
+      </aside>
+
+      <div id="sidebarBackdrop" class="sidebarBackdrop hidden"></div>
+      <aside id="sidebar" class="sidebar">
+        <button id="sidebarClose" class="sidebarClose">Close</button>
+        <section class="sidePanel active" data-panel-view="explorer">
+          <div class="sideTitle">Plugin</div>
+          <div class="fieldGrid">
+            <label>Name<input id="manifestName" spellcheck="false"></label>
+            <label>Author<input id="manifestAuthor" spellcheck="false"></label>
+            <label>Version<input id="manifestVersion" spellcheck="false"></label>
+            <label>Description<textarea id="manifestDescription" spellcheck="false"></textarea></label>
+          </div>
+          <div class="sideActions">
+            <button data-action="restart">Restart</button>
+            <button data-action="duplicate">Duplicate</button>
+            <button data-action="delete" class="danger">Delete</button>
+          </div>
+        </section>
+
+        <section class="sidePanel" data-panel-view="api">
+          <div class="sideTitle">GGAPI</div>
+          <input id="apiSearch" class="sideSearch" placeholder="Search API">
+          <div id="apiList" class="apiList"></div>
+        </section>
+
+        <section class="sidePanel" data-panel-view="snippets">
+          <div class="sideTitle">Snippets</div>
+          <div id="snippetList" class="snippetList"></div>
+        </section>
+
+        <section class="sidePanel" data-panel-view="outline">
+          <div class="sideTitle">Outline</div>
+          <div id="outlineList" class="outlineList muted">No symbols</div>
+        </section>
+      </aside>
+
+      <section class="mainPane">
+        <nav class="editorTabs">
+          <button class="editorTab active">plugin.js</button>
+          <button class="editorTool" data-command="search">Search</button>
+          <button class="editorTool" data-command="format">Format</button>
+          <button class="editorTool" data-action="docs">Docs</button>
+        </nav>
+
+        <section id="searchBar" class="searchBar hidden">
+          <input id="searchInput" placeholder="Find">
+          <input id="replaceInput" placeholder="Replace">
+          <button data-command="findPrev">Prev</button>
+          <button data-command="findNext">Next</button>
+          <button data-command="replaceOne">Replace</button>
+          <button data-command="replaceAll">All</button>
+          <button data-command="closeSearch">Close</button>
+          <span id="searchStatus" class="searchStatus"></span>
+        </section>
+
+        <section class="editorFrame">
+          <pre id="lineNumbers" class="lineNumbers">1</pre>
+          <div class="codeSurface">
+            <pre id="highlightLayer" class="highlightLayer" aria-hidden="true"></pre>
+            <textarea id="editor" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+            <div id="activeLine" class="activeLine"></div>
+            <div id="suggestions" class="suggestions hidden"></div>
+          </div>
+          <pre id="minimap" class="minimap"></pre>
+        </section>
+
+        <section class="bottomWorkbench">
+          <div class="workbenchTabs">
+            <button class="workbenchTab active" data-bottom="diagnostics">Diagnostics</button>
+            <button class="workbenchTab" data-bottom="console">Console</button>
+            <button class="workbenchTab" data-bottom="events">Events</button>
+            <div class="consoleFilters">
+              <button data-console-filter="all" class="active">All</button>
+              <button data-console-filter="log">Log</button>
+              <button data-console-filter="warn">Warn</button>
+              <button data-console-filter="error">Error</button>
+            </div>
+          </div>
+          <div id="diagnostics" class="workbenchPanel active muted" data-bottom-view="diagnostics">No issues</div>
+          <div id="console" class="workbenchPanel console" data-bottom-view="console"></div>
+          <div id="events" class="workbenchPanel" data-bottom-view="events"></div>
+        </section>
+      </section>
+    </section>
+
+    <footer class="statusbar">
+      <div id="cursorStatus">Ln 1, Col 1</div>
+      <div id="diagnosticStatus">0 diagnostics</div>
+      <div id="fileStatus">JavaScript · GGAPI</div>
+    </footer>
+  </main>
+
+  <nav class="mobileActionBar">
+    <button class="mobileAction primary" data-action="save">Save</button>
+    <button class="mobileAction run" data-action="run">Run</button>
+    <button class="mobileAction" data-action="stop">Stop</button>
+    <button class="mobileAction" data-action="docs">Docs</button>
+  </nav>
+
+  <section id="commandPalette" class="palette hidden">
+    <div class="paletteBox">
+      <input id="paletteInput" placeholder="Type a command">
+      <div id="paletteList" class="paletteList"></div>
+    </div>
+  </section>
+
+  <script src="ide.js"></script>
+</body>
+</html>

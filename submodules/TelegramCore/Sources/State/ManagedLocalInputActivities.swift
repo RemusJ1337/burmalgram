@@ -88,6 +88,9 @@ func managedLocalTypingActivities(activities: Signal<[PeerActivitySpace: [(PeerI
             }
             
             for (peerId, activity, disposable) in start {
+                if GhostModeManager.shared.shouldHideTypingIndicator {
+                    continue
+                }
                 var threadId: Int64?
                 switch peerId.category {
                 case let .thread(id):

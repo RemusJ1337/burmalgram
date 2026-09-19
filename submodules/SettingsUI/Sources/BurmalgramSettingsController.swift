@@ -16,6 +16,8 @@ private enum BurmalgramSettingsSection: Int32 {
 private enum BurmalgramSettingsEntry: ItemListNodeEntry {
     case deletedMessages(PresentationTheme, String, String)
     case ghostMode(PresentationTheme, String, String)
+    case tgExtra(PresentationTheme, String, String)
+    case pluginIDE(PresentationTheme, String, String)
     case misc(PresentationTheme, String, String)
     case deviceSpoof(PresentationTheme, String, String)
     case voiceMorpher(PresentationTheme, String, String)
@@ -32,16 +34,20 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
             return 0
         case .ghostMode:
             return 1
-        case .misc:
+        case .tgExtra:
             return 2
-        case .deviceSpoof:
+        case .pluginIDE:
             return 3
-        case .voiceMorpher:
+        case .misc:
             return 4
-        case .sendDelay:
+        case .deviceSpoof:
             return 5
-        case .info:
+        case .voiceMorpher:
             return 6
+        case .sendDelay:
+            return 7
+        case .info:
+            return 8
         }
     }
     
@@ -55,6 +61,18 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
             return false
         case let .ghostMode(lhsTheme, lhsText, lhsValue):
             if case let .ghostMode(rhsTheme, rhsText, rhsValue) = rhs,
+               lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                return true
+            }
+            return false
+        case let .tgExtra(lhsTheme, lhsText, lhsValue):
+            if case let .tgExtra(rhsTheme, rhsText, rhsValue) = rhs,
+               lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                return true
+            }
+            return false
+        case let .pluginIDE(lhsTheme, lhsText, lhsValue):
+            if case let .pluginIDE(rhsTheme, rhsText, rhsValue) = rhs,
                lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
                 return true
             }
@@ -120,6 +138,28 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
                     arguments.openGhostMode()
                 }
             )
+        case let .tgExtra(_, text, value):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                title: text,
+                label: value,
+                sectionId: self.section,
+                style: .blocks,
+                action: {
+                    arguments.openTGExtra()
+                }
+            )
+        case let .pluginIDE(_, text, value):
+            return ItemListDisclosureItem(
+                presentationData: presentationData,
+                title: text,
+                label: value,
+                sectionId: self.section,
+                style: .blocks,
+                action: {
+                    arguments.openPluginIDE()
+                }
+            )
         case let .misc(_, text, value):
             return ItemListDisclosureItem(
                 presentationData: presentationData,
@@ -175,6 +215,8 @@ private enum BurmalgramSettingsEntry: ItemListNodeEntry {
 private final class BurmalgramSettingsControllerArguments {
     let openDeletedMessages: () -> Void
     let openGhostMode: () -> Void
+    let openTGExtra: () -> Void
+    let openPluginIDE: () -> Void
     let openMisc: () -> Void
     let openDeviceSpoof: () -> Void
     let openVoiceMorpher: () -> Void
@@ -183,6 +225,8 @@ private final class BurmalgramSettingsControllerArguments {
     init(
         openDeletedMessages: @escaping () -> Void,
         openGhostMode: @escaping () -> Void,
+        openTGExtra: @escaping () -> Void,
+        openPluginIDE: @escaping () -> Void,
         openMisc: @escaping () -> Void,
         openDeviceSpoof: @escaping () -> Void,
         openVoiceMorpher: @escaping () -> Void,
@@ -190,6 +234,8 @@ private final class BurmalgramSettingsControllerArguments {
     ) {
         self.openDeletedMessages = openDeletedMessages
         self.openGhostMode = openGhostMode
+        self.openTGExtra = openTGExtra
+        self.openPluginIDE = openPluginIDE
         self.openMisc = openMisc
         self.openDeviceSpoof = openDeviceSpoof
         self.openVoiceMorpher = openVoiceMorpher
@@ -203,6 +249,7 @@ private struct BurmalgramSettingsState: Equatable {
     var deletedMessagesEnabled: Bool
     var ghostModeEnabled: Bool
     var ghostModeActiveCount: Int
+    var activePluginsCount: Int
     var miscEnabled: Bool
     var miscActiveCount: Int
     var deviceSpoofEnabled: Bool
@@ -215,6 +262,7 @@ private struct BurmalgramSettingsState: Equatable {
             deletedMessagesEnabled: AntiDeleteManager.shared.isEnabled,
             ghostModeEnabled: GhostModeManager.shared.isEnabled,
             ghostModeActiveCount: GhostModeManager.shared.activeFeatureCount,
+            activePluginsCount: GGPluginManager.shared.getPlugins().filter({ $0.isEnabled }).count,
             miscEnabled: MiscSettingsManager.shared.isEnabled,
             miscActiveCount: MiscSettingsManager.shared.activeFeatureCount,
             deviceSpoofEnabled: DeviceSpoofManager.shared.isEnabled,
@@ -241,6 +289,13 @@ private func burmalgramSettingsControllerEntries(
     let ghostModeStatus = state.ghostModeEnabled ? "\(state.ghostModeActiveCount)/5" : "Выкл"
     entries.append(.ghostMode(presentationData.theme, "Режим призрака", ghostModeStatus))
     
+    // TGExtra Plugins
+    entries.append(.tgExtra(presentationData.theme, "Плагины TGExtra (Choco)", "Твики и меню"))
+    
+    // GGPlugin IDE
+    let pluginStatus = state.activePluginsCount > 0 ? "\(state.activePluginsCount) активных" : "Выкл"
+    entries.append(.pluginIDE(presentationData.theme, "Плагины GGPlugin (IDE)", pluginStatus))
+    
     // Misc
     let miscStatus = state.miscEnabled ? "\(state.miscActiveCount)/5" : "Выкл"
     entries.append(.misc(presentationData.theme, "Прочее", miscStatus))
@@ -258,7 +313,7 @@ private func burmalgramSettingsControllerEntries(
     entries.append(.sendDelay(presentationData.theme, "Отложка сообщений", sendDelayStatus))
     
     // Info
-    entries.append(.info(presentationData.theme, "Функции конфиденциальности Burmalgram. Скрытые отметки о прочтении, обход исчезающих сообщений, обход защиты от пересылки и другое."))
+    entries.append(.info(presentationData.theme, "Функции Burmalgram, Ghostgram и плагины TGExtra. Скрытые отметки о прочтении, обход таймеров, сохранение запрещённого контента, поддержка JS-скриптов GGAPI и интеграция твиков TGExtra."))
     
     return entries
 }
@@ -267,6 +322,7 @@ private func burmalgramSettingsControllerEntries(
 
 public func burmalgramSettingsController(context: AccountContext) -> ViewController {
     var pushControllerImpl: ((ViewController, Bool) -> Void)?
+    var presentControllerImpl: ((ViewController) -> Void)?
     
     let stateValue = Atomic(value: BurmalgramSettingsState.current())
     let statePromise = ValuePromise(BurmalgramSettingsState.current(), ignoreRepeated: true)
@@ -277,6 +333,31 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         },
         openGhostMode: {
             pushControllerImpl?(ghostModeController(context: context), true)
+        },
+        openTGExtra: {
+            if let tgExtraClass = NSClassFromString("TGExtra") as? UIViewController.Type {
+                let vc = tgExtraClass.init()
+                if let displayVc = vc as? ViewController {
+                    let nav = NavigationController(mode: .single, rootViewController: displayVc)
+                    presentControllerImpl?(nav)
+                } else {
+                    let nav = UINavigationController(rootViewController: vc)
+                    nav.modalPresentationStyle = .fullScreen
+                    UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController?.present(nav, animated: true)
+                }
+            } else {
+                let alert = UIAlertController(
+                    title: "Плагин TGExtra",
+                    message: "TGExtra активирован в системе приложения.\n\nБыстрый доступ к интерфейсу твика:\n• Удерживайте экран 3 пальцами (3-finger long press)\n• Либо нажмите 5 раз на вкладку «Чаты».",
+                    preferredStyle: .alert
+                )
+                alert.addAction(UIAlertAction(title: "Понятно", style: .default))
+                let alertWrapper = makeCustomAlertController(alert: alert)
+                presentControllerImpl?(alertWrapper)
+            }
+        },
+        openPluginIDE: {
+            pushControllerImpl?(pluginListController(context: context), true)
         },
         openMisc: {
             pushControllerImpl?(miscController(context: context), true)
@@ -331,5 +412,17 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
     pushControllerImpl = { [weak controller] c, animated in
         controller?.push(c)
     }
+    presentControllerImpl = { [weak controller] c in
+        controller?.present(c, in: .window(.root))
+    }
     return controller
+}
+
+private func makeCustomAlertController(alert: UIAlertController) -> ViewController {
+    let vc = ViewController(navigationBarPresentationData: nil)
+    vc.view.backgroundColor = .clear
+    vc.viewDidAppear = { [weak vc] _ in
+        vc?.present(alert, animated: true)
+    }
+    return vc
 }
