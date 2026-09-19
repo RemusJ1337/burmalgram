@@ -191,87 +191,132 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
     let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
         var current = current
         
+        let nightIndex = PresentationThemeReference.builtin(.night).index
+        let nightAccentIndex = PresentationThemeReference.builtin(.nightAccent).index
+        let dayIndex = PresentationThemeReference.builtin(.day).index
+        let dayClassicIndex = PresentationThemeReference.builtin(.dayClassic).index
+        
+        var accents = current.themeSpecificAccentColors
+        var wallpapers = current.themeSpecificChatWallpapers
+        
         switch themeKey {
         case "neon": // ⚡ Cyber Neon (Неон) - neon.jpg
-            let baseThemeRef: PresentationThemeReference = .builtin(.nightAccent)
-            let accentColor: UInt32 = 0x00E5FF
-            let bubbleColors: [UInt32] = [0x00A8D6, 0x00BCE5, 0x01C1E6, 0x18E5FF]
+            let accentColor: UInt32 = 0x00B4FF
+            let bubbleColors: [UInt32] = [0x006CE6, 0x0091FA, 0x00BCFF, 0x00E2FF]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x00165F, 0x00256B, 0x003A72, 0x002058],
-                settings: WallpaperSettings(blur: false, motion: true, colors: [0x00165F, 0x00256B, 0x003A72, 0x002058], rotation: 45)
+                colors: [0x000F35, 0x00184D, 0x00246B, 0x001442],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x000F35, 0x00184D, 0x00246B, 0x001442], rotation: 45)
             ))
             SGSimpleSettings.shared.canUseNY = true
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.sparks.rawValue
-            var accents = current.themeSpecificAccentColors
-            accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
-            var wallpapers = current.themeSpecificChatWallpapers
-            wallpapers[baseThemeRef.index] = wallpaper
-            current.theme = baseThemeRef
+            
+            let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            accents[nightIndex] = accent
+            accents[nightAccentIndex] = accent
+            wallpapers[nightIndex] = wallpaper
+            wallpapers[nightAccentIndex] = wallpaper
+            
+            current.theme = .builtin(.night)
+            var autoSwitch = current.automaticThemeSwitchSetting
+            autoSwitch.theme = .builtin(.night)
+            current.automaticThemeSwitchSetting = autoSwitch
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
         case "titanium": // 🛡️ Titanium Metal (Титан) - titanium.jpg
-            let baseThemeRef: PresentationThemeReference = .builtin(.night)
-            let accentColor: UInt32 = 0xD5D5D5
-            let bubbleColors: [UInt32] = [0x8A8A8A, 0xACACAC, 0xD5D5D5, 0xEBEBF0]
+            let accentColor: UInt32 = 0xD0D3DE
+            let bubbleColors: [UInt32] = [0x5E6068, 0x7E808C, 0xA4A7B4, 0xD0D3DE]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x121212, 0x1F2024, 0x2E2F36, 0x18181B],
-                settings: WallpaperSettings(blur: false, motion: true, colors: [0x121212, 0x1F2024, 0x2E2F36, 0x18181B], rotation: 90)
+                colors: [0x121214, 0x1A1B1F, 0x26282E, 0x151619],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x121214, 0x1A1B1F, 0x26282E, 0x151619], rotation: 90)
             ))
             SGSimpleSettings.shared.canUseNY = true
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.metal.rawValue
-            var accents = current.themeSpecificAccentColors
-            accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
-            var wallpapers = current.themeSpecificChatWallpapers
-            wallpapers[baseThemeRef.index] = wallpaper
-            current.theme = baseThemeRef
+            
+            let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            accents[nightIndex] = accent
+            accents[nightAccentIndex] = accent
+            wallpapers[nightIndex] = wallpaper
+            wallpapers[nightAccentIndex] = wallpaper
+            
+            current.theme = .builtin(.night)
+            var autoSwitch = current.automaticThemeSwitchSetting
+            autoSwitch.theme = .builtin(.night)
+            current.automaticThemeSwitchSetting = autoSwitch
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
         case "space", "midnight": // 🌌 Deep Space (Космос) - space.jpg
-            let baseThemeRef: PresentationThemeReference = .builtin(.nightAccent)
-            let accentColor: UInt32 = 0xA855F7
-            let bubbleColors: [UInt32] = [0x26374D, 0x314660, 0x3A4F6C, 0x465E82]
+            let accentColor: UInt32 = 0x5B82B8
+            let bubbleColors: [UInt32] = [0x223040, 0x2D3E52, 0x394E6B, 0x48648B]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x030409, 0x060B1E, 0x0D1127, 0x07081A],
-                settings: WallpaperSettings(blur: false, motion: true, colors: [0x030409, 0x060B1E, 0x0D1127, 0x07081A], rotation: 120)
+                colors: [0x020716, 0x060B1C, 0x0C152B, 0x050917],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x020716, 0x060B1C, 0x0C152B, 0x050917], rotation: 120)
             ))
             SGSimpleSettings.shared.canUseNY = true
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.stars.rawValue
-            var accents = current.themeSpecificAccentColors
-            accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
-            var wallpapers = current.themeSpecificChatWallpapers
-            wallpapers[baseThemeRef.index] = wallpaper
-            current.theme = baseThemeRef
+            
+            let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            accents[nightIndex] = accent
+            accents[nightAccentIndex] = accent
+            wallpapers[nightIndex] = wallpaper
+            wallpapers[nightAccentIndex] = wallpaper
+            
+            current.theme = .builtin(.night)
+            var autoSwitch = current.automaticThemeSwitchSetting
+            autoSwitch.theme = .builtin(.night)
+            current.automaticThemeSwitchSetting = autoSwitch
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
         case "sparkling": // ✨ Sparkling Star (Сверкающая) - sparkling.jpg
-            let baseThemeRef: PresentationThemeReference = .builtin(.nightAccent)
-            let accentColor: UInt32 = 0x00A6FF
+            let accentColor: UInt32 = 0x0088FF
             let bubbleColors: [UInt32] = [0x0238FD, 0x0545FE, 0x0B94FE, 0x00D2FF]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x05041A, 0x0B0837, 0x120C4D, 0x000E3A],
-                settings: WallpaperSettings(blur: false, motion: true, colors: [0x05041A, 0x0B0837, 0x120C4D, 0x000E3A], rotation: 60)
+                colors: [0x040514, 0x080A22, 0x0E1136, 0x050618],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x040514, 0x080A22, 0x0E1136, 0x050618], rotation: 60)
             ))
             SGSimpleSettings.shared.canUseNY = true
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.stars.rawValue
-            var accents = current.themeSpecificAccentColors
-            accents[baseThemeRef.index] = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
-            var wallpapers = current.themeSpecificChatWallpapers
-            wallpapers[baseThemeRef.index] = wallpaper
-            current.theme = baseThemeRef
+            
+            let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            accents[nightIndex] = accent
+            accents[nightAccentIndex] = accent
+            wallpapers[nightIndex] = wallpaper
+            wallpapers[nightAccentIndex] = wallpaper
+            
+            current.theme = .builtin(.night)
+            var autoSwitch = current.automaticThemeSwitchSetting
+            autoSwitch.theme = .builtin(.night)
+            current.automaticThemeSwitchSetting = autoSwitch
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
             
         default: // Reset to default Telegram
             SGSimpleSettings.shared.canUseNY = false
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.default.rawValue
-            current.theme = .builtin(.dayClassic)
+            SGSimpleSettings.shared.burmalgramTheme = ""
+            
+            accents.removeValue(forKey: nightIndex)
+            accents.removeValue(forKey: nightAccentIndex)
+            accents.removeValue(forKey: dayIndex)
+            accents.removeValue(forKey: dayClassicIndex)
+            
+            wallpapers.removeValue(forKey: nightIndex)
+            wallpapers.removeValue(forKey: nightAccentIndex)
+            wallpapers.removeValue(forKey: dayIndex)
+            wallpapers.removeValue(forKey: dayClassicIndex)
+            
+            current.themeSpecificAccentColors = accents
+            current.themeSpecificChatWallpapers = wallpapers
+            current.theme = .builtin(.nightAccent)
+            var autoSwitch = current.automaticThemeSwitchSetting
+            autoSwitch.theme = .builtin(.nightAccent)
+            current.automaticThemeSwitchSetting = autoSwitch
         }
         
         return current
