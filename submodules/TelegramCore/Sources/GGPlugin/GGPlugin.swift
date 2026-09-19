@@ -325,7 +325,7 @@ public final class GGPluginManager {
         
         GGPluginConsole.shared.add(pluginId: id, level: "info", text: "Запуск плагина \(plugin.name)...")
         
-        let result = context.evaluateScript(plugin.code)
+        let _ = context.evaluateScript(plugin.code)
         if let exc = context.exception {
             let errStr = exc.toString() ?? "Ошибка выполнения скрипта"
             GGPluginConsole.shared.add(pluginId: id, level: "error", text: errStr)

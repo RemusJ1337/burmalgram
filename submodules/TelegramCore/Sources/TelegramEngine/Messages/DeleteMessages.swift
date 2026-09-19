@@ -55,7 +55,9 @@ public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBo
     if AntiDeleteManager.shared.isEnabled {
         for id in ids {
             if let message = transaction.getMessage(id) {
+                let globalId = message.globallyUniqueId.map { Int32(truncatingIfNeeded: $0) } ?? message.id.id
                 AntiDeleteManager.shared.archiveMessage(
+                    globalId: globalId,
                     peerId: id.peerId.toInt64(),
                     messageId: id.id,
                     timestamp: message.timestamp,
