@@ -188,6 +188,7 @@ extension TelegramUser {
                 default:
                     break
                 }
+            }
             if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
                 if SGSimpleSettings.shared.fakeProfileColor >= 0 {
                     profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
@@ -332,6 +333,7 @@ extension TelegramUser {
                             default:
                                 break
                             }
+                        }
                         if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
                             if SGSimpleSettings.shared.fakeProfileColor >= 0 {
                                 profileColorIndex = SGSimpleSettings.shared.fakeProfileColor

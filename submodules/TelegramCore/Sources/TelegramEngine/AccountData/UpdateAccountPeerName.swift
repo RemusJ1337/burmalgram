@@ -63,7 +63,7 @@ func _internal_updateNameColorAndEmoji(account: Account, nameColor: UpdateNameCo
             SGSimpleSettings.shared.fakeBackgroundEmojiId = backgroundEmojiId ?? 0
         case let .collectible(collectibleColor):
             SGSimpleSettings.shared.fakeNameColor = 0
-            SGSimpleSettings.shared.fakeBackgroundEmojiId = collectibleColor.backgroundEmojiId ?? 0
+            SGSimpleSettings.shared.fakeBackgroundEmojiId = collectibleColor.backgroundEmojiId
         }
         SGSimpleSettings.shared.fakeProfileColor = profileColor?.rawValue ?? -1
         SGSimpleSettings.shared.fakeProfileBackgroundEmojiId = profileBackgroundEmojiId ?? 0
