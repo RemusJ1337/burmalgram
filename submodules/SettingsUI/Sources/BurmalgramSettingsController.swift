@@ -336,16 +336,9 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
             pushControllerImpl?(ghostModeController(context: context), true)
         },
         openTGExtra: {
-            if let tgExtraClass = NSClassFromString("TGExtra") as? UIViewController.Type {
-                let vc = tgExtraClass.init()
-                if let displayVc = vc as? ViewController {
-                    let nav = NavigationController(mode: .single, rootViewController: displayVc)
-                    presentControllerImpl?(nav)
-                } else {
-                    let nav = UINavigationController(rootViewController: vc)
-                    nav.modalPresentationStyle = .fullScreen
-                    UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController?.present(nav, animated: true)
-                }
+            if let tgExtraClass = NSClassFromString("TGExtra") as? NSObject.Type,
+               let displayVc = tgExtraClass.init() as? ViewController {
+                pushControllerImpl?(displayVc, true)
             } else {
                 let alert = textAlertController(
                     context: context,
