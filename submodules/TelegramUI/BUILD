@@ -41,7 +41,7 @@ filegroup(
     srcs = glob([
         "Sounds/**/*",
         "Resources/**/*",
-    ], exclude = ["Sounds/**/.*", "Resources/**/.*"]),
+    ], exclude = ["Sounds/**/.*", "Resources/**/.*", "Resources/**/Info.plist"]),
     visibility = ["//visibility:public"],
 )
 
