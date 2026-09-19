@@ -1359,13 +1359,13 @@ public func themeSettingsController(context: AccountContext, focusOnItemTag: The
                 ActionSheetTextItem(title: "Шрифт приложения")
             ]
             for (key, title) in fontOptions {
-                items.append(ActionSheetButtonItem(title: title, color: key == current ? .accent : .default, action: { [weak actionSheet] in
+                items.append(ActionSheetButtonItem(title: title, color: .accent, font: key == current ? .bold : .default, action: { [weak actionSheet] in
                     actionSheet?.dismissAnimated()
                     SGSimpleSettings.shared.customFont = key
                     reloadPromise.set(true)
                 }))
             }
-            items.append(ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .default, action: { [weak actionSheet] in
+            items.append(ActionSheetButtonItem(title: presentationData.strings.Common_Cancel, color: .accent, font: .bold, action: { [weak actionSheet] in
                 actionSheet?.dismissAnimated()
             }))
             actionSheet.setItemGroups([ActionSheetItemGroup(items: items)])

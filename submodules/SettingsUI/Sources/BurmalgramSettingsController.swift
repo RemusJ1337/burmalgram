@@ -765,7 +765,7 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
                 }
             }))
             alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
-            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.keyWindow,
+            if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
                let rootVC = window.rootViewController {
                 rootVC.present(alert, animated: true, completion: nil)
             }
@@ -807,7 +807,7 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
                 let ui = tgExtraClass.init()
                 let navVC = DismissableNavigationController(rootViewController: ui)
                 navVC.modalPresentationStyle = .fullScreen
-                if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.keyWindow,
+                if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
                    let rootVC = window.rootViewController {
                     rootVC.present(navVC, animated: true, completion: nil)
                     return

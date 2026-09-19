@@ -1786,7 +1786,7 @@ public func privacyAndSecurityController(
             }
         }))
         alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
-        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.keyWindow,
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
            let rootVC = window.rootViewController {
             rootVC.present(alert, animated: true, completion: nil)
         }
