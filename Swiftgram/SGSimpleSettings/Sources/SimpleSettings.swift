@@ -187,6 +187,7 @@ public class SGSimpleSettings {
         case fakeBackgroundEmojiId
         case fakeEmojiStatusFileId
         case burmalgramTheme
+        case useDefaultThemeColors
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -353,7 +354,8 @@ public class SGSimpleSettings {
         Keys.fakeNameColor.rawValue: -1 as Int32,
         Keys.fakeBackgroundEmojiId.rawValue: 0 as Int64,
         Keys.fakeEmojiStatusFileId.rawValue: 0 as Int64,
-        Keys.burmalgramTheme.rawValue: "default"
+        Keys.burmalgramTheme.rawValue: "default",
+        Keys.useDefaultThemeColors.rawValue: false
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -396,6 +398,9 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.burmalgramTheme.rawValue)
     public var burmalgramTheme: String
+
+    @UserDefault(key: Keys.useDefaultThemeColors.rawValue)
+    public var useDefaultThemeColors: Bool
 
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool

@@ -6690,6 +6690,11 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 if strongSelf.chatLocation.peerId == strongSelf.context.account.peerId {
                     chatTheme = nil
                 }
+                
+                if !SGSimpleSettings.shared.burmalgramTheme.isEmpty && SGSimpleSettings.shared.burmalgramTheme != "default" && !SGSimpleSettings.shared.useDefaultThemeColors {
+                    chatTheme = nil
+                    chatWallpaper = nil
+                }
                                 
                 var presentationData = presentationData
                 var useDarkAppearance = presentationData.theme.overallDarkAppearance

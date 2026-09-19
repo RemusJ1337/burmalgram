@@ -212,10 +212,14 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.sparks.rawValue
             
             let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            let coloredNightIndex = coloredThemeIndex(reference: .builtin(.night), accentColor: accent)
+            let coloredNightAccentIndex = coloredThemeIndex(reference: .builtin(.nightAccent), accentColor: accent)
             accents[nightIndex] = accent
             accents[nightAccentIndex] = accent
             wallpapers[nightIndex] = wallpaper
             wallpapers[nightAccentIndex] = wallpaper
+            wallpapers[coloredNightIndex] = wallpaper
+            wallpapers[coloredNightAccentIndex] = wallpaper
             
             current.theme = .builtin(.night)
             var autoSwitch = current.automaticThemeSwitchSetting
@@ -236,10 +240,14 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.metal.rawValue
             
             let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            let coloredNightIndex = coloredThemeIndex(reference: .builtin(.night), accentColor: accent)
+            let coloredNightAccentIndex = coloredThemeIndex(reference: .builtin(.nightAccent), accentColor: accent)
             accents[nightIndex] = accent
             accents[nightAccentIndex] = accent
             wallpapers[nightIndex] = wallpaper
             wallpapers[nightAccentIndex] = wallpaper
+            wallpapers[coloredNightIndex] = wallpaper
+            wallpapers[coloredNightAccentIndex] = wallpaper
             
             current.theme = .builtin(.night)
             var autoSwitch = current.automaticThemeSwitchSetting
@@ -260,10 +268,14 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.stars.rawValue
             
             let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            let coloredNightIndex = coloredThemeIndex(reference: .builtin(.night), accentColor: accent)
+            let coloredNightAccentIndex = coloredThemeIndex(reference: .builtin(.nightAccent), accentColor: accent)
             accents[nightIndex] = accent
             accents[nightAccentIndex] = accent
             wallpapers[nightIndex] = wallpaper
             wallpapers[nightAccentIndex] = wallpaper
+            wallpapers[coloredNightIndex] = wallpaper
+            wallpapers[coloredNightAccentIndex] = wallpaper
             
             current.theme = .builtin(.night)
             var autoSwitch = current.automaticThemeSwitchSetting
@@ -284,10 +296,14 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.stars.rawValue
             
             let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
+            let coloredNightIndex = coloredThemeIndex(reference: .builtin(.night), accentColor: accent)
+            let coloredNightAccentIndex = coloredThemeIndex(reference: .builtin(.nightAccent), accentColor: accent)
             accents[nightIndex] = accent
             accents[nightAccentIndex] = accent
             wallpapers[nightIndex] = wallpaper
             wallpapers[nightAccentIndex] = wallpaper
+            wallpapers[coloredNightIndex] = wallpaper
+            wallpapers[coloredNightAccentIndex] = wallpaper
             
             current.theme = .builtin(.night)
             var autoSwitch = current.automaticThemeSwitchSetting
@@ -306,10 +322,7 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             accents.removeValue(forKey: dayIndex)
             accents.removeValue(forKey: dayClassicIndex)
             
-            wallpapers.removeValue(forKey: nightIndex)
-            wallpapers.removeValue(forKey: nightAccentIndex)
-            wallpapers.removeValue(forKey: dayIndex)
-            wallpapers.removeValue(forKey: dayClassicIndex)
+            wallpapers.removeAll()
             
             current.themeSpecificAccentColors = accents
             current.themeSpecificChatWallpapers = wallpapers
@@ -591,6 +604,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
     case themeSparkling(PresentationTheme, String, String)
     case themeStandardPicker(PresentationTheme, String)
     case themeReset(PresentationTheme, String, String)
+    case useDefaultThemeColors(PresentationTheme, String, Bool)
     case themeFooter(PresentationTheme, String)
     
     case headerVisuals(PresentationTheme, String)
@@ -625,7 +639,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         switch self {
         case .headerPremium, .fakePremium, .fakePremiumInfo:
             return BurmalgramCustomizationSection.premium.rawValue
-        case .headerThemes, .themeNeon, .themeTitanium, .themeSpace, .themeSparkling, .themeStandardPicker, .themeReset, .themeFooter:
+        case .headerThemes, .themeNeon, .themeTitanium, .themeSpace, .themeSparkling, .themeStandardPicker, .themeReset, .useDefaultThemeColors, .themeFooter:
             return BurmalgramCustomizationSection.themes.rawValue
         case .headerVisuals, .customFont, .customPhone, .hidePhone, .showProfileId, .showDC, .showRegDate, .showCreationDate:
             return BurmalgramCustomizationSection.visuals.rawValue
@@ -649,7 +663,8 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case .themeSparkling: return 14
         case .themeStandardPicker: return 15
         case .themeReset: return 16
-        case .themeFooter: return 17
+        case .useDefaultThemeColors: return 17
+        case .themeFooter: return 18
         
         case .headerVisuals: return 20
         case .customFont: return 21
@@ -712,6 +727,9 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return false
         case let .themeReset(lhsTheme, lhsText, lhsValue):
             if case let .themeReset(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .useDefaultThemeColors(lhsTheme, lhsText, lhsValue):
+            if case let .useDefaultThemeColors(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .themeFooter(lhsTheme, lhsText):
             if case let .themeFooter(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
@@ -835,6 +853,10 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.applyTheme("default")
             })
+        case let .useDefaultThemeColors(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleUseDefaultThemeColors(val)
+            })
         case let .themeFooter(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         case let .headerVisuals(_, text):
@@ -938,6 +960,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
 private final class BurmalgramCustomizationArguments {
     let toggleFakePremium: (Bool) -> Void
     let applyTheme: (String) -> Void
+    let toggleUseDefaultThemeColors: (Bool) -> Void
     let openStandardThemes: () -> Void
     let selectFont: () -> Void
     let editCustomPhone: () -> Void
@@ -965,6 +988,7 @@ private final class BurmalgramCustomizationArguments {
     init(
         toggleFakePremium: @escaping (Bool) -> Void,
         applyTheme: @escaping (String) -> Void,
+        toggleUseDefaultThemeColors: @escaping (Bool) -> Void,
         openStandardThemes: @escaping () -> Void,
         selectFont: @escaping () -> Void,
         editCustomPhone: @escaping () -> Void,
@@ -991,6 +1015,7 @@ private final class BurmalgramCustomizationArguments {
     ) {
         self.toggleFakePremium = toggleFakePremium
         self.applyTheme = applyTheme
+        self.toggleUseDefaultThemeColors = toggleUseDefaultThemeColors
         self.openStandardThemes = openStandardThemes
         self.selectFont = selectFont
         self.editCustomPhone = editCustomPhone
@@ -1042,6 +1067,11 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         },
         applyTheme: { themeKey in
             applyBurmalgramTheme(context: context, themeKey: themeKey)
+            reloadPromise.set(true)
+        },
+        toggleUseDefaultThemeColors: { val in
+            SGSimpleSettings.shared.useDefaultThemeColors = val
+            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
             reloadPromise.set(true)
         },
         openStandardThemes: {
@@ -1163,7 +1193,8 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         entries.append(.themeSparkling(presentationData.theme, "✨ Сверкающая (Sparkling Star)", currentTheme == "sparkling" ? "Активна" : ""))
         entries.append(.themeStandardPicker(presentationData.theme, "🎨 Все стандартные темы Telegram..."))
         entries.append(.themeReset(presentationData.theme, "🔄 Сбросить тему (По умолчанию)", ""))
-        entries.append(.themeFooter(presentationData.theme, "Анимированные частицы (мерцающие звезды, искры, переливы платины), гироскопный параллакс 3D и многоточечные градиенты сообщений и фона."))
+        entries.append(.useDefaultThemeColors(presentationData.theme, "Использовать цвета стандартных тем", SGSimpleSettings.shared.useDefaultThemeColors))
+        entries.append(.themeFooter(presentationData.theme, "Анимированные частицы (мерцающие звезды, искры, переливы платины), гироскопный параллакс 3D и многоточечные градиенты сообщений и фона. При выключенном переключателе эксклюзивные темы принудительно заменяют стандартные цвета чатов Telegram."))
         
         entries.append(.headerVisuals(presentationData.theme, "ШРИФТ И ПРОФИЛЬ"))
         entries.append(.customFont(presentationData.theme, "Шрифт интерфейса", burmalgramFontDisplayName(SGSimpleSettings.shared.customFont)))
