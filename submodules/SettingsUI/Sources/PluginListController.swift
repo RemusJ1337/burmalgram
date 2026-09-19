@@ -86,7 +86,7 @@ private enum PluginListEntry: ItemListNodeEntry {
         switch self {
         case let .info(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
-        case let .pluginItem(_, title, subtitle, isEnabled, id):
+        case let .pluginItem(_, title, _, isEnabled, id):
             return ItemListSwitchItem(
                 presentationData: presentationData,
                 title: title,

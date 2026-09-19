@@ -1,6 +1,7 @@
 import Foundation
 import UIKit
 import Display
+import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
 import ItemListUI
@@ -91,9 +92,9 @@ public func pluginAPIDocsController(context: AccountContext) -> ViewController {
     
     let signal = combineLatest(
         context.sharedContext.presentationData,
-        .single(entries)
+        .single(entries) as Signal<[PluginAPIDocsEntry], NoError>
     )
-    |> map { presentationData, entries -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, entries -> (ItemListControllerState, (ItemListNodeState, Void)) in
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),
             title: .text("GGAPI Docs"),

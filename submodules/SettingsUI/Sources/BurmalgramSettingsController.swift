@@ -5,6 +5,7 @@ import SwiftSignalKit
 import TelegramCore
 import TelegramPresentationData
 import ItemListUI
+import AlertUI
 import AccountContext
 
 // MARK: - Entry Definition
@@ -346,14 +347,13 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
                     UIApplication.shared.windows.first(where: { $0.isKeyWindow })?.rootViewController?.present(nav, animated: true)
                 }
             } else {
-                let alert = UIAlertController(
+                let alert = textAlertController(
+                    context: context,
                     title: "Плагин TGExtra",
-                    message: "TGExtra активирован в системе приложения.\n\nБыстрый доступ к интерфейсу твика:\n• Удерживайте экран 3 пальцами (3-finger long press)\n• Либо нажмите 5 раз на вкладку «Чаты».",
-                    preferredStyle: .alert
+                    text: "TGExtra активирован в системе приложения.\n\nБыстрый доступ к интерфейсу твика:\n• Удерживайте экран 3 пальцами (3-finger long press)\n• Либо нажмите 5 раз на вкладку «Чаты».",
+                    actions: [TextAlertAction(type: .defaultAction, title: "Понятно", action: {})]
                 )
-                alert.addAction(UIAlertAction(title: "Понятно", style: .default))
-                let alertWrapper = makeCustomAlertController(alert: alert)
-                presentControllerImpl?(alertWrapper)
+                presentControllerImpl?(alert)
             }
         },
         openPluginIDE: {
@@ -377,7 +377,7 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         context.sharedContext.presentationData,
         statePromise.get()
     )
-    |> map { presentationData, state -> (ItemListControllerState, (ItemListNodeState, Any)) in
+    |> map { presentationData, state -> (ItemListControllerState, (ItemListNodeState, BurmalgramSettingsControllerArguments)) in
         let entries = burmalgramSettingsControllerEntries(presentationData: presentationData, state: state)
         
         let controllerState = ItemListControllerState(
@@ -416,13 +416,4 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         controller?.present(c, in: .window(.root))
     }
     return controller
-}
-
-private func makeCustomAlertController(alert: UIAlertController) -> ViewController {
-    let vc = ViewController(navigationBarPresentationData: nil)
-    vc.view.backgroundColor = .clear
-    vc.viewDidAppear = { [weak vc] _ in
-        vc?.present(alert, animated: true)
-    }
-    return vc
 }
