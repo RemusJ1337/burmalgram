@@ -97,7 +97,8 @@ private enum BurmalgramFontEntry: ItemListNodeEntry {
         case let .header(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
         case let .font(_, key, title, selected):
-            return ItemListCheckboxItem(presentationData: presentationData, title: title, style: .left, checked: selected, zeroSeparatorInsets: false, sectionId: self.section, action: {
+            let previewFont = Font.fontForCustomFontKey(key, size: presentationData.fontSize.itemListBaseFontSize)
+            return ItemListCheckboxItem(presentationData: presentationData, title: title, titleFont: previewFont, style: .left, checked: selected, zeroSeparatorInsets: false, sectionId: self.section, action: {
                 args.selectFont(key)
             })
         case let .footer(_, text):
@@ -229,15 +230,15 @@ private func applyBurmalgramTheme(context: AccountContext, themeKey: String) {
             current.themeSpecificChatWallpapers = wallpapers
             
         case "titanium": // 🛡️ Titanium Metal (Титан) - titanium.jpg
-            let accentColor: UInt32 = 0xD0D3DE
-            let bubbleColors: [UInt32] = [0x5E6068, 0x7E808C, 0xA4A7B4, 0xD0D3DE]
+            let accentColor: UInt32 = 0x9399A8
+            let bubbleColors: [UInt32] = [0x5A5F6B, 0x9399A8, 0xC6CBD6, 0x6E7380]
             let wallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
                 id: nil,
-                colors: [0x121214, 0x1A1B1F, 0x26282E, 0x151619],
-                settings: WallpaperSettings(blur: false, motion: true, colors: [0x121214, 0x1A1B1F, 0x26282E, 0x151619], rotation: 90)
+                colors: [0x121316, 0x181A1F, 0x22252C, 0x15171B],
+                settings: WallpaperSettings(blur: false, motion: true, colors: [0x121316, 0x181A1F, 0x22252C, 0x15171B], rotation: 90)
             ))
-            SGSimpleSettings.shared.canUseNY = true
-            SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.metal.rawValue
+            SGSimpleSettings.shared.canUseNY = false
+            SGSimpleSettings.shared.nyStyle = SGSimpleSettings.NYStyle.default.rawValue
             
             let accent = PresentationThemeAccentColor(index: -1, baseColor: .custom, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
             let coloredNightIndex = coloredThemeIndex(reference: .builtin(.night), accentColor: accent)
@@ -349,6 +350,7 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
     case customization(PresentationTheme, String, String)
     case privacy(PresentationTheme, String, String)
     case tools(PresentationTheme, String, String)
+    case burmaldaTools(PresentationTheme, String, String)
     
     case headerQuick(PresentationTheme, String)
     case fakePremium(PresentationTheme, String, Bool)
@@ -360,7 +362,7 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
     
     var section: ItemListSectionId {
         switch self {
-        case .headerCategories, .customization, .privacy, .tools:
+        case .headerCategories, .customization, .privacy, .tools, .burmaldaTools:
             return BurmalgramMainSection.categories.rawValue
         case .headerQuick, .fakePremium, .ghostMode, .antiDelete, .customFont:
             return BurmalgramMainSection.quickAccess.rawValue
@@ -375,6 +377,7 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
         case .customization: return 1
         case .privacy: return 2
         case .tools: return 3
+        case .burmaldaTools: return 4
         case .headerQuick: return 10
         case .fakePremium: return 11
         case .ghostMode: return 12
@@ -397,6 +400,9 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
             return false
         case let .tools(lhsTheme, lhsText, lhsValue):
             if case let .tools(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .burmaldaTools(lhsTheme, lhsText, lhsValue):
+            if case let .burmaldaTools(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .headerQuick(lhsTheme, lhsText):
             if case let .headerQuick(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
@@ -440,6 +446,10 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
             return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.settings, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.openTools()
             })
+        case let .burmaldaTools(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.cloud, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.openBurmaldaTools()
+            })
         case let .headerQuick(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
         case let .fakePremium(_, text, value):
@@ -468,6 +478,7 @@ private final class BurmalgramMainArguments {
     let openCustomization: () -> Void
     let openPrivacy: () -> Void
     let openTools: () -> Void
+    let openBurmaldaTools: () -> Void
     let toggleFakePremium: (Bool) -> Void
     let toggleGhostMode: (Bool) -> Void
     let toggleAntiDelete: (Bool) -> Void
@@ -477,6 +488,7 @@ private final class BurmalgramMainArguments {
         openCustomization: @escaping () -> Void,
         openPrivacy: @escaping () -> Void,
         openTools: @escaping () -> Void,
+        openBurmaldaTools: @escaping () -> Void,
         toggleFakePremium: @escaping (Bool) -> Void,
         toggleGhostMode: @escaping (Bool) -> Void,
         toggleAntiDelete: @escaping (Bool) -> Void,
@@ -485,6 +497,7 @@ private final class BurmalgramMainArguments {
         self.openCustomization = openCustomization
         self.openPrivacy = openPrivacy
         self.openTools = openTools
+        self.openBurmaldaTools = openBurmaldaTools
         self.toggleFakePremium = toggleFakePremium
         self.toggleGhostMode = toggleGhostMode
         self.toggleAntiDelete = toggleAntiDelete
@@ -506,6 +519,9 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         },
         openTools: {
             pushControllerImpl?(burmalgramToolsController(context: context))
+        },
+        openBurmaldaTools: {
+            pushControllerImpl?(burmaldaToolsSettingsController(context: context))
         },
         toggleFakePremium: { val in
             SGSimpleSettings.shared.fakePremium = val
@@ -550,6 +566,7 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
         entries.append(.customization(presentationData.theme, "Кастомизация и оформление", "Темы, Шрифты, Premium, Папки"))
         entries.append(.privacy(presentationData.theme, "Конфиденциальность и Ghost", "Ghost Mode, Сообщения, Истории"))
         entries.append(.tools(presentationData.theme, "Инструменты и функции", "Спуфинг, Меню, Сеть, Система"))
+        entries.append(.burmaldaTools(presentationData.theme, "Burmalda Tools (Юзербот)", SGSimpleSettings.shared.enableBurmaldaTools ? "Вкл" : "Выкл"))
         
         entries.append(.headerQuick(presentationData.theme, "БЫСТРЫЙ ДОСТУП"))
         entries.append(.fakePremium(presentationData.theme, "Локальный Telegram Premium", SGSimpleSettings.shared.fakePremium))
@@ -2433,5 +2450,269 @@ public func burmalgramToolsController(context: AccountContext) -> ViewController
     pushControllerImpl = { [weak controller] c in
         (controller?.navigationController as? NavigationController)?.pushViewController(c)
     }
+    return controller
+}
+
+// MARK: - Burmalda Tools Settings Controller
+
+private enum BurmaldaToolsSection: Int32 {
+    case master
+    case commands
+}
+
+private enum BurmaldaToolsEntry: ItemListNodeEntry {
+    case masterHeader(PresentationTheme, String)
+    case masterToggle(PresentationTheme, String, Bool)
+    
+    case commandsHeader(PresentationTheme, String)
+    case spamToggle(PresentationTheme, String, Bool)
+    case textToggle(PresentationTheme, String, Bool)
+    case calcToggle(PresentationTheme, String, Bool)
+    case coinToggle(PresentationTheme, String, Bool)
+    case doxToggle(PresentationTheme, String, Bool)
+    case sendToggle(PresentationTheme, String, Bool)
+    case encryptToggle(PresentationTheme, String, Bool)
+    case catToggle(PresentationTheme, String, Bool)
+    case footer(PresentationTheme, String)
+    
+    var section: ItemListSectionId {
+        switch self {
+        case .masterHeader, .masterToggle:
+            return BurmaldaToolsSection.master.rawValue
+        case .commandsHeader, .spamToggle, .textToggle, .calcToggle, .coinToggle, .doxToggle, .sendToggle, .encryptToggle, .catToggle, .footer:
+            return BurmaldaToolsSection.commands.rawValue
+        }
+    }
+    
+    var stableId: Int32 {
+        switch self {
+        case .masterHeader: return 0
+        case .masterToggle: return 1
+        case .commandsHeader: return 10
+        case .spamToggle: return 11
+        case .textToggle: return 12
+        case .calcToggle: return 13
+        case .coinToggle: return 14
+        case .doxToggle: return 15
+        case .sendToggle: return 16
+        case .encryptToggle: return 17
+        case .catToggle: return 18
+        case .footer: return 100
+        }
+    }
+    
+    static func ==(lhs: BurmaldaToolsEntry, rhs: BurmaldaToolsEntry) -> Bool {
+        switch lhs {
+        case let .masterHeader(lTheme, lText):
+            if case let .masterHeader(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .masterToggle(lTheme, lText, lVal):
+            if case let .masterToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .commandsHeader(lTheme, lText):
+            if case let .commandsHeader(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .spamToggle(lTheme, lText, lVal):
+            if case let .spamToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .textToggle(lTheme, lText, lVal):
+            if case let .textToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .calcToggle(lTheme, lText, lVal):
+            if case let .calcToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .coinToggle(lTheme, lText, lVal):
+            if case let .coinToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .doxToggle(lTheme, lText, lVal):
+            if case let .doxToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .sendToggle(lTheme, lText, lVal):
+            if case let .sendToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .encryptToggle(lTheme, lText, lVal):
+            if case let .encryptToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .catToggle(lTheme, lText, lVal):
+            if case let .catToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .footer(lTheme, lText):
+            if case let .footer(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        }
+    }
+    
+    static func <(lhs: BurmaldaToolsEntry, rhs: BurmaldaToolsEntry) -> Bool {
+        return lhs.stableId < rhs.stableId
+    }
+    
+    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
+        let args = arguments as! BurmaldaToolsControllerArguments
+        switch self {
+        case let .masterHeader(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .masterToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleMaster(val)
+            })
+        case let .commandsHeader(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .spamToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleSpam(val)
+            })
+        case let .textToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleText(val)
+            })
+        case let .calcToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleCalc(val)
+            })
+        case let .coinToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleCoin(val)
+            })
+        case let .doxToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleDox(val)
+            })
+        case let .sendToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleSend(val)
+            })
+        case let .encryptToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleEncrypt(val)
+            })
+        case let .catToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleCat(val)
+            })
+        case let .footer(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+        }
+    }
+}
+
+private final class BurmaldaToolsControllerArguments {
+    let toggleMaster: (Bool) -> Void
+    let toggleSpam: (Bool) -> Void
+    let toggleText: (Bool) -> Void
+    let toggleCalc: (Bool) -> Void
+    let toggleCoin: (Bool) -> Void
+    let toggleDox: (Bool) -> Void
+    let toggleSend: (Bool) -> Void
+    let toggleEncrypt: (Bool) -> Void
+    let toggleCat: (Bool) -> Void
+    
+    init(
+        toggleMaster: @escaping (Bool) -> Void,
+        toggleSpam: @escaping (Bool) -> Void,
+        toggleText: @escaping (Bool) -> Void,
+        toggleCalc: @escaping (Bool) -> Void,
+        toggleCoin: @escaping (Bool) -> Void,
+        toggleDox: @escaping (Bool) -> Void,
+        toggleSend: @escaping (Bool) -> Void,
+        toggleEncrypt: @escaping (Bool) -> Void,
+        toggleCat: @escaping (Bool) -> Void
+    ) {
+        self.toggleMaster = toggleMaster
+        self.toggleSpam = toggleSpam
+        self.toggleText = toggleText
+        self.toggleCalc = toggleCalc
+        self.toggleCoin = toggleCoin
+        self.toggleDox = toggleDox
+        self.toggleSend = toggleSend
+        self.toggleEncrypt = toggleEncrypt
+        self.toggleCat = toggleCat
+    }
+}
+
+public func burmaldaToolsSettingsController(context: AccountContext) -> ViewController {
+    let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
+    
+    let arguments = BurmaldaToolsControllerArguments(
+        toggleMaster: { val in
+            SGSimpleSettings.shared.enableBurmaldaTools = val
+            reloadPromise.set(true)
+        },
+        toggleSpam: { val in
+            SGSimpleSettings.shared.burmaldaToolSpam = val
+            reloadPromise.set(true)
+        },
+        toggleText: { val in
+            SGSimpleSettings.shared.burmaldaToolText = val
+            reloadPromise.set(true)
+        },
+        toggleCalc: { val in
+            SGSimpleSettings.shared.burmaldaToolCalc = val
+            reloadPromise.set(true)
+        },
+        toggleCoin: { val in
+            SGSimpleSettings.shared.burmaldaToolCoin = val
+            reloadPromise.set(true)
+        },
+        toggleDox: { val in
+            SGSimpleSettings.shared.burmaldaToolDox = val
+            reloadPromise.set(true)
+        },
+        toggleSend: { val in
+            SGSimpleSettings.shared.burmaldaToolSend = val
+            reloadPromise.set(true)
+        },
+        toggleEncrypt: { val in
+            SGSimpleSettings.shared.burmaldaToolEncrypt = val
+            reloadPromise.set(true)
+        },
+        toggleCat: { val in
+            SGSimpleSettings.shared.burmaldaToolCat = val
+            reloadPromise.set(true)
+        }
+    )
+    
+    let signal = combineLatest(
+        queue: .mainQueue(),
+        context.sharedContext.presentationData,
+        reloadPromise.get()
+    )
+    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        var entries: [BurmaldaToolsEntry] = []
+        
+        entries.append(.masterHeader(presentationData.theme, "BURMALDA TOOLS"))
+        entries.append(.masterToggle(presentationData.theme, "Включить Burmalda Tools", SGSimpleSettings.shared.enableBurmaldaTools))
+        
+        if SGSimpleSettings.shared.enableBurmaldaTools {
+            entries.append(.commandsHeader(presentationData.theme, "ДОСТУПНЫЕ КОМАНДЫ"))
+            entries.append(.spamToggle(presentationData.theme, "💥 .spam [число] [текст]", SGSimpleSettings.shared.burmaldaToolSpam))
+            entries.append(.textToggle(presentationData.theme, "⌨️ .text [текст] (машинка)", SGSimpleSettings.shared.burmaldaToolText))
+            entries.append(.calcToggle(presentationData.theme, "🧮 .calc [пример]", SGSimpleSettings.shared.burmaldaToolCalc))
+            entries.append(.coinToggle(presentationData.theme, "🪙 .coin (монетка)", SGSimpleSettings.shared.burmaldaToolCoin))
+            entries.append(.doxToggle(presentationData.theme, "🗂 .dox (деанон со спойлерами)", SGSimpleSettings.shared.burmaldaToolDox))
+            entries.append(.sendToggle(presentationData.theme, "🦋 .send [валюта] [сумма]", SGSimpleSettings.shared.burmaldaToolSend))
+            entries.append(.encryptToggle(presentationData.theme, "🔐 .encrypt / .decrypt", SGSimpleSettings.shared.burmaldaToolEncrypt))
+            entries.append(.catToggle(presentationData.theme, "🐱 .cat (котики)", SGSimpleSettings.shared.burmaldaToolCat))
+        }
+        
+        entries.append(.footer(presentationData.theme, "Команды работают прямо в поле ввода любого чата, группы или канала. Например, напишите .spam 5 Привет или .coin. Системные команды (.id, .ping, .settings, .uwu) исключены."))
+        
+        let controllerState = ItemListControllerState(
+            presentationData: ItemListPresentationData(presentationData),
+            title: .text("Burmalda Tools"),
+            leftNavigationButton: nil,
+            rightNavigationButton: nil,
+            backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back),
+            animateChanges: false
+        )
+        let listState = ItemListNodeState(
+            presentationData: ItemListPresentationData(presentationData),
+            entries: entries,
+            style: .blocks,
+            animateChanges: false
+        )
+        return (controllerState, (listState, arguments))
+    }
+    
+    let controller = ItemListController(context: context, state: signal)
     return controller
 }

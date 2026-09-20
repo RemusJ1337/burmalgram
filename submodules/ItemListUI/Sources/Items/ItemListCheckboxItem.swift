@@ -32,6 +32,7 @@ public class ItemListCheckboxItem: ListViewItem, ItemListItem {
     let iconSize: CGSize?
     let iconPlacement: IconPlacement
     let title: String
+    let titleFont: UIFont?
     let subtitle: String?
     let style: ItemListCheckboxItemStyle
     let color: ItemListCheckboxItemColor
@@ -44,13 +45,14 @@ public class ItemListCheckboxItem: ListViewItem, ItemListItem {
     let deleteAction: (() -> Void)?
     public let tag: Any?
     
-    public init(presentationData: ItemListPresentationData, systemStyle: ItemListSystemStyle = .legacy, icon: UIImage? = nil, iconSize: CGSize? = nil, iconPlacement: IconPlacement = .default, title: String, subtitle: String? = nil, style: ItemListCheckboxItemStyle, color: ItemListCheckboxItemColor = .accent, textColor: TextColor = .primary, checked: Bool, enabled: Bool = true, zeroSeparatorInsets: Bool, sectionId: ItemListSectionId, action: @escaping () -> Void, deleteAction: (() -> Void)? = nil, tag: Any? = nil) {
+    public init(presentationData: ItemListPresentationData, systemStyle: ItemListSystemStyle = .legacy, icon: UIImage? = nil, iconSize: CGSize? = nil, iconPlacement: IconPlacement = .default, title: String, titleFont: UIFont? = nil, subtitle: String? = nil, style: ItemListCheckboxItemStyle, color: ItemListCheckboxItemColor = .accent, textColor: TextColor = .primary, checked: Bool, enabled: Bool = true, zeroSeparatorInsets: Bool, sectionId: ItemListSectionId, action: @escaping () -> Void, deleteAction: (() -> Void)? = nil, tag: Any? = nil) {
         self.presentationData = presentationData
         self.systemStyle = systemStyle
         self.icon = icon
         self.iconSize = iconSize
         self.iconPlacement = iconPlacement
         self.title = title
+        self.titleFont = titleFont
         self.subtitle = subtitle
         self.style = style
         self.color = color
@@ -219,7 +221,7 @@ public class ItemListCheckboxItemNode: ItemListRevealOptionsItemNode {
                 }
             }
             
-            let titleFont = Font.regular(item.presentationData.fontSize.itemListBaseFontSize)
+            let titleFont = item.titleFont ?? Font.regular(item.presentationData.fontSize.itemListBaseFontSize)
             let subtitleFont = Font.regular(floor(item.presentationData.fontSize.itemListBaseFontSize * 15.0 / 17.0))
             
             var titleColor: UIColor

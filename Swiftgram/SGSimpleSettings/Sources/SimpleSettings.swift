@@ -188,6 +188,15 @@ public class SGSimpleSettings {
         case fakeEmojiStatusFileId
         case burmalgramTheme
         case useDefaultThemeColors
+        case enableBurmaldaTools
+        case burmaldaToolSpam
+        case burmaldaToolText
+        case burmaldaToolCalc
+        case burmaldaToolCoin
+        case burmaldaToolDox
+        case burmaldaToolSend
+        case burmaldaToolEncrypt
+        case burmaldaToolCat
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -355,7 +364,16 @@ public class SGSimpleSettings {
         Keys.fakeBackgroundEmojiId.rawValue: 0 as Int64,
         Keys.fakeEmojiStatusFileId.rawValue: 0 as Int64,
         Keys.burmalgramTheme.rawValue: "default",
-        Keys.useDefaultThemeColors.rawValue: false
+        Keys.useDefaultThemeColors.rawValue: false,
+        Keys.enableBurmaldaTools.rawValue: true,
+        Keys.burmaldaToolSpam.rawValue: true,
+        Keys.burmaldaToolText.rawValue: true,
+        Keys.burmaldaToolCalc.rawValue: true,
+        Keys.burmaldaToolCoin.rawValue: true,
+        Keys.burmaldaToolDox.rawValue: true,
+        Keys.burmaldaToolSend.rawValue: true,
+        Keys.burmaldaToolEncrypt.rawValue: true,
+        Keys.burmaldaToolCat.rawValue: true
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -401,6 +419,33 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.useDefaultThemeColors.rawValue)
     public var useDefaultThemeColors: Bool
+
+    @UserDefault(key: Keys.enableBurmaldaTools.rawValue)
+    public var enableBurmaldaTools: Bool
+
+    @UserDefault(key: Keys.burmaldaToolSpam.rawValue)
+    public var burmaldaToolSpam: Bool
+
+    @UserDefault(key: Keys.burmaldaToolText.rawValue)
+    public var burmaldaToolText: Bool
+
+    @UserDefault(key: Keys.burmaldaToolCalc.rawValue)
+    public var burmaldaToolCalc: Bool
+
+    @UserDefault(key: Keys.burmaldaToolCoin.rawValue)
+    public var burmaldaToolCoin: Bool
+
+    @UserDefault(key: Keys.burmaldaToolDox.rawValue)
+    public var burmaldaToolDox: Bool
+
+    @UserDefault(key: Keys.burmaldaToolSend.rawValue)
+    public var burmaldaToolSend: Bool
+
+    @UserDefault(key: Keys.burmaldaToolEncrypt.rawValue)
+    public var burmaldaToolEncrypt: Bool
+
+    @UserDefault(key: Keys.burmaldaToolCat.rawValue)
+    public var burmaldaToolCat: Bool
 
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool

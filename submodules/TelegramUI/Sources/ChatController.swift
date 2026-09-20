@@ -9048,6 +9048,20 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             return
         }
         
+        if !commit && messages.count == 1, case let .message(text, _, _, _, threadId, replyToMessageId, _, _, _, _) = messages[0] {
+            if BurmaldaTools.handleCommand(
+                text: text,
+                peerId: peerId,
+                threadId: threadId ?? self.chatLocation.threadId,
+                replyToMessageId: replyToMessageId,
+                context: self.context
+            ) {
+                self.chatDisplayNode.historyNode.scrollToEndOfHistory()
+                self.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })
+                return
+            }
+        }
+        
         let _ = (self.shouldDivertMessagesToScheduled(messages: messages)
         |> deliverOnMainQueue).startStandalone(next: { [weak self] shouldDivert in
             guard let self else {

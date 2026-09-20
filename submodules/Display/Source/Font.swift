@@ -279,9 +279,8 @@ public struct Font {
         }
     }
     
-    private static func applyCustomFont(size: CGFloat, weight: Weight) -> UIFont {
-        let fontPref = SGSimpleSettings.shared.customFont
-        switch fontPref {
+    public static func fontForCustomFontKey(_ fontKey: String, size: CGFloat, weight: Weight = .regular) -> UIFont {
+        switch fontKey {
         case "round":
             return self.with(size: size, design: .round, weight: weight)
         case "serif":
@@ -340,6 +339,10 @@ public struct Font {
         default:
             return UIFont.systemFont(ofSize: size, weight: weight.weight)
         }
+    }
+    
+    private static func applyCustomFont(size: CGFloat, weight: Weight) -> UIFont {
+        return fontForCustomFontKey(SGSimpleSettings.shared.customFont, size: size, weight: weight)
     }
     
     public static func regular(_ size: CGFloat) -> UIFont {

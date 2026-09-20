@@ -37,6 +37,98 @@ private extension PresentationThemeBaseColor {
     }
 }
 
+private func applyBurmalgramThemeClientWide(
+    themeKey: String,
+    rootController: inout PresentationThemeRootController,
+    list: inout PresentationThemeList,
+    chatList: inout PresentationThemeChatList
+) {
+    let plainBg: UIColor
+    let blocksBg: UIColor
+    let itemBlocksBg: UIColor
+    let highlightedBg: UIColor
+    let barBg: UIColor
+    let searchBarBg: UIColor
+    let sepColor: UIColor
+    
+    switch themeKey {
+    case "neon":
+        plainBg = UIColor(rgb: 0x000C2A)
+        blocksBg = UIColor(rgb: 0x000C2A)
+        itemBlocksBg = UIColor(rgb: 0x001744)
+        highlightedBg = UIColor(rgb: 0x002566)
+        barBg = UIColor(rgb: 0x001238, alpha: 0.94)
+        searchBarBg = UIColor(rgb: 0x001744)
+        sepColor = UIColor(rgb: 0x003380, alpha: 0.6)
+    case "titanium":
+        plainBg = UIColor(rgb: 0x121316)
+        blocksBg = UIColor(rgb: 0x121316)
+        itemBlocksBg = UIColor(rgb: 0x1E2026)
+        highlightedBg = UIColor(rgb: 0x2D3038)
+        barBg = UIColor(rgb: 0x17191E, alpha: 0.94)
+        searchBarBg = UIColor(rgb: 0x1E2026)
+        sepColor = UIColor(rgb: 0x363A44, alpha: 0.6)
+    case "space", "midnight":
+        plainBg = UIColor(rgb: 0x030818)
+        blocksBg = UIColor(rgb: 0x030818)
+        itemBlocksBg = UIColor(rgb: 0x09142F)
+        highlightedBg = UIColor(rgb: 0x13244F)
+        barBg = UIColor(rgb: 0x060F26, alpha: 0.94)
+        searchBarBg = UIColor(rgb: 0x09142F)
+        sepColor = UIColor(rgb: 0x1A2B5E, alpha: 0.6)
+    case "sparkling":
+        plainBg = UIColor(rgb: 0x050718)
+        blocksBg = UIColor(rgb: 0x050718)
+        itemBlocksBg = UIColor(rgb: 0x0D1135)
+        highlightedBg = UIColor(rgb: 0x181F54)
+        barBg = UIColor(rgb: 0x090D2A, alpha: 0.94)
+        searchBarBg = UIColor(rgb: 0x0D1135)
+        sepColor = UIColor(rgb: 0x212966, alpha: 0.6)
+    default:
+        return
+    }
+    
+    rootController = rootController.withUpdated(
+        tabBar: rootController.tabBar.withUpdated(
+            backgroundColor: barBg,
+            separatorColor: sepColor
+        ),
+        navigationBar: rootController.navigationBar.withUpdated(
+            blurredBackgroundColor: barBg,
+            opaqueBackgroundColor: barBg,
+            separatorColor: sepColor
+        ),
+        navigationSearchBar: rootController.navigationSearchBar.withUpdated(
+            backgroundColor: searchBarBg,
+            separatorColor: sepColor
+        )
+    )
+    
+    list = list.withUpdated(
+        blocksBackgroundColor: blocksBg,
+        modalBlocksBackgroundColor: itemBlocksBg,
+        plainBackgroundColor: plainBg,
+        modalPlainBackgroundColor: plainBg,
+        itemBlocksBackgroundColor: itemBlocksBg,
+        itemModalBlocksBackgroundColor: itemBlocksBg,
+        itemHighlightedBackgroundColor: highlightedBg,
+        itemBlocksSeparatorColor: sepColor,
+        itemPlainSeparatorColor: sepColor
+    )
+    
+    chatList = chatList.withUpdated(
+        backgroundColor: plainBg,
+        itemSeparatorColor: sepColor,
+        itemBackgroundColor: plainBg,
+        pinnedItemBackgroundColor: itemBlocksBg,
+        itemHighlightedBackgroundColor: highlightedBg,
+        pinnedItemHighlightedBackgroundColor: highlightedBg,
+        pinnedSearchBarColor: searchBarBg,
+        regularSearchBarColor: searchBarBg,
+        sectionHeaderFillColor: plainBg
+    )
+}
+
 public func customizeDefaultDarkPresentationTheme(theme: PresentationTheme, editing: Bool, title: String?, accentColor: UIColor?, backgroundColors: [UInt32], bubbleColors: [UInt32], animateBubbleColors: Bool?, wallpaper forcedWallpaper: TelegramWallpaper? = nil, baseColor: PresentationThemeBaseColor? = nil) -> PresentationTheme {
     if (theme.referenceTheme != .night) {
         return theme
@@ -307,6 +399,17 @@ public func customizeDefaultDarkPresentationTheme(theme: PresentationTheme, edit
             badgeTextColor: badgeTextColor
         )
     )
+    
+    let burmalgramThemeKey = UserDefaults.standard.string(forKey: "burmalgramTheme") ?? ""
+    let useDefaultColors = UserDefaults.standard.bool(forKey: "useDefaultThemeColors")
+    if !useDefaultColors && !burmalgramThemeKey.isEmpty && burmalgramThemeKey != "default" {
+        applyBurmalgramThemeClientWide(
+            themeKey: burmalgramThemeKey,
+            rootController: &rootController,
+            list: &list,
+            chatList: &chatList
+        )
+    }
     
     return PresentationTheme(
         name: title.flatMap { .custom($0) } ?? theme.name,
@@ -804,6 +907,20 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
         rangeViewFrameColor: UIColor(rgb: 0x6d6d72),
         rangeViewMarkerColor: UIColor(rgb: 0xffffff)
     )
+
+    var rootController = rootController
+    var list = list
+    var chatList = chatList
+    let burmalgramThemeKey = UserDefaults.standard.string(forKey: "burmalgramTheme") ?? ""
+    let useDefaultColors = UserDefaults.standard.bool(forKey: "useDefaultThemeColors")
+    if !useDefaultColors && !burmalgramThemeKey.isEmpty && burmalgramThemeKey != "default" {
+        applyBurmalgramThemeClientWide(
+            themeKey: burmalgramThemeKey,
+            rootController: &rootController,
+            list: &list,
+            chatList: &chatList
+        )
+    }
 
     return PresentationTheme(
         name: extendingThemeReference?.name ?? .builtin(.night),
