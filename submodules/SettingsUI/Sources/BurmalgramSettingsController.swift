@@ -447,7 +447,7 @@ private enum BurmalgramMainEntry: ItemListNodeEntry {
                 args.openTools()
             })
         case let .burmaldaTools(_, text, value):
-            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.cloud, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.messages, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.openBurmaldaTools()
             })
         case let .headerQuick(_, text):
