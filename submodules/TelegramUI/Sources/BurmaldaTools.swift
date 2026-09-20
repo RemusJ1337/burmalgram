@@ -6,8 +6,129 @@ import Postbox
 import TelegramCore
 import AccountContext
 import SGSimpleSettings
+import UndoUI
 
 public final class BurmaldaTools {
+    
+    // MARK: - State Cache
+    
+    private struct IncomingRecord {
+        let peerId: PeerId
+        let authorId: PeerId
+        let text: String
+        let timestamp: Double
+    }
+    
+    private static var recentIncomingRecords: [IncomingRecord] = []
+    private static var lastAutoanswerTimestamps: [PeerId: Double] = [:]
+    private static let lock = NSLock()
+    
+    // MARK: - Toast Helper
+    
+    public static func showToast(_ text: String, controller: ViewController?, context: AccountContext) {
+        if let controller = controller {
+            let presentationData = context.sharedContext.currentPresentationData.with { $0 }
+            controller.present(UndoOverlayController(
+                presentationData: presentationData,
+                content: .info(title: nil, text: text, timeout: nil, customUndoText: nil),
+                elevatedLayout: false,
+                action: { _ in return false }
+            ), in: .current)
+        }
+    }
+    
+    // MARK: - Mute Store
+    
+    public static func isPeerMuted(_ peerId: PeerId) -> Bool {
+        return SGSimpleSettings.shared.burmaldaMutedPeerIds.contains(peerId.toInt64())
+    }
+    
+    @discardableResult
+    public static func toggleMute(peerId: PeerId) -> Bool {
+        let idVal = peerId.toInt64()
+        var list = SGSimpleSettings.shared.burmaldaMutedPeerIds
+        let isNowMuted: Bool
+        if list.contains(idVal) {
+            list.removeAll(where: { $0 == idVal })
+            isNowMuted = false
+        } else {
+            list.append(idVal)
+            isNowMuted = true
+        }
+        SGSimpleSettings.shared.burmaldaMutedPeerIds = list
+        return isNowMuted
+    }
+    
+    // MARK: - Incoming Message Processor (Real-Time Auto-Antispam, Mute & Autoanswer)
+    
+    public static func handleIncomingMessage(message: Message, context: AccountContext) {
+        guard SGSimpleSettings.shared.enableBurmaldaTools else { return }
+        guard message.flags.contains(.Incoming) else { return }
+        guard let author = message.author, author.id != context.account.peerId else { return }
+        
+        let isPM = message.id.peerId.namespace == Namespaces.Peer.CloudUser
+        
+        // 1. PM Mute logic (delete all new messages from the interlocutor immediately)
+        if isPM && isPeerMuted(message.id.peerId) {
+            let _ = context.engine.messages.deleteMessagesInteractively(messageIds: [message.id], type: .forEveryone).startStandalone()
+            return
+        }
+        
+        // 2. Real-Time Auto-Antispam (if > 3 identical messages from same sender, delete repeats)
+        if SGSimpleSettings.shared.burmaldaAntispamOn {
+            let trimmedText = message.text.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmedText.isEmpty {
+                let now = Date().timeIntervalSince1970
+                var shouldDelete = false
+                
+                lock.lock()
+                recentIncomingRecords.removeAll(where: { now - $0.timestamp > 180.0 })
+                let duplicates = recentIncomingRecords.filter {
+                    $0.peerId == message.id.peerId && $0.authorId == author.id && $0.text == trimmedText
+                }
+                if duplicates.count >= 3 {
+                    shouldDelete = true
+                } else {
+                    recentIncomingRecords.append(IncomingRecord(
+                        peerId: message.id.peerId,
+                        authorId: author.id,
+                        text: trimmedText,
+                        timestamp: now
+                    ))
+                }
+                lock.unlock()
+                
+                if shouldDelete {
+                    let _ = context.engine.messages.deleteMessagesInteractively(messageIds: [message.id], type: .forEveryone).startStandalone()
+                    return
+                }
+            }
+        }
+        
+        // 3. Offline Auto-Responder in PM
+        if isPM && SGSimpleSettings.shared.burmaldaAutoanswerOn {
+            if let user = author as? TelegramUser, user.botInfo == nil {
+                let now = Date().timeIntervalSince1970
+                let delay = Double(max(5, SGSimpleSettings.shared.burmaldaAutoanswerDelay))
+                
+                var canAnswer = false
+                lock.lock()
+                let lastTime = lastAutoanswerTimestamps[message.id.peerId] ?? 0.0
+                if now - lastTime >= delay {
+                    lastAutoanswerTimestamps[message.id.peerId] = now
+                    canAnswer = true
+                }
+                lock.unlock()
+                
+                if canAnswer {
+                    let autoText = SGSimpleSettings.shared.burmaldaAutoanswerText.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !autoText.isEmpty {
+                        sendMessage(account: context.account, peerId: message.id.peerId, threadId: nil, replyToMessageId: nil, text: autoText)
+                    }
+                }
+            }
+        }
+    }
     
     // MARK: - Markdown & Spoiler Parser
     
@@ -57,7 +178,7 @@ public final class BurmaldaTools {
         return (resultText, entities)
     }
     
-    // MARK: - Message Sender Helper
+    // MARK: - Outgoing Message Sender
     
     public static func sendMessage(
         account: Account,
@@ -90,21 +211,23 @@ public final class BurmaldaTools {
         })
     }
     
-    // MARK: - Main Command Handler
+    // MARK: - Main Command Interceptor
     
     public static func handleCommand(
         text: String,
         peerId: PeerId,
         threadId: Int64?,
         replyToMessageId: EngineMessageReplySubject?,
-        context: AccountContext
+        context: AccountContext,
+        controller: ViewController?
     ) -> Bool {
         guard SGSimpleSettings.shared.enableBurmaldaTools else {
             return false
         }
         
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard trimmed.hasPrefix(".") else {
+        let isCatSynonym = trimmed.lowercased() == "котость"
+        guard trimmed.hasPrefix(".") || isCatSynonym else {
             return false
         }
         
@@ -115,20 +238,37 @@ public final class BurmaldaTools {
         
         let cmd = firstWord.lowercased()
         
+        // Handle sending command to server if requested
+        let sendRawToServerIfNeeded: () -> Void = {
+            if SGSimpleSettings.shared.burmaldaSendCommandsToServer {
+                sendMessage(account: context.account, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, text: text) { sentCmdId in
+                    if SGSimpleSettings.shared.burmaldaDeleteCommands, let sentCmdId = sentCmdId {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                            let _ = context.engine.messages.deleteMessagesInteractively(messageIds: [sentCmdId], type: .forEveryone).startStandalone()
+                        }
+                    }
+                }
+            }
+        }
+        
         // 1. .help / .хелп
         if cmd == ".help" || cmd == ".хелп" {
+            sendRawToServerIfNeeded()
             let helpText = """
             🛠 **Burmalda Tools (Native):**
 
             • `.spam [число] [текст]` — Заспамить чат
             • `.text [текст]` — Анимация печати (машинка)
-            • `.calc [пример]` — Калькулятор (или `.calculate`)
+            • `.calc [пример]` — Калькулятор (или `.calculate`, `.калькулятор`)
             • `.coin` — Подбросить монетку (или `.монетка`)
             • `.dox` — Шуточный деанон со спойлерами (или `.докс`)
             • `.send [валюта] [сумма]` — Фейк-чек CryptoBot
             • `.encrypt [текст]` — Зашифровать в Base64
             • `.decrypt` — Расшифровать (ответом на шифр)
-            • `.cat` — Котики (или `.кот`)
+            • `.cat` — Котики (или `.кот`, `котость`)
+            • `.mute` — Мут в ЛС (удаляет сообщения собеседника)
+            • `.antispam` — Очистить повторяющиеся сообщения
+            • `.antispam-on` / `.antispam-off` — Авто-антиспам
             • `.help` — Справка по командам
             """
             let (parsedText, entities) = parseSimpleEntities(helpText)
@@ -136,9 +276,100 @@ public final class BurmaldaTools {
             return true
         }
         
-        // 2. .spam [count] [text] / .спам
+        // 2. .mute / .мут (логика мутов в лс - просто удаляет все новые сообщения собеседника)
+        if cmd == ".mute" || cmd == ".мут" {
+            guard SGSimpleSettings.shared.burmaldaToolMute else { return false }
+            sendRawToServerIfNeeded()
+            if peerId.namespace != Namespaces.Peer.CloudUser {
+                showToast("❌ Мут работает только в личных сообщениях (ЛС)!", controller: controller, context: context)
+                return true
+            }
+            let isMuted = toggleMute(peerId: peerId)
+            if isMuted {
+                showToast("🔇 Мут в ЛС включен!\nНовые сообщения собеседника будут сразу удаляться.", controller: controller, context: context)
+            } else {
+                showToast("🔊 Мут в ЛС снят!", controller: controller, context: context)
+            }
+            return true
+        }
+        
+        // 3. .antispam / .антиспам (удалить повторяющиеся сообщения в лс или чатах если админ)
+        if cmd == ".antispam" || cmd == ".антиспам" {
+            guard SGSimpleSettings.shared.burmaldaToolAntispam else { return false }
+            sendRawToServerIfNeeded()
+            
+            let _ = (context.account.postbox.transaction { transaction -> (canDelete: Bool, duplicateIds: [MessageId], scanned: Int) in
+                var canDelete = false
+                if peerId.namespace == Namespaces.Peer.CloudUser {
+                    canDelete = true
+                } else if let channel = transaction.getPeer(peerId) as? TelegramChannel {
+                    if channel.hasPermission(.deleteAllMessages) || channel.flags.contains(.isCreator) {
+                        canDelete = true
+                    }
+                } else if let group = transaction.getPeer(peerId) as? TelegramGroup {
+                    if case .creator = group.role {
+                        canDelete = true
+                    } else if case .admin = group.role {
+                        canDelete = true
+                    }
+                }
+                
+                guard canDelete else {
+                    return (false, [], 0)
+                }
+                
+                var seenTexts: [String: MessageId] = [:]
+                var duplicateIds: [MessageId] = []
+                var count = 0
+                
+                transaction.scanTopMessages(peerId: peerId, namespace: Namespaces.Message.Cloud, limit: 100, { msg in
+                    count += 1
+                    let t = msg.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !t.isEmpty && t.count >= 2 {
+                        if seenTexts[t] != nil {
+                            duplicateIds.append(msg.id)
+                        } else {
+                            seenTexts[t] = msg.id
+                        }
+                    }
+                    return true
+                })
+                
+                return (true, duplicateIds, count)
+            } |> deliverOnMainQueue).startStandalone(next: { result in
+                if !result.canDelete {
+                    showToast("❌ Для антиспама в группе требуются права администратора на удаление сообщений!", controller: controller, context: context)
+                    return
+                }
+                if result.duplicateIds.isEmpty {
+                    showToast("🧹 Повторяющихся сообщений не найдено (проверено: \(result.scanned))", controller: controller, context: context)
+                } else {
+                    let _ = context.engine.messages.deleteMessagesInteractively(messageIds: result.duplicateIds, type: .forEveryone).startStandalone()
+                    showToast("🧹 Антиспам: удалено \(result.duplicateIds.count) повторных сообщений!", controller: controller, context: context)
+                }
+            })
+            return true
+        }
+        
+        // 4. .antispam-on / .antispam-off / .антиспам-вкл / .антиспам-выкл
+        if cmd == ".antispam-on" || cmd == ".антиспам-вкл" {
+            sendRawToServerIfNeeded()
+            SGSimpleSettings.shared.burmaldaAntispamOn = true
+            showToast("✅ Авто-антиспам включен!\n(При >3 одинаковых сообщений в ЛС повторки удаляются)", controller: controller, context: context)
+            return true
+        }
+        if cmd == ".antispam-off" || cmd == ".антиспам-выкл" {
+            sendRawToServerIfNeeded()
+            SGSimpleSettings.shared.burmaldaAntispamOn = false
+            showToast("❌ Авто-антиспам выключен", controller: controller, context: context)
+            return true
+        }
+        
+        // 5. .spam [count] [text] / .спам
         if cmd == ".spam" || cmd == ".спам" {
             guard SGSimpleSettings.shared.burmaldaToolSpam else { return false }
+            sendRawToServerIfNeeded()
+            
             let count: Int
             let spamText: String
             
@@ -167,9 +398,10 @@ public final class BurmaldaTools {
             return true
         }
         
-        // 3. .text [text] / .текст
+        // 6. .text [text] / .текст
         if cmd == ".text" || cmd == ".текст" {
             guard SGSimpleSettings.shared.burmaldaToolText else { return false }
+            sendRawToServerIfNeeded()
             let targetText = parts.dropFirst().joined(separator: " ")
             guard !targetText.isEmpty else {
                 sendMessage(account: context.account, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, text: "❌ Пример: .text Привет!")
@@ -179,9 +411,10 @@ public final class BurmaldaTools {
             return true
         }
         
-        // 4. .calc [expression] / .calculate / .калькулятор
+        // 7. .calc [expression] / .calculate / .калькулятор
         if cmd == ".calc" || cmd == ".calculate" || cmd == ".калькулятор" {
             guard SGSimpleSettings.shared.burmaldaToolCalc else { return false }
+            sendRawToServerIfNeeded()
             let expr = parts.dropFirst().joined(separator: " ")
             guard !expr.isEmpty else {
                 sendMessage(account: context.account, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, text: "❌ Пример: .calc 2 + 2 * 2")
@@ -197,46 +430,52 @@ public final class BurmaldaTools {
             return true
         }
         
-        // 5. .coin / .монетка
+        // 8. .coin / .монетка
         if cmd == ".coin" || cmd == ".монетка" {
             guard SGSimpleSettings.shared.burmaldaToolCoin else { return false }
+            sendRawToServerIfNeeded()
             handleCoin(peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
             return true
         }
         
-        // 6. .dox / .докс
+        // 9. .dox / .докс
         if cmd == ".dox" || cmd == ".докс" {
             guard SGSimpleSettings.shared.burmaldaToolDox else { return false }
+            sendRawToServerIfNeeded()
             handleDox(peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
             return true
         }
         
-        // 7. .send [currency] [amount] / .сенд
+        // 10. .send [currency] [amount] / .сенд
         if cmd == ".send" || cmd == ".сенд" {
             guard SGSimpleSettings.shared.burmaldaToolSend else { return false }
+            sendRawToServerIfNeeded()
             handleSend(parts: parts, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
             return true
         }
         
-        // 8. .encrypt [text] / .зашифровать
+        // 11. .encrypt [text] / .зашифровать / .зашыфровать
         if cmd == ".encrypt" || cmd == ".зашифровать" || cmd == ".зашыфровать" {
             guard SGSimpleSettings.shared.burmaldaToolEncrypt else { return false }
+            sendRawToServerIfNeeded()
             let content = parts.dropFirst().joined(separator: " ")
             handleEncrypt(content: content, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
             return true
         }
         
-        // 9. .decrypt / .расшифровать
+        // 12. .decrypt / .расшифровать / .расшыфровать
         if cmd == ".decrypt" || cmd == ".расшифровать" || cmd == ".расшыфровать" {
             guard SGSimpleSettings.shared.burmaldaToolEncrypt else { return false }
+            sendRawToServerIfNeeded()
             let arg = parts.count > 1 ? parts.dropFirst().joined(separator: " ") : nil
             handleDecrypt(arg: arg, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
             return true
         }
         
-        // 10. .cat / .кот / котость
-        if cmd == ".cat" || cmd == ".кот" || cmd == ".котость" {
+        // 13. .cat / .кот / .котость / котость
+        if cmd == ".cat" || cmd == ".кот" || cmd == ".котость" || isCatSynonym {
             guard SGSimpleSettings.shared.burmaldaToolCat else { return false }
+            sendRawToServerIfNeeded()
             handleCat(peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
             return true
         }

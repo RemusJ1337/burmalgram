@@ -9054,7 +9054,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
                 peerId: peerId,
                 threadId: threadId ?? self.chatLocation.threadId,
                 replyToMessageId: replyToMessageId,
-                context: self.context
+                context: self.context,
+                controller: self
             ) {
                 self.chatDisplayNode.historyNode.scrollToEndOfHistory()
                 self.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })

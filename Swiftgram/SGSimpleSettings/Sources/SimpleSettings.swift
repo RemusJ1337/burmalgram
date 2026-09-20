@@ -189,6 +189,15 @@ public class SGSimpleSettings {
         case burmalgramTheme
         case useDefaultThemeColors
         case enableBurmaldaTools
+        case burmaldaDeleteCommands
+        case burmaldaSendCommandsToServer
+        case burmaldaAutoanswerOn
+        case burmaldaAutoanswerText
+        case burmaldaAutoanswerDelay
+        case burmaldaMutedPeerIds
+        case burmaldaAntispamOn
+        case burmaldaToolAntispam
+        case burmaldaToolMute
         case burmaldaToolSpam
         case burmaldaToolText
         case burmaldaToolCalc
@@ -366,6 +375,15 @@ public class SGSimpleSettings {
         Keys.burmalgramTheme.rawValue: "default",
         Keys.useDefaultThemeColors.rawValue: false,
         Keys.enableBurmaldaTools.rawValue: true,
+        Keys.burmaldaDeleteCommands.rawValue: true,
+        Keys.burmaldaSendCommandsToServer.rawValue: false,
+        Keys.burmaldaAutoanswerOn.rawValue: false,
+        Keys.burmaldaAutoanswerText.rawValue: "Я сейчас не в сети.",
+        Keys.burmaldaAutoanswerDelay.rawValue: 300,
+        Keys.burmaldaMutedPeerIds.rawValue: [] as [Int64],
+        Keys.burmaldaAntispamOn.rawValue: true,
+        Keys.burmaldaToolAntispam.rawValue: true,
+        Keys.burmaldaToolMute.rawValue: true,
         Keys.burmaldaToolSpam.rawValue: true,
         Keys.burmaldaToolText.rawValue: true,
         Keys.burmaldaToolCalc.rawValue: true,
@@ -446,6 +464,33 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.burmaldaToolCat.rawValue)
     public var burmaldaToolCat: Bool
+
+    @UserDefault(key: Keys.burmaldaDeleteCommands.rawValue)
+    public var burmaldaDeleteCommands: Bool
+
+    @UserDefault(key: Keys.burmaldaSendCommandsToServer.rawValue)
+    public var burmaldaSendCommandsToServer: Bool
+
+    @UserDefault(key: Keys.burmaldaAutoanswerOn.rawValue)
+    public var burmaldaAutoanswerOn: Bool
+
+    @UserDefault(key: Keys.burmaldaAutoanswerText.rawValue)
+    public var burmaldaAutoanswerText: String
+
+    @UserDefault(key: Keys.burmaldaAutoanswerDelay.rawValue)
+    public var burmaldaAutoanswerDelay: Int
+
+    @UserDefault(key: Keys.burmaldaMutedPeerIds.rawValue)
+    public var burmaldaMutedPeerIds: [Int64]
+
+    @UserDefault(key: Keys.burmaldaAntispamOn.rawValue)
+    public var burmaldaAntispamOn: Bool
+
+    @UserDefault(key: Keys.burmaldaToolAntispam.rawValue)
+    public var burmaldaToolAntispam: Bool
+
+    @UserDefault(key: Keys.burmaldaToolMute.rawValue)
+    public var burmaldaToolMute: Bool
 
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool

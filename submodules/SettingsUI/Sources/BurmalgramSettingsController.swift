@@ -2457,6 +2457,9 @@ public func burmalgramToolsController(context: AccountContext) -> ViewController
 
 private enum BurmaldaToolsSection: Int32 {
     case master
+    case general
+    case autoanswer
+    case antispam
     case commands
 }
 
@@ -2464,7 +2467,21 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
     case masterHeader(PresentationTheme, String)
     case masterToggle(PresentationTheme, String, Bool)
     
+    case generalHeader(PresentationTheme, String)
+    case deleteCommandsToggle(PresentationTheme, String, Bool)
+    case sendCommandsToServerToggle(PresentationTheme, String, Bool)
+    
+    case autoanswerHeader(PresentationTheme, String)
+    case autoanswerToggle(PresentationTheme, String, Bool)
+    case autoanswerText(PresentationTheme, String, String)
+    case autoanswerDelay(PresentationTheme, String, String)
+    
+    case antispamHeader(PresentationTheme, String)
+    case antispamToggle(PresentationTheme, String, Bool)
+    
     case commandsHeader(PresentationTheme, String)
+    case antispamCmdToggle(PresentationTheme, String, Bool)
+    case muteCmdToggle(PresentationTheme, String, Bool)
     case spamToggle(PresentationTheme, String, Bool)
     case textToggle(PresentationTheme, String, Bool)
     case calcToggle(PresentationTheme, String, Bool)
@@ -2479,7 +2496,13 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
         switch self {
         case .masterHeader, .masterToggle:
             return BurmaldaToolsSection.master.rawValue
-        case .commandsHeader, .spamToggle, .textToggle, .calcToggle, .coinToggle, .doxToggle, .sendToggle, .encryptToggle, .catToggle, .footer:
+        case .generalHeader, .deleteCommandsToggle, .sendCommandsToServerToggle:
+            return BurmaldaToolsSection.general.rawValue
+        case .autoanswerHeader, .autoanswerToggle, .autoanswerText, .autoanswerDelay:
+            return BurmaldaToolsSection.autoanswer.rawValue
+        case .antispamHeader, .antispamToggle:
+            return BurmaldaToolsSection.antispam.rawValue
+        case .commandsHeader, .antispamCmdToggle, .muteCmdToggle, .spamToggle, .textToggle, .calcToggle, .coinToggle, .doxToggle, .sendToggle, .encryptToggle, .catToggle, .footer:
             return BurmaldaToolsSection.commands.rawValue
         }
     }
@@ -2488,15 +2511,26 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
         switch self {
         case .masterHeader: return 0
         case .masterToggle: return 1
-        case .commandsHeader: return 10
-        case .spamToggle: return 11
-        case .textToggle: return 12
-        case .calcToggle: return 13
-        case .coinToggle: return 14
-        case .doxToggle: return 15
-        case .sendToggle: return 16
-        case .encryptToggle: return 17
-        case .catToggle: return 18
+        case .generalHeader: return 10
+        case .deleteCommandsToggle: return 11
+        case .sendCommandsToServerToggle: return 12
+        case .autoanswerHeader: return 20
+        case .autoanswerToggle: return 21
+        case .autoanswerText: return 22
+        case .autoanswerDelay: return 23
+        case .antispamHeader: return 30
+        case .antispamToggle: return 31
+        case .commandsHeader: return 40
+        case .antispamCmdToggle: return 41
+        case .muteCmdToggle: return 42
+        case .spamToggle: return 43
+        case .textToggle: return 44
+        case .calcToggle: return 45
+        case .coinToggle: return 46
+        case .doxToggle: return 47
+        case .sendToggle: return 48
+        case .encryptToggle: return 49
+        case .catToggle: return 50
         case .footer: return 100
         }
     }
@@ -2509,8 +2543,41 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
         case let .masterToggle(lTheme, lText, lVal):
             if case let .masterToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
             return false
+        case let .generalHeader(lTheme, lText):
+            if case let .generalHeader(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .deleteCommandsToggle(lTheme, lText, lVal):
+            if case let .deleteCommandsToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .sendCommandsToServerToggle(lTheme, lText, lVal):
+            if case let .sendCommandsToServerToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .autoanswerHeader(lTheme, lText):
+            if case let .autoanswerHeader(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .autoanswerToggle(lTheme, lText, lVal):
+            if case let .autoanswerToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .autoanswerText(lTheme, lText, lVal):
+            if case let .autoanswerText(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .autoanswerDelay(lTheme, lText, lVal):
+            if case let .autoanswerDelay(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .antispamHeader(lTheme, lText):
+            if case let .antispamHeader(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .antispamToggle(lTheme, lText, lVal):
+            if case let .antispamToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
         case let .commandsHeader(lTheme, lText):
             if case let .commandsHeader(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .antispamCmdToggle(lTheme, lText, lVal):
+            if case let .antispamCmdToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .muteCmdToggle(lTheme, lText, lVal):
+            if case let .muteCmdToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
             return false
         case let .spamToggle(lTheme, lText, lVal):
             if case let .spamToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
@@ -2555,8 +2622,46 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleMaster(val)
             })
+        case let .generalHeader(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .deleteCommandsToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleDeleteCommands(val)
+            })
+        case let .sendCommandsToServerToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleSendCommandsToServer(val)
+            })
+        case let .autoanswerHeader(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .autoanswerToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleAutoanswer(val)
+            })
+        case let .autoanswerText(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.editAutoanswerText()
+            })
+        case let .autoanswerDelay(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.selectAutoanswerDelay()
+            })
+        case let .antispamHeader(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .antispamToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleAntispam(val)
+            })
         case let .commandsHeader(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .antispamCmdToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleAntispamCmd(val)
+            })
+        case let .muteCmdToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleMuteCmd(val)
+            })
         case let .spamToggle(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleSpam(val)
@@ -2595,8 +2700,64 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
     }
 }
 
+private func presentEditAutoanswerTextDialog(onComplete: @escaping () -> Void) {
+    let alert = UIAlertController(
+        title: "Текст автоответчика",
+        message: "Введите текст, который будет автоматически отправляться собеседникам в ЛС:",
+        preferredStyle: .alert
+    )
+    alert.addTextField { textField in
+        textField.text = SGSimpleSettings.shared.burmaldaAutoanswerText
+        textField.placeholder = "Я сейчас не в сети."
+    }
+    alert.addAction(UIAlertAction(title: "Сохранить", style: .default, handler: { _ in
+        let text = alert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        SGSimpleSettings.shared.burmaldaAutoanswerText = text.isEmpty ? "Я сейчас не в сети." : text
+        onComplete()
+    }))
+    alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+       let rootVC = window.rootViewController {
+        rootVC.present(alert, animated: true, completion: nil)
+    }
+}
+
+private func presentSelectAutoanswerDelayDialog(onComplete: @escaping () -> Void) {
+    let alert = UIAlertController(
+        title: "Задержка автоответчика",
+        message: "Интервал между автоответами одному собеседнику:",
+        preferredStyle: .actionSheet
+    )
+    let options: [(String, Int)] = [
+        ("30 секунд", 30),
+        ("1 минута (60с)", 60),
+        ("5 минут (300с, как в ориге)", 300),
+        ("15 минут (900с)", 900),
+        ("1 час (3600с)", 3600)
+    ]
+    for (label, seconds) in options {
+        alert.addAction(UIAlertAction(title: label, style: .default, handler: { _ in
+            SGSimpleSettings.shared.burmaldaAutoanswerDelay = seconds
+            onComplete()
+        }))
+    }
+    alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+       let rootVC = window.rootViewController {
+        rootVC.present(alert, animated: true, completion: nil)
+    }
+}
+
 private final class BurmaldaToolsControllerArguments {
     let toggleMaster: (Bool) -> Void
+    let toggleDeleteCommands: (Bool) -> Void
+    let toggleSendCommandsToServer: (Bool) -> Void
+    let toggleAutoanswer: (Bool) -> Void
+    let editAutoanswerText: () -> Void
+    let selectAutoanswerDelay: () -> Void
+    let toggleAntispam: (Bool) -> Void
+    let toggleAntispamCmd: (Bool) -> Void
+    let toggleMuteCmd: (Bool) -> Void
     let toggleSpam: (Bool) -> Void
     let toggleText: (Bool) -> Void
     let toggleCalc: (Bool) -> Void
@@ -2608,6 +2769,14 @@ private final class BurmaldaToolsControllerArguments {
     
     init(
         toggleMaster: @escaping (Bool) -> Void,
+        toggleDeleteCommands: @escaping (Bool) -> Void,
+        toggleSendCommandsToServer: @escaping (Bool) -> Void,
+        toggleAutoanswer: @escaping (Bool) -> Void,
+        editAutoanswerText: @escaping () -> Void,
+        selectAutoanswerDelay: @escaping () -> Void,
+        toggleAntispam: @escaping (Bool) -> Void,
+        toggleAntispamCmd: @escaping (Bool) -> Void,
+        toggleMuteCmd: @escaping (Bool) -> Void,
         toggleSpam: @escaping (Bool) -> Void,
         toggleText: @escaping (Bool) -> Void,
         toggleCalc: @escaping (Bool) -> Void,
@@ -2618,6 +2787,14 @@ private final class BurmaldaToolsControllerArguments {
         toggleCat: @escaping (Bool) -> Void
     ) {
         self.toggleMaster = toggleMaster
+        self.toggleDeleteCommands = toggleDeleteCommands
+        self.toggleSendCommandsToServer = toggleSendCommandsToServer
+        self.toggleAutoanswer = toggleAutoanswer
+        self.editAutoanswerText = editAutoanswerText
+        self.selectAutoanswerDelay = selectAutoanswerDelay
+        self.toggleAntispam = toggleAntispam
+        self.toggleAntispamCmd = toggleAntispamCmd
+        self.toggleMuteCmd = toggleMuteCmd
         self.toggleSpam = toggleSpam
         self.toggleText = toggleText
         self.toggleCalc = toggleCalc
@@ -2635,6 +2812,40 @@ public func burmaldaToolsSettingsController(context: AccountContext) -> ViewCont
     let arguments = BurmaldaToolsControllerArguments(
         toggleMaster: { val in
             SGSimpleSettings.shared.enableBurmaldaTools = val
+            reloadPromise.set(true)
+        },
+        toggleDeleteCommands: { val in
+            SGSimpleSettings.shared.burmaldaDeleteCommands = val
+            reloadPromise.set(true)
+        },
+        toggleSendCommandsToServer: { val in
+            SGSimpleSettings.shared.burmaldaSendCommandsToServer = val
+            reloadPromise.set(true)
+        },
+        toggleAutoanswer: { val in
+            SGSimpleSettings.shared.burmaldaAutoanswerOn = val
+            reloadPromise.set(true)
+        },
+        editAutoanswerText: {
+            presentEditAutoanswerTextDialog {
+                reloadPromise.set(true)
+            }
+        },
+        selectAutoanswerDelay: {
+            presentSelectAutoanswerDelayDialog {
+                reloadPromise.set(true)
+            }
+        },
+        toggleAntispam: { val in
+            SGSimpleSettings.shared.burmaldaAntispamOn = val
+            reloadPromise.set(true)
+        },
+        toggleAntispamCmd: { val in
+            SGSimpleSettings.shared.burmaldaToolAntispam = val
+            reloadPromise.set(true)
+        },
+        toggleMuteCmd: { val in
+            SGSimpleSettings.shared.burmaldaToolMute = val
             reloadPromise.set(true)
         },
         toggleSpam: { val in
@@ -2683,7 +2894,23 @@ public func burmaldaToolsSettingsController(context: AccountContext) -> ViewCont
         entries.append(.masterToggle(presentationData.theme, "Включить Burmalda Tools", SGSimpleSettings.shared.enableBurmaldaTools))
         
         if SGSimpleSettings.shared.enableBurmaldaTools {
+            entries.append(.generalHeader(presentationData.theme, "ОБЩИЕ НАСТРОЙКИ"))
+            entries.append(.deleteCommandsToggle(presentationData.theme, "Удалять команды после ввода", SGSimpleSettings.shared.burmaldaDeleteCommands))
+            entries.append(.sendCommandsToServerToggle(presentationData.theme, "Отсылать команды на сервер", SGSimpleSettings.shared.burmaldaSendCommandsToServer))
+            
+            entries.append(.autoanswerHeader(presentationData.theme, "ОФЛАЙН АВТООТВЕТЧИК (ЛС)"))
+            entries.append(.autoanswerToggle(presentationData.theme, "Включить автоответчик", SGSimpleSettings.shared.burmaldaAutoanswerOn))
+            if SGSimpleSettings.shared.burmaldaAutoanswerOn {
+                entries.append(.autoanswerText(presentationData.theme, "Текст автоответа", SGSimpleSettings.shared.burmaldaAutoanswerText))
+                entries.append(.autoanswerDelay(presentationData.theme, "Задержка автоответа", "\(SGSimpleSettings.shared.burmaldaAutoanswerDelay) сек"))
+            }
+            
+            entries.append(.antispamHeader(presentationData.theme, "АНТИСПАМ"))
+            entries.append(.antispamToggle(presentationData.theme, "Авто-антиспам в ЛС (>3 повторок)", SGSimpleSettings.shared.burmaldaAntispamOn))
+            
             entries.append(.commandsHeader(presentationData.theme, "ДОСТУПНЫЕ КОМАНДЫ"))
+            entries.append(.antispamCmdToggle(presentationData.theme, "🧹 .antispam / .антиспам", SGSimpleSettings.shared.burmaldaToolAntispam))
+            entries.append(.muteCmdToggle(presentationData.theme, "🔇 .mute / .мут (в ЛС)", SGSimpleSettings.shared.burmaldaToolMute))
             entries.append(.spamToggle(presentationData.theme, "💥 .spam [число] [текст]", SGSimpleSettings.shared.burmaldaToolSpam))
             entries.append(.textToggle(presentationData.theme, "⌨️ .text [текст] (машинка)", SGSimpleSettings.shared.burmaldaToolText))
             entries.append(.calcToggle(presentationData.theme, "🧮 .calc [пример]", SGSimpleSettings.shared.burmaldaToolCalc))
@@ -2694,7 +2921,7 @@ public func burmaldaToolsSettingsController(context: AccountContext) -> ViewCont
             entries.append(.catToggle(presentationData.theme, "🐱 .cat (котики)", SGSimpleSettings.shared.burmaldaToolCat))
         }
         
-        entries.append(.footer(presentationData.theme, "Команды работают прямо в поле ввода любого чата, группы или канала. Например, напишите .spam 5 Привет или .coin. Системные команды (.id, .ping, .settings, .uwu) исключены."))
+        entries.append(.footer(presentationData.theme, "Команды работают прямо в любом чате, группе или канале.\nКоманды принимаются как на русском, так и на английском.\n.mute в ЛС удаляет все новые сообщения собеседника.\n.antispam удаляет повторяющиеся сообщения в ЛС или группе (если админ).\n.antispam-on включает авто-удаление при >3 одинаковых сообщений."))
         
         let controllerState = ItemListControllerState(
             presentationData: ItemListPresentationData(presentationData),

@@ -246,6 +246,11 @@ public final class AccountStateManager {
             return self.notificationMessagesPipe.signal()
         }
         
+        private let allIncomingMessagesPipe = ValuePipe<[Message]>()
+        public var allIncomingMessages: Signal<[Message], NoError> {
+            return self.allIncomingMessagesPipe.signal()
+        }
+        
         private let reactionNotificationsPipe = ValuePipe<[(reactionAuthor: Peer, reaction: MessageReaction.Reaction, message: Message, timestamp: Int32)]>()
         public var reactionNotifications: Signal<[(reactionAuthor: Peer, reaction: MessageReaction.Reaction, message: Message, timestamp: Int32)], NoError> {
             return self.reactionNotificationsPipe.signal()
@@ -1210,10 +1215,14 @@ public final class AccountStateManager {
                     let _ = self.delayNotificatonsUntil.swap(events.delayNotificatonsUntil)
                 }
                 
-                let signal = self.postbox.transaction { transaction -> [([Message], PeerGroupId, Bool, MessageHistoryThreadData?)] in
+                let signal = self.postbox.transaction { transaction -> (messageList: [([Message], PeerGroupId, Bool, MessageHistoryThreadData?)], allIncoming: [Message]) in
                     var messageList: [([Message], PeerGroupId, Bool, MessageHistoryThreadData?)] = []
+                    var allIncoming: [Message] = []
                     
                     for id in events.addedIncomingMessageIds {
+                        if let message = transaction.getMessage(id) {
+                            allIncoming.append(message)
+                        }
                         let (messages, notify, _, _, threadData) = messagesForNotification(transaction: transaction, id: id, alwaysReturnMessage: false)
                         if !messages.isEmpty {
                             messageList.append((messages, .root, notify, threadData))
@@ -1237,13 +1246,16 @@ public final class AccountStateManager {
                         }
                         messageList.append((wasScheduledMessages, .root, true, threadData))
                     }
-                    return messageList
+                    return (messageList, allIncoming)
                 }
                 
                 let _ = (signal
-                |> deliverOn(self.queue)).start(next: { [weak self] messages in
+                |> deliverOn(self.queue)).start(next: { [weak self] result in
                     if let strongSelf = self {
-                        strongSelf.notificationMessagesPipe.putNext(messages)
+                        strongSelf.notificationMessagesPipe.putNext(result.messageList)
+                        if !result.allIncoming.isEmpty {
+                            strongSelf.allIncomingMessagesPipe.putNext(result.allIncoming)
+                        }
                     }
                 }, completed: {
                     completed()
@@ -1916,6 +1928,12 @@ public final class AccountStateManager {
     public var notificationMessages: Signal<[([Message], PeerGroupId, Bool, MessageHistoryThreadData?)], NoError> {
         return self.impl.signalWith { impl, subscriber in
             return impl.notificationMessages.start(next: subscriber.putNext, error: subscriber.putError, completed: subscriber.putCompletion)
+        }
+    }
+    
+    public var allIncomingMessages: Signal<[Message], NoError> {
+        return self.impl.signalWith { impl, subscriber in
+            return impl.allIncomingMessages.start(next: subscriber.putNext, error: subscriber.putError, completed: subscriber.putCompletion)
         }
     }
     

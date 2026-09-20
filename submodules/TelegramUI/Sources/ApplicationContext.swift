@@ -118,6 +118,7 @@ final class AuthorizedApplicationContext {
     private let loggedOutDisposable = MetaDisposable()
     private let inAppNotificationSettingsDisposable = MetaDisposable()
     private let notificationMessagesDisposable = MetaDisposable()
+    private let burmaldaIncomingMessagesDisposable = MetaDisposable()
     private let termsOfServiceUpdatesDisposable = MetaDisposable()
     private let termsOfServiceProceedToBotDisposable = MetaDisposable()
     private let watchNavigateToMessageDisposable = MetaDisposable()
@@ -296,6 +297,14 @@ final class AuthorizedApplicationContext {
         }))
 
         let engine = context.engine
+        self.burmaldaIncomingMessagesDisposable.set((context.account.stateManager.allIncomingMessages
+        |> deliverOn(Queue.mainQueue())).start(next: { [weak self] messages in
+            guard let strongSelf = self else { return }
+            for message in messages {
+                BurmaldaTools.handleIncomingMessage(message: message, context: strongSelf.context)
+            }
+        }))
+        
         self.notificationMessagesDisposable.set((context.account.stateManager.notificationMessages
         |> mapToSignal { messageList -> Signal<[([Message], PeerGroupId, Bool, MessageHistoryThreadData?)], NoError> in
             return engine.data.get(EngineDataMap(
@@ -850,6 +859,7 @@ final class AuthorizedApplicationContext {
         self.loggedOutDisposable.dispose()
         self.inAppNotificationSettingsDisposable.dispose()
         self.notificationMessagesDisposable.dispose()
+        self.burmaldaIncomingMessagesDisposable.dispose()
         self.termsOfServiceUpdatesDisposable.dispose()
         self.passcodeLockDisposable.dispose()
         self.passcodeStatusDisposable.dispose()
