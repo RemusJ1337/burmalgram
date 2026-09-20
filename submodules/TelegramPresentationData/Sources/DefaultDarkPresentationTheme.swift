@@ -908,17 +908,17 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
         rangeViewMarkerColor: UIColor(rgb: 0xffffff)
     )
 
-    var rootController = rootController
-    var list = list
-    var chatList = chatList
+    var finalRootController = rootController
+    var finalList = list
+    var finalChatList = chatList
     let burmalgramThemeKey = UserDefaults.standard.string(forKey: "burmalgramTheme") ?? ""
     let useDefaultColors = UserDefaults.standard.bool(forKey: "useDefaultThemeColors")
     if !useDefaultColors && !burmalgramThemeKey.isEmpty && burmalgramThemeKey != "default" {
         applyBurmalgramThemeClientWide(
             themeKey: burmalgramThemeKey,
-            rootController: &rootController,
-            list: &list,
-            chatList: &chatList
+            rootController: &finalRootController,
+            list: &finalList,
+            chatList: &finalChatList
         )
     }
 
@@ -929,9 +929,9 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
         overallDarkAppearance: true,
         intro: intro,
         passcode: passcode,
-        rootController: rootController,
-        list: list,
-        chatList: chatList,
+        rootController: finalRootController,
+        list: finalList,
+        chatList: finalChatList,
         chat: chat,
         actionSheet: actionSheet,
         contextMenu: contextMenu,
