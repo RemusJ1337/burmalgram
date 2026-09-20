@@ -76,7 +76,7 @@ public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBo
                     if !attributes.contains(where: { $0 is DeletedMessageAttribute }) {
                         attributes.append(DeletedMessageAttribute(deletedAt: Int32(Date().timeIntervalSince1970)))
                     }
-                    return .update(currentMessage.withUpdatedAttributes(attributes))
+                    return .update(StoreMessage(id: currentMessage.id, customStableId: nil, globallyUniqueId: currentMessage.globallyUniqueId, groupingKey: currentMessage.groupingKey, threadId: currentMessage.threadId, timestamp: currentMessage.timestamp, flags: StoreMessageFlags(currentMessage.flags), tags: currentMessage.tags, globalTags: currentMessage.globalTags, localTags: currentMessage.localTags, forwardInfo: currentMessage.forwardInfo.flatMap(StoreMessageForwardInfo.init), authorId: currentMessage.author?.id, text: currentMessage.text, attributes: attributes, media: currentMessage.media))
                 })
             }
         } else {
