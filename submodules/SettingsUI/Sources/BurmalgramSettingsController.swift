@@ -1138,6 +1138,17 @@ private final class BurmalgramCustomizationArguments {
     }
 }
 
+private func forceRefreshPresentationTheme(context: AccountContext) {
+    let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+        var current = current
+        var accents = current.themeSpecificAccentColors
+        let dummyId = Int64(-999)
+        let nextIndex: Int32 = (accents[dummyId]?.index == 1) ? 2 : 1
+        accents[dummyId] = PresentationThemeAccentColor(index: nextIndex, baseColor: .custom, accentColor: nil, bubbleColors: [], wallpaper: nil)
+        return current.withUpdatedThemeSpecificAccentColors(accents)
+    }).start()
+}
+
 public func burmalgramCustomizationController(context: AccountContext) -> ViewController {
     let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
     var pushControllerImpl: ((ViewController) -> Void)?
@@ -1170,34 +1181,19 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         },
         toggleUseDefaultThemeColors: { val in
             SGSimpleSettings.shared.useDefaultThemeColors = val
-            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
-                var current = current
-                var accents = current.themeSpecificAccentColors
-                accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
-                return current.withUpdatedThemeSpecificAccentColors(accents)
-            }).start()
+            forceRefreshPresentationTheme(context: context)
             reloadPromise.set(true)
         },
         toggleTextShimmer: { val in
             SGSimpleSettings.shared.customThemeTextShimmer = val
-            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
-                var current = current
-                var accents = current.themeSpecificAccentColors
-                accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
-                return current.withUpdatedThemeSpecificAccentColors(accents)
-            }).start()
+            forceRefreshPresentationTheme(context: context)
             reloadPromise.set(true)
         },
         pickTextShimmerMode: {
             presentBurmalgramShimmerModePicker(onSelect: { mode in
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerMode = mode
-                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
-                    var current = current
-                    var accents = current.themeSpecificAccentColors
-                    accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
-                    return current.withUpdatedThemeSpecificAccentColors(accents)
-                }).start()
+                forceRefreshPresentationTheme(context: context)
                 reloadPromise.set(true)
             })
         },
@@ -1205,12 +1201,7 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             presentBurmalgramShimmerColorPicker(onSelect: { color in
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerColor = color
-                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
-                    var current = current
-                    var accents = current.themeSpecificAccentColors
-                    accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
-                    return current.withUpdatedThemeSpecificAccentColors(accents)
-                }).start()
+                forceRefreshPresentationTheme(context: context)
                 reloadPromise.set(true)
             })
         },
@@ -1218,12 +1209,7 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             presentBurmalgramShimmerSpeedPicker(onSelect: { speed in
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerSpeed = speed
-                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
-                    var current = current
-                    var accents = current.themeSpecificAccentColors
-                    accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
-                    return current.withUpdatedThemeSpecificAccentColors(accents)
-                }).start()
+                forceRefreshPresentationTheme(context: context)
                 reloadPromise.set(true)
             })
         },
@@ -3623,12 +3609,7 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
     let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
     
     let refreshTheme: () -> Void = {
-        let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
-            var current = current
-            var accents = current.themeSpecificAccentColors
-            accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
-            return current.withUpdatedThemeSpecificAccentColors(accents)
-        }).start()
+        forceRefreshPresentationTheme(context: context)
         reloadPromise.set(true)
     }
     
