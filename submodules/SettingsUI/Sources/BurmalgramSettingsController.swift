@@ -1140,7 +1140,6 @@ private final class BurmalgramCustomizationArguments {
 
 private func forceRefreshPresentationTheme(context: AccountContext) {
     let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
-        var current = current
         var accents = current.themeSpecificAccentColors
         let dummyId = Int64(-999)
         let nextIndex: Int32 = (accents[dummyId]?.index == 1) ? 2 : 1
