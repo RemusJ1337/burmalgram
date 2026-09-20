@@ -4440,38 +4440,78 @@ func replayFinalState(
                     }
                 }
             case let .DeleteMessagesWithGlobalIds(ids):
+                var idsToDeleteFromPostbox: [Int32] = []
+                let messageIds = transaction.messageIdsForGlobalIds(ids)
+                var interceptedGlobalIds = Set<Int32>()
+                
                 if AntiDeleteManager.shared.isEnabled {
-                    let messageIds = transaction.messageIdsForGlobalIds(ids)
                     for id in messageIds {
-                        if let message = transaction.getMessage(id) {
-                            let globalId = message.globallyUniqueId.map { Int32(truncatingIfNeeded: $0) } ?? message.id.id
-                            AntiDeleteManager.shared.archiveMessage(
-                                globalId: globalId,
-                                peerId: id.peerId.toInt64(),
-                                messageId: id.id,
-                                timestamp: message.timestamp,
-                                authorId: message.author?.id.toInt64(),
-                                text: message.text,
-                                forwardAuthorId: message.forwardInfo?.author?.id.toInt64(),
-                                mediaDescription: nil
-                            )
-                            AntiDeleteManager.shared.markAsDeleted(peerId: id.peerId.toInt64(), messageId: id.id)
+                        if !AntiDeleteManager.shared.isDeliberatelyDeleted(peerId: id.peerId.toInt64(), messageId: id.id), let message = transaction.getMessage(id) {
+                            let isOutgoing = !message.flags.contains(.Incoming)
+                            if isOutgoing && !AntiDeleteManager.shared.showOwnDeletedMessages {
+                                // Own message and showOwnDeletedMessages is false: let it be deleted
+                            } else {
+                                let globalId = message.globallyUniqueId.map { Int32(truncatingIfNeeded: $0) } ?? message.id.id
+                                interceptedGlobalIds.insert(globalId)
+                                AntiDeleteManager.shared.archiveMessage(
+                                    globalId: globalId,
+                                    peerId: id.peerId.toInt64(),
+                                    messageId: id.id,
+                                    timestamp: message.timestamp,
+                                    authorId: message.author?.id.toInt64(),
+                                    text: message.text,
+                                    forwardAuthorId: message.forwardInfo?.author?.id.toInt64(),
+                                    mediaDescription: nil
+                                )
+                                AntiDeleteManager.shared.markAsDeleted(peerId: id.peerId.toInt64(), messageId: id.id)
+                                
+                                transaction.updateMessage(id, update: { currentMessage in
+                                    var attributes = currentMessage.attributes
+                                    if !attributes.contains(where: { $0 is DeletedMessageAttribute }) {
+                                        attributes.append(DeletedMessageAttribute(deletedAt: Int32(Date().timeIntervalSince1970)))
+                                    }
+                                    return .update(currentMessage.withUpdatedAttributes(attributes))
+                                })
+                            }
                         }
                     }
                 }
-                var resourceIds: [MediaResourceId] = []
-                transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
-                    addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
-                })
-                if !resourceIds.isEmpty {
-                    let _ = mediaBox.removeCachedResources(Array(Set(resourceIds)), force: true).start()
+                for globalId in ids {
+                    if !interceptedGlobalIds.contains(globalId) {
+                        idsToDeleteFromPostbox.append(globalId)
+                    }
                 }
-                deletedMessageIds.append(contentsOf: ids.map { .global($0) })
+                if !idsToDeleteFromPostbox.isEmpty {
+                    var resourceIds: [MediaResourceId] = []
+                    transaction.deleteMessagesWithGlobalIds(idsToDeleteFromPostbox, forEachMedia: { media in
+                        addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)
+                    })
+                    if !resourceIds.isEmpty {
+                        let _ = mediaBox.removeCachedResources(Array(Set(resourceIds)), force: true).start()
+                    }
+                    deletedMessageIds.append(contentsOf: idsToDeleteFromPostbox.map { .global($0) })
+                }
             case let .DeleteMessages(ids):
-                _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: ids, manualAddMessageThreadStatsDifference: { id, add, remove in
-                    addMessageThreadStatsDifference(threadKey: id, remove: remove, addedMessagePeer: nil, addedMessageId: nil, isOutgoing: false)
-                })
-                deletedMessageIds.append(contentsOf: ids.map { .messageId($0) })
+                var idsToPass: [MessageId] = []
+                for id in ids {
+                    if AntiDeleteManager.shared.isEnabled, !AntiDeleteManager.shared.isDeliberatelyDeleted(peerId: id.peerId.toInt64(), messageId: id.id), let message = transaction.getMessage(id) {
+                        let isOutgoing = !message.flags.contains(.Incoming)
+                        if isOutgoing && !AntiDeleteManager.shared.showOwnDeletedMessages {
+                            idsToPass.append(id)
+                        } else {
+                            // Intercepted by AntiDelete, preserved with DeletedMessageAttribute
+                            _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: [id], manualAddMessageThreadStatsDifference: nil)
+                        }
+                    } else {
+                        idsToPass.append(id)
+                    }
+                }
+                if !idsToPass.isEmpty {
+                    _internal_deleteMessages(transaction: transaction, mediaBox: mediaBox, ids: idsToPass, manualAddMessageThreadStatsDifference: { id, add, remove in
+                        addMessageThreadStatsDifference(threadKey: id, remove: remove, addedMessagePeer: nil, addedMessageId: nil, isOutgoing: false)
+                    })
+                    deletedMessageIds.append(contentsOf: idsToPass.map { .messageId($0) })
+                }
             case let .UpdateMinAvailableMessage(id):
                 if let message = transaction.getMessage(id) {
                     updatePeerChatInclusionWithMinTimestamp(transaction: transaction, id: id.peerId, minTimestamp: message.timestamp, forceRootGroupIfNotExists: false)

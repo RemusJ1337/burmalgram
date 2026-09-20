@@ -652,6 +652,35 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                     }
                     attributedText = updatedString
                 }
+                
+                if EditHistoryManager.shared.isEnabled {
+                    if let original = EditHistoryManager.shared.getOriginalText(peerId: item.message.id.peerId.toInt64(), messageId: item.message.id.id), !original.isEmpty, original != rawText {
+                        let fullString = NSMutableAttributedString(attributedString: attributedText)
+                        let quoteBarColor = messageTheme.accentTextColor
+                        let titleFont = item.presentationData.messageBoldFont.withSize(round(item.presentationData.messageBoldFont.pointSize * 0.85))
+                        let titleString = NSAttributedString(string: "Исходное сообщение", font: titleFont, textColor: quoteBarColor)
+                        
+                        let originalAttributed = NSMutableAttributedString(string: "\n\n" + original, attributes: [
+                            NSAttributedString.Key.font: item.presentationData.messageBlockQuoteFont,
+                            NSAttributedString.Key.foregroundColor: effectiveTextColor
+                        ])
+                        
+                        let quoteRange = NSRange(location: 2, length: (original as NSString).length)
+                        let quoteData = TextNodeBlockQuoteData(
+                            kind: .quote,
+                            title: titleString,
+                            color: quoteBarColor,
+                            secondaryColor: nil,
+                            tertiaryColor: nil,
+                            backgroundColor: quoteBarColor.withMultipliedAlpha(0.1),
+                            isCollapsible: false
+                        )
+                        originalAttributed.addAttribute(NSAttributedString.Key(rawValue: "Attribute__Blockquote"), value: quoteData, range: quoteRange)
+                        
+                        fullString.append(originalAttributed)
+                        attributedText = fullString
+                    }
+                }
                                 
                 var customTruncationToken: ((UIFont, Bool) -> NSAttributedString?)?
                 var maximumNumberOfLines: Int = 0
@@ -909,8 +938,6 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             ))
                             animation.animator.updatePosition(layer: strongSelf.textNode.textNode.layer, position: realTextFrame.center, completion: nil)
                             animation.animator.updateBounds(layer: strongSelf.textNode.textNode.layer, bounds: CGRect(origin: CGPoint(), size: realTextFrame.size), completion: nil)
-                            strongSelf.updateBurmaldaTextShimmer(size: realTextFrame.size)
-                            
                             
                             switch strongSelf.visibility {
                             case .none:
@@ -1858,87 +1885,5 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             }
             self.containerNode.clipsToBounds = true
         })
-    }
-    
-    private func updateBurmaldaTextShimmer(size: CGSize) {
-        let textLayer = self.textNode.textNode.layer
-        guard UserDefaults.standard.bool(forKey: "customThemeTextShimmer") else {
-            if textLayer.mask?.name == "burmaldaTextShimmerMask" {
-                textLayer.mask = nil
-            }
-            return
-        }
-        
-        let isGradient = (UserDefaults.standard.string(forKey: "customThemeTextShimmerMode") ?? "single") == "gradient"
-        let speed = UserDefaults.standard.string(forKey: "customThemeTextShimmerSpeed") ?? "normal"
-        let duration: Double
-        switch speed {
-        case "turbo": duration = 0.8
-        case "fast": duration = 1.3
-        case "slow": duration = 3.2
-        default: duration = 2.0
-        }
-        
-        let maskLayer: CAGradientLayer
-        if let existing = textLayer.mask as? CAGradientLayer, existing.name == "burmaldaTextShimmerMask" {
-            maskLayer = existing
-        } else {
-            maskLayer = CAGradientLayer()
-            maskLayer.name = "burmaldaTextShimmerMask"
-            maskLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
-            maskLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
-            textLayer.mask = maskLayer
-        }
-        
-        maskLayer.frame = CGRect(origin: .zero, size: size)
-        
-        let currentConfig = "\(isGradient)_\(speed)"
-        let previousConfig = maskLayer.value(forKey: "burmaldaConfig") as? String
-        if previousConfig != currentConfig {
-            maskLayer.removeAnimation(forKey: "burmaldaShimmer")
-            maskLayer.setValue(currentConfig, forKey: "burmaldaConfig")
-        }
-        
-        if isGradient {
-            maskLayer.colors = [
-                UIColor(white: 1.0, alpha: 0.55).cgColor,
-                UIColor(white: 1.0, alpha: 0.55).cgColor,
-                UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.6).cgColor,
-                UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.55).cgColor,
-                UIColor(white: 1.0, alpha: 0.55).cgColor
-            ]
-        } else {
-            maskLayer.colors = [
-                UIColor(white: 1.0, alpha: 0.6).cgColor,
-                UIColor(white: 1.0, alpha: 0.6).cgColor,
-                UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.6).cgColor,
-                UIColor(white: 1.0, alpha: 0.6).cgColor
-            ]
-        }
-        
-        if maskLayer.animation(forKey: "burmaldaShimmer") == nil {
-            let anim = CABasicAnimation(keyPath: "locations")
-            if isGradient {
-                let fromLocs: [NSNumber] = [-1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2]
-                let toLocs: [NSNumber] = [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
-                maskLayer.locations = fromLocs
-                anim.fromValue = fromLocs
-                anim.toValue = toLocs
-                anim.duration = duration
-            } else {
-                let fromLocs: [NSNumber] = [-0.6, -0.4, -0.2, 0.0, 0.2]
-                let toLocs: [NSNumber] = [0.8, 1.0, 1.2, 1.4, 1.6]
-                maskLayer.locations = fromLocs
-                anim.fromValue = fromLocs
-                anim.toValue = toLocs
-                anim.duration = duration
-            }
-            anim.timingFunction = CAMediaTimingFunction(name: .linear)
-            anim.repeatCount = .infinity
-            maskLayer.add(anim, forKey: "burmaldaShimmer")
-        }
     }
 }

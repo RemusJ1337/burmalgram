@@ -28,10 +28,10 @@ private enum DeletedMessagesSection: Int32 {
 
 private enum DeletedMessagesEntry: ItemListNodeEntry {
     case enableToggle(PresentationTheme, String, Bool)
+    case showOwnDeletedToggle(PresentationTheme, String, Bool)
     case editHistoryToggle(PresentationTheme, String, Bool)
     case archiveMediaToggle(PresentationTheme, String, Bool)
     case history(PresentationTheme, String, String)
-    case transparencySlider(PresentationTheme, Int32, Bool)
     case settingsInfo(PresentationTheme, String)
     
     var section: ItemListSectionId {
@@ -42,13 +42,13 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
         switch self {
         case .enableToggle:
             return 0
-        case .editHistoryToggle:
+        case .showOwnDeletedToggle:
             return 1
-        case .archiveMediaToggle:
+        case .editHistoryToggle:
             return 2
-        case .history:
+        case .archiveMediaToggle:
             return 3
-        case .transparencySlider:
+        case .history:
             return 4
         case .settingsInfo:
             return 5
@@ -59,6 +59,12 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
         switch lhs {
         case let .enableToggle(lhsTheme, lhsText, lhsValue):
             if case let .enableToggle(rhsTheme, rhsText, rhsValue) = rhs,
+               lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                return true
+            }
+            return false
+        case let .showOwnDeletedToggle(lhsTheme, lhsText, lhsValue):
+            if case let .showOwnDeletedToggle(rhsTheme, rhsText, rhsValue) = rhs,
                lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
                 return true
             }
@@ -78,12 +84,6 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
         case let .history(lhsTheme, lhsText, lhsValue):
             if case let .history(rhsTheme, rhsText, rhsValue) = rhs,
                lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
-                return true
-            }
-            return false
-        case let .transparencySlider(lhsTheme, lhsValue, lhsIsEnabled):
-            if case let .transparencySlider(rhsTheme, rhsValue, rhsIsEnabled) = rhs,
-               lhsTheme === rhsTheme, lhsValue == rhsValue, lhsIsEnabled == rhsIsEnabled {
                 return true
             }
             return false
@@ -111,6 +111,17 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
                 style: .blocks,
                 updated: { value in
                     arguments.toggleEnabled(value)
+                }
+            )
+        case let .showOwnDeletedToggle(_, text, value):
+            return ItemListSwitchItem(
+                presentationData: presentationData,
+                title: text,
+                value: value,
+                sectionId: self.section,
+                style: .blocks,
+                updated: { value in
+                    arguments.toggleShowOwnDeleted(value)
                 }
             )
         case let .editHistoryToggle(_, text, value):
@@ -146,16 +157,6 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
                     arguments.openHistory()
                 }
             )
-        case let .transparencySlider(theme, value, isEnabled):
-            return DeletedMessagesTransparencySliderItem(
-                theme: theme,
-                value: value,
-                isEnabled: isEnabled,
-                sectionId: self.section,
-                updated: { value in
-                    arguments.updateTransparency(value)
-                }
-            )
         case let .settingsInfo(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         }
@@ -166,23 +167,23 @@ private enum DeletedMessagesEntry: ItemListNodeEntry {
 
 private final class DeletedMessagesControllerArguments {
     let toggleEnabled: (Bool) -> Void
+    let toggleShowOwnDeleted: (Bool) -> Void
     let toggleEditHistory: (Bool) -> Void
     let toggleArchiveMedia: (Bool) -> Void
     let openHistory: () -> Void
-    let updateTransparency: (Int32) -> Void
     
     init(
         toggleEnabled: @escaping (Bool) -> Void,
+        toggleShowOwnDeleted: @escaping (Bool) -> Void,
         toggleEditHistory: @escaping (Bool) -> Void,
         toggleArchiveMedia: @escaping (Bool) -> Void,
-        openHistory: @escaping () -> Void,
-        updateTransparency: @escaping (Int32) -> Void
+        openHistory: @escaping () -> Void
     ) {
         self.toggleEnabled = toggleEnabled
+        self.toggleShowOwnDeleted = toggleShowOwnDeleted
         self.toggleEditHistory = toggleEditHistory
         self.toggleArchiveMedia = toggleArchiveMedia
         self.openHistory = openHistory
-        self.updateTransparency = updateTransparency
     }
 }
 
@@ -190,17 +191,17 @@ private final class DeletedMessagesControllerArguments {
 
 private struct DeletedMessagesControllerState: Equatable {
     var isEnabled: Bool
+    var showOwnDeletedMessages: Bool
     var editHistoryEnabled: Bool
     var archiveMedia: Bool
     var archivedCount: Int
-    var transparencyPercent: Int32
     
     static func ==(lhs: DeletedMessagesControllerState, rhs: DeletedMessagesControllerState) -> Bool {
         return lhs.isEnabled == rhs.isEnabled &&
+               lhs.showOwnDeletedMessages == rhs.showOwnDeletedMessages &&
                lhs.editHistoryEnabled == rhs.editHistoryEnabled &&
                lhs.archiveMedia == rhs.archiveMedia &&
-               lhs.archivedCount == rhs.archivedCount &&
-               lhs.transparencyPercent == rhs.transparencyPercent
+               lhs.archivedCount == rhs.archivedCount
     }
 }
 
@@ -213,11 +214,11 @@ private func deletedMessagesControllerEntries(
     var entries: [DeletedMessagesEntry] = []
     
     entries.append(.enableToggle(presentationData.theme, "Сохранять удалённые сообщения", state.isEnabled))
-    entries.append(.editHistoryToggle(presentationData.theme, "История изменений текста (Ghostgram)", state.editHistoryEnabled))
+    entries.append(.showOwnDeletedToggle(presentationData.theme, "Показывать свои удалённые сообщения", state.showOwnDeletedMessages))
+    entries.append(.editHistoryToggle(presentationData.theme, "История изменений текста", state.editHistoryEnabled))
     entries.append(.archiveMediaToggle(presentationData.theme, "Архивировать медиа", state.archiveMedia))
     entries.append(.history(presentationData.theme, "История удалений", state.archivedCount == 0 ? "Пусто" : "\(state.archivedCount)"))
-    entries.append(.transparencySlider(presentationData.theme, state.transparencyPercent, state.isEnabled))
-    entries.append(.settingsInfo(presentationData.theme, "Когда включено, сообщения, удалённые другими пользователями, будут сохраняться локально. Прозрачность влияет только на сообщения, которые уже помечены как удалённые."))
+    entries.append(.settingsInfo(presentationData.theme, "Когда включено, удалённые сообщения остаются в чате и помечаются иконкой 🗑 рядом со временем. Сообщения, удалённые вами вручную из приложения или антиспамом, удаляются навсегда."))
     
     return entries
 }
@@ -229,10 +230,10 @@ public func deletedMessagesController(context: AccountContext) -> ViewController
     
     let initialState = DeletedMessagesControllerState(
         isEnabled: AntiDeleteManager.shared.isEnabled,
+        showOwnDeletedMessages: AntiDeleteManager.shared.showOwnDeletedMessages,
         editHistoryEnabled: EditHistoryManager.shared.isEnabled,
         archiveMedia: AntiDeleteManager.shared.archiveMedia,
-        archivedCount: AntiDeleteManager.shared.archivedCount,
-        transparencyPercent: clampDeletedMessageTransparencyPercent(Int32(round(AntiDeleteManager.shared.deletedMessageTransparency * 100.0)))
+        archivedCount: AntiDeleteManager.shared.archivedCount
     )
     
     let statePromise = ValuePromise(initialState, ignoreRepeated: true)
@@ -247,6 +248,14 @@ public func deletedMessagesController(context: AccountContext) -> ViewController
             updateState { state in
                 var state = state
                 state.isEnabled = value
+                return state
+            }
+        },
+        toggleShowOwnDeleted: { value in
+            AntiDeleteManager.shared.showOwnDeletedMessages = value
+            updateState { state in
+                var state = state
+                state.showOwnDeletedMessages = value
                 return state
             }
         },
@@ -268,15 +277,6 @@ public func deletedMessagesController(context: AccountContext) -> ViewController
         },
         openHistory: {
             pushControllerImpl?(deletedMessagesHistoryController(context: context), true)
-        },
-        updateTransparency: { value in
-            let clampedValue = clampDeletedMessageTransparencyPercent(value)
-            AntiDeleteManager.shared.deletedMessageTransparency = Double(clampedValue) / 100.0
-            updateState { state in
-                var state = state
-                state.transparencyPercent = clampedValue
-                return state
-            }
         }
     )
     
@@ -311,10 +311,10 @@ public func deletedMessagesController(context: AccountContext) -> ViewController
         updateState { state in
             var state = state
             state.isEnabled = AntiDeleteManager.shared.isEnabled
+            state.showOwnDeletedMessages = AntiDeleteManager.shared.showOwnDeletedMessages
             state.editHistoryEnabled = EditHistoryManager.shared.isEnabled
             state.archiveMedia = AntiDeleteManager.shared.archiveMedia
             state.archivedCount = AntiDeleteManager.shared.archivedCount
-            state.transparencyPercent = clampDeletedMessageTransparencyPercent(Int32(round(AntiDeleteManager.shared.deletedMessageTransparency * 100.0)))
             return state
         }
     }

@@ -1141,11 +1141,16 @@ private final class BurmalgramCustomizationArguments {
 private func forceRefreshPresentationTheme(context: AccountContext) {
     let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
         var accents = current.themeSpecificAccentColors
-        let dummyId = Int64(-999)
-        let nextIndex: Int32 = (accents[dummyId]?.index == 1) ? 2 : 1
-        accents[dummyId] = PresentationThemeAccentColor(index: nextIndex, baseColor: .custom, accentColor: nil, bubbleColors: [], wallpaper: nil)
+        let activeId = current.theme.index
+        let nextIndex: Int32 = ((accents[activeId]?.index ?? 0) == 1) ? 2 : 1
+        let baseColor = accents[activeId]?.baseColor ?? .custom
+        let accentColor = accents[activeId]?.accentColor
+        let bubbleColors = accents[activeId]?.bubbleColors ?? []
+        let wallpaper = accents[activeId]?.wallpaper
+        accents[activeId] = PresentationThemeAccentColor(index: nextIndex, baseColor: baseColor, accentColor: accentColor, bubbleColors: bubbleColors, wallpaper: wallpaper)
         return current.withUpdatedThemeSpecificAccentColors(accents)
     }).start()
+    NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
 }
 
 public func burmalgramCustomizationController(context: AccountContext) -> ViewController {
@@ -1185,6 +1190,9 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         },
         toggleTextShimmer: { val in
             SGSimpleSettings.shared.customThemeTextShimmer = val
+            UserDefaults.standard.set(val, forKey: "customThemeTextShimmer")
+            UserDefaults.standard.synchronize()
+            NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
             forceRefreshPresentationTheme(context: context)
             reloadPromise.set(true)
         },
@@ -1192,6 +1200,10 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             presentBurmalgramShimmerModePicker(onSelect: { mode in
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerMode = mode
+                UserDefaults.standard.set(true, forKey: "customThemeTextShimmer")
+                UserDefaults.standard.set(mode, forKey: "customThemeTextShimmerMode")
+                UserDefaults.standard.synchronize()
+                NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
                 forceRefreshPresentationTheme(context: context)
                 reloadPromise.set(true)
             })
@@ -1200,6 +1212,10 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             presentBurmalgramShimmerColorPicker(onSelect: { color in
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerColor = color
+                UserDefaults.standard.set(true, forKey: "customThemeTextShimmer")
+                UserDefaults.standard.set(color, forKey: "customThemeTextShimmerColor")
+                UserDefaults.standard.synchronize()
+                NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
                 forceRefreshPresentationTheme(context: context)
                 reloadPromise.set(true)
             })
@@ -1208,6 +1224,10 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             presentBurmalgramShimmerSpeedPicker(onSelect: { speed in
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerSpeed = speed
+                UserDefaults.standard.set(true, forKey: "customThemeTextShimmer")
+                UserDefaults.standard.set(speed, forKey: "customThemeTextShimmerSpeed")
+                UserDefaults.standard.synchronize()
+                NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
                 forceRefreshPresentationTheme(context: context)
                 reloadPromise.set(true)
             })
@@ -3755,23 +3775,41 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
         },
         toggleTextShimmer: { val in
             SGSimpleSettings.shared.customThemeTextShimmer = val
+            UserDefaults.standard.set(val, forKey: "customThemeTextShimmer")
+            UserDefaults.standard.synchronize()
+            NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
             refreshTheme()
         },
         pickTextShimmerMode: {
             presentBurmalgramShimmerModePicker(onSelect: { mode in
+                SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerMode = mode
+                UserDefaults.standard.set(true, forKey: "customThemeTextShimmer")
+                UserDefaults.standard.set(mode, forKey: "customThemeTextShimmerMode")
+                UserDefaults.standard.synchronize()
+                NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
                 refreshTheme()
             })
         },
         pickTextShimmerColor: {
             presentBurmalgramShimmerColorPicker(onSelect: { color in
+                SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerColor = color
+                UserDefaults.standard.set(true, forKey: "customThemeTextShimmer")
+                UserDefaults.standard.set(color, forKey: "customThemeTextShimmerColor")
+                UserDefaults.standard.synchronize()
+                NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
                 refreshTheme()
             })
         },
         pickTextShimmerSpeed: {
             presentBurmalgramShimmerSpeedPicker(onSelect: { speed in
+                SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerSpeed = speed
+                UserDefaults.standard.set(true, forKey: "customThemeTextShimmer")
+                UserDefaults.standard.set(speed, forKey: "customThemeTextShimmerSpeed")
+                UserDefaults.standard.synchronize()
+                NotificationCenter.default.post(name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
                 refreshTheme()
             })
         },

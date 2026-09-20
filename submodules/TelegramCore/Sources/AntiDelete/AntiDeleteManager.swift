@@ -14,17 +14,33 @@ public final class AntiDeleteManager {
     private let deletedMessageTransparencyKey = "antiDelete.deletedMessageTransparency"
     private let archiveKey = "antiDelete.archive"
     private let deletedIdsKey = "antiDelete.deletedIds"
+    private let showOwnDeletedMessagesKey = "antiDelete.showOwnDeletedMessages"
     
     /// Включено ли сохранение удалённых сообщений
     public var isEnabled: Bool {
         get { defaults.bool(forKey: enabledKey) }
-        set { defaults.set(newValue, forKey: enabledKey) }
+        set {
+            defaults.set(newValue, forKey: enabledKey)
+            defaults.synchronize()
+        }
     }
     
     /// Сохранять ли медиа-контент
     public var archiveMedia: Bool {
         get { defaults.bool(forKey: archiveMediaKey) }
-        set { defaults.set(newValue, forKey: archiveMediaKey) }
+        set {
+            defaults.set(newValue, forKey: archiveMediaKey)
+            defaults.synchronize()
+        }
+    }
+    
+    /// Показывать ли свои удалённые сообщения
+    public var showOwnDeletedMessages: Bool {
+        get { defaults.bool(forKey: showOwnDeletedMessagesKey) }
+        set {
+            defaults.set(newValue, forKey: showOwnDeletedMessagesKey)
+            defaults.synchronize()
+        }
     }
     
     /// Минимальное значение прозрачности удалённого сообщения
@@ -34,24 +50,37 @@ public final class AntiDeleteManager {
     public static let maxDeletedMessageTransparency: Double = 0.8
     
     /// Значение прозрачности удалённого сообщения по умолчанию
-    public static let defaultDeletedMessageTransparency: Double = 0.45
+    public static let defaultDeletedMessageTransparency: Double = 0.0
     
-    /// Прозрачность удалённых сообщений (0.0 = непрозрачно, 0.8 = максимально прозрачно)
+    /// Прозрачность удалённых сообщений (0.0 = непрозрачно)
     public var deletedMessageTransparency: Double {
-        get {
-            let value = defaults.object(forKey: deletedMessageTransparencyKey) as? NSNumber
-            let resolvedValue = value?.doubleValue ?? Self.defaultDeletedMessageTransparency
-            return max(Self.minDeletedMessageTransparency, min(Self.maxDeletedMessageTransparency, resolvedValue))
-        }
-        set {
-            let clampedValue = max(Self.minDeletedMessageTransparency, min(Self.maxDeletedMessageTransparency, newValue))
-            defaults.set(clampedValue, forKey: deletedMessageTransparencyKey)
-        }
+        get { return 0.0 }
+        set { }
     }
     
-    /// Альфа для отображения удалённых сообщений
+    /// Альфа для отображения удалённых сообщений (всегда 1.0 - не затемнять)
     public var deletedMessageDisplayAlpha: Double {
-        return 1.0 - self.deletedMessageTransparency
+        return 1.0
+    }
+    
+    // MARK: - Deliberately Deleted Message IDs (user initiated or antispam)
+    
+    private var deliberatelyDeletedIds: Set<String> = []
+    private let deliberatelyDeletedLock = NSLock()
+    
+    /// Пометить сообщение как намеренно удалённое (юзером или антиспамом), чтобы AntiDelete его игнорировал
+    public func markAsDeliberatelyDeleted(peerId: Int64, messageId: Int32) {
+        let key = "\(peerId)_\(messageId)"
+        deliberatelyDeletedLock.lock()
+        deliberatelyDeletedIds.insert(key)
+        deliberatelyDeletedLock.unlock()
+    }
+    
+    public func isDeliberatelyDeleted(peerId: Int64, messageId: Int32) -> Bool {
+        let key = "\(peerId)_\(messageId)"
+        deliberatelyDeletedLock.lock()
+        defer { deliberatelyDeletedLock.unlock() }
+        return deliberatelyDeletedIds.contains(key)
     }
     
     // MARK: - Deleted Message IDs Storage

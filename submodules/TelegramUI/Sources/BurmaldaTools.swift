@@ -116,6 +116,9 @@ public final class BurmaldaTools {
                 lock.unlock()
                 
                 if !idsToDelete.isEmpty {
+                    for id in idsToDelete {
+                        AntiDeleteManager.shared.markAsDeliberatelyDeleted(peerId: id.peerId.toInt64(), messageId: id.id)
+                    }
                     let _ = context.engine.messages.deleteMessagesInteractively(messageIds: idsToDelete, type: .forEveryone).startStandalone()
                     return
                 }
@@ -390,6 +393,9 @@ public final class BurmaldaTools {
                 if result.duplicateIds.isEmpty {
                     showToast("🧹 Повторяющихся сообщений не найдено (проверено: \(result.scanned))", controller: controller, context: context)
                 } else {
+                    for id in result.duplicateIds {
+                        AntiDeleteManager.shared.markAsDeliberatelyDeleted(peerId: id.peerId.toInt64(), messageId: id.id)
+                    }
                     let _ = context.engine.messages.deleteMessagesInteractively(messageIds: result.duplicateIds, type: .forEveryone).startStandalone()
                     showToast("🧹 Антиспам: удалено \(result.duplicateIds.count) повторных сообщений!", controller: controller, context: context)
                 }

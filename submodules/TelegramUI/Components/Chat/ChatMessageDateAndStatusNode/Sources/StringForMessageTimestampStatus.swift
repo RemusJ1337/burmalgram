@@ -248,5 +248,9 @@ public func stringForMessageTimestampStatus(
         }
     }
     
+    if message._asMessage().ghostgramIsDeleted {
+        dateText = "\u{1F5D1}\u{FE0E} " + dateText
+    }
+    
     return dateText
 }

@@ -52,9 +52,13 @@ public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBo
             }
         }
     }
-    if AntiDeleteManager.shared.isEnabled {
-        for id in ids {
-            if let message = transaction.getMessage(id) {
+    var idsToDeleteFromPostbox: [MessageId] = []
+    for id in ids {
+        if AntiDeleteManager.shared.isEnabled, !AntiDeleteManager.shared.isDeliberatelyDeleted(peerId: id.peerId.toInt64(), messageId: id.id), let message = transaction.getMessage(id) {
+            let isOutgoing = !message.flags.contains(.Incoming)
+            if isOutgoing && !AntiDeleteManager.shared.showOwnDeletedMessages {
+                idsToDeleteFromPostbox.append(id)
+            } else {
                 let globalId = message.globallyUniqueId.map { Int32(truncatingIfNeeded: $0) } ?? message.id.id
                 AntiDeleteManager.shared.archiveMessage(
                     globalId: globalId,
@@ -67,11 +71,22 @@ public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBo
                     mediaDescription: nil
                 )
                 AntiDeleteManager.shared.markAsDeleted(peerId: id.peerId.toInt64(), messageId: id.id)
+                transaction.updateMessage(id, update: { currentMessage in
+                    var attributes = currentMessage.attributes
+                    if !attributes.contains(where: { $0 is DeletedMessageAttribute }) {
+                        attributes.append(DeletedMessageAttribute(deletedAt: Int32(Date().timeIntervalSince1970)))
+                    }
+                    return .update(currentMessage.withUpdatedAttributes(attributes))
+                })
             }
+        } else {
+            idsToDeleteFromPostbox.append(id)
         }
     }
-    transaction.deleteMessages(ids, forEachMedia: { _ in
-    })
+    if !idsToDeleteFromPostbox.isEmpty {
+        transaction.deleteMessages(idsToDeleteFromPostbox, forEachMedia: { _ in
+        })
+    }
 }
 
 func _internal_deleteAllMessagesWithAuthor(transaction: Transaction, mediaBox: MediaBox, peerId: PeerId, authorId: PeerId, namespace: MessageId.Namespace) {

@@ -66,6 +66,15 @@ public final class EditHistoryManager {
         }
     }
     
+    /// Gets original text before any edits
+    public func getOriginalText(peerId: Int64, messageId: Int32) -> String? {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        let key = messageKey(peerId: peerId, messageId: messageId)
+        return editHistory[key]?.first?.text
+    }
+    
     /// Gets edit history for a message
     public func getEditHistory(peerId: Int64, messageId: Int32) -> [EditRecord] {
         lock.lock()
@@ -109,6 +118,7 @@ public final class EditHistoryManager {
         do {
             let data = try JSONEncoder().encode(editHistory)
             UserDefaults.standard.set(data, forKey: historyKey)
+            UserDefaults.standard.synchronize()
         } catch {
             // Silent fail - non-critical feature
         }

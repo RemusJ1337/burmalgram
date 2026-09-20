@@ -151,6 +151,9 @@ func deleteMessagesInteractively(transaction: Transaction, stateManager: Account
             }
         }
     }
+    for entry in messageIds {
+        AntiDeleteManager.shared.markAsDeliberatelyDeleted(peerId: entry.messageId.peerId.toInt64(), messageId: entry.messageId.id)
+    }
     _internal_deleteMessages(transaction: transaction, mediaBox: postbox.mediaBox, ids: messageIds.map(\.messageId))
     
     stateManager?.notifyDeletedMessages(messageIds: messageIds.map(\.messageId))
