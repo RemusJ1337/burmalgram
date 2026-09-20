@@ -9059,6 +9059,8 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             ) {
                 self.chatDisplayNode.historyNode.scrollToEndOfHistory()
                 self.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })
+                self.clearInputText()
+                self.chatDisplayNode.textInputPanelNode?.text = ""
                 return
             }
         }

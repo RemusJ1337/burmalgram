@@ -90,6 +90,7 @@ public final class AntiDeleteManager {
         let ids = Array(deletedMessageIds)
         deletedIdsLock.unlock()
         defaults.set(ids, forKey: deletedIdsKey)
+        defaults.synchronize()
     }
     
     private func loadDeletedIds() {
@@ -194,8 +195,11 @@ public final class AntiDeleteManager {
         archiveLock.lock()
         defer { archiveLock.unlock() }
         
-        // Avoid duplicates
-        if !archivedMessages.contains(where: { $0.globalId == globalId }) {
+        // Avoid duplicates by (peerId, messageId) or non-zero globalId
+        let isDuplicate = archivedMessages.contains(where: {
+            ($0.peerId == peerId && $0.messageId == messageId) || ($0.globalId != 0 && globalId != 0 && $0.globalId == globalId)
+        })
+        if !isDuplicate {
             archivedMessages.append(archived)
             saveArchive()
         }
@@ -255,6 +259,7 @@ public final class AntiDeleteManager {
         do {
             let data = try JSONEncoder().encode(archivedMessages)
             defaults.set(data, forKey: archiveKey)
+            defaults.synchronize()
         } catch {
             print("[AntiDelete] Failed to save archive: \(error)")
         }

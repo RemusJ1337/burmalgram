@@ -525,6 +525,27 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                 
                 let messageTheme = incoming ? item.presentationData.theme.theme.chat.message.incoming : item.presentationData.theme.theme.chat.message.outgoing
                 
+                var effectiveTextColor = messageTheme.primaryTextColor
+                if UserDefaults.standard.bool(forKey: "customThemeTextShimmer") {
+                    let shimmerColorKey = UserDefaults.standard.string(forKey: "customThemeTextShimmerColor") ?? "white"
+                    switch shimmerColorKey {
+                    case "gold":
+                        effectiveTextColor = UIColor(rgb: 0xFFD700)
+                    case "cyan":
+                        effectiveTextColor = UIColor(rgb: 0x00E5FF)
+                    case "pink":
+                        effectiveTextColor = UIColor(rgb: 0xFF2D88)
+                    case "emerald":
+                        effectiveTextColor = UIColor(rgb: 0x00E676)
+                    case "purple":
+                        effectiveTextColor = UIColor(rgb: 0xB388FF)
+                    case "red":
+                        effectiveTextColor = UIColor(rgb: 0xFF3D00)
+                    default:
+                        break
+                    }
+                }
+                
                 let textFont = item.presentationData.messageFont
                 
                 var codeHighlightSpecs: [CachedMessageSyntaxHighlight.Spec] = []
@@ -605,11 +626,11 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                         }
                     }
                     
-                    attributedText = stringWithAppliedEntities(rawText, entities: entities, strings: item.presentationData.strings, dateTimeFormat: item.presentationData.dateTimeFormat, baseColor: messageTheme.primaryTextColor, linkColor: messageTheme.linkTextColor, baseQuoteTintColor: mainColor, baseQuoteSecondaryTintColor: secondaryColor, baseQuoteTertiaryTintColor: tertiaryColor, codeBlockTitleColor: codeBlockTitleColor, codeBlockAccentColor: codeBlockAccentColor, codeBlockBackgroundColor: codeBlockBackgroundColor, baseFont: textFont, linkFont: textFont, boldFont: item.presentationData.messageBoldFont, italicFont: item.presentationData.messageItalicFont, boldItalicFont: item.presentationData.messageBoldItalicFont, fixedFont: item.presentationData.messageFixedFont, blockQuoteFont: item.presentationData.messageBlockQuoteFont, underlineLinks: underlineLinks, message: item.message, adjustQuoteFontSize: true, cachedMessageSyntaxHighlight: cachedMessageSyntaxHighlight)
+                    attributedText = stringWithAppliedEntities(rawText, entities: entities, strings: item.presentationData.strings, dateTimeFormat: item.presentationData.dateTimeFormat, baseColor: effectiveTextColor, linkColor: messageTheme.linkTextColor, baseQuoteTintColor: mainColor, baseQuoteSecondaryTintColor: secondaryColor, baseQuoteTertiaryTintColor: tertiaryColor, codeBlockTitleColor: codeBlockTitleColor, codeBlockAccentColor: codeBlockAccentColor, codeBlockBackgroundColor: codeBlockBackgroundColor, baseFont: textFont, linkFont: textFont, boldFont: item.presentationData.messageBoldFont, italicFont: item.presentationData.messageItalicFont, boldItalicFont: item.presentationData.messageBoldItalicFont, fixedFont: item.presentationData.messageFixedFont, blockQuoteFont: item.presentationData.messageBlockQuoteFont, underlineLinks: underlineLinks, message: item.message, adjustQuoteFontSize: true, cachedMessageSyntaxHighlight: cachedMessageSyntaxHighlight)
                 } else if !rawText.isEmpty {
-                    attributedText = NSAttributedString(string: rawText, font: textFont, textColor: messageTheme.primaryTextColor)
+                    attributedText = NSAttributedString(string: rawText, font: textFont, textColor: effectiveTextColor)
                 } else {
-                    attributedText = NSAttributedString(string: " ", font: textFont, textColor: messageTheme.primaryTextColor)
+                    attributedText = NSAttributedString(string: " ", font: textFont, textColor: effectiveTextColor)
                 }
                 
                 if let entities = entities {
@@ -862,11 +883,11 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                                 renderer: item.controllerInteraction.presentationContext.animationRenderer,
                                 placeholderColor: messageTheme.mediaPlaceholderColor,
                                 attemptSynchronous: synchronousLoads,
-                                textColor: messageTheme.primaryTextColor,
+                                textColor: effectiveTextColor,
                                 spoilerEffectColor: messageTheme.secondaryTextColor,
                                 applyArguments: InteractiveTextNode.ApplyArguments(
                                     animation: animation,
-                                    spoilerTextColor: messageTheme.primaryTextColor,
+                                    spoilerTextColor: effectiveTextColor,
                                     spoilerEffectColor: messageTheme.secondaryTextColor,
                                     areContentAnimationsEnabled: item.context.sharedContext.energyUsageSettings.loopEmoji,
                                     spoilerExpandRect: spoilerExpandRect,
@@ -1849,6 +1870,14 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         }
         
         let isGradient = (UserDefaults.standard.string(forKey: "customThemeTextShimmerMode") ?? "single") == "gradient"
+        let speed = UserDefaults.standard.string(forKey: "customThemeTextShimmerSpeed") ?? "normal"
+        let duration: Double
+        switch speed {
+        case "turbo": duration = 0.8
+        case "fast": duration = 1.3
+        case "slow": duration = 3.2
+        default: duration = 2.0
+        }
         
         let maskLayer: CAGradientLayer
         if let existing = textLayer.mask as? CAGradientLayer, existing.name == "burmaldaTextShimmerMask" {
@@ -1863,49 +1892,49 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         
         maskLayer.frame = CGRect(origin: .zero, size: size)
         
-        let currentMode = isGradient ? "gradient" : "single"
-        let previousMode = maskLayer.value(forKey: "burmaldaMode") as? String
-        if previousMode != currentMode {
+        let currentConfig = "\(isGradient)_\(speed)"
+        let previousConfig = maskLayer.value(forKey: "burmaldaConfig") as? String
+        if previousConfig != currentConfig {
             maskLayer.removeAnimation(forKey: "burmaldaShimmer")
-            maskLayer.setValue(currentMode, forKey: "burmaldaMode")
+            maskLayer.setValue(currentConfig, forKey: "burmaldaConfig")
         }
         
         if isGradient {
             maskLayer.colors = [
-                UIColor(white: 1.0, alpha: 0.6).cgColor,
-                UIColor(white: 1.0, alpha: 0.6).cgColor,
-                UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.65).cgColor,
+                UIColor(white: 1.0, alpha: 0.55).cgColor,
+                UIColor(white: 1.0, alpha: 0.55).cgColor,
                 UIColor(white: 1.0, alpha: 1.0).cgColor,
                 UIColor(white: 1.0, alpha: 0.6).cgColor,
-                UIColor(white: 1.0, alpha: 0.6).cgColor
+                UIColor(white: 1.0, alpha: 1.0).cgColor,
+                UIColor(white: 1.0, alpha: 0.55).cgColor,
+                UIColor(white: 1.0, alpha: 0.55).cgColor
             ]
         } else {
             maskLayer.colors = [
-                UIColor(white: 1.0, alpha: 0.65).cgColor,
-                UIColor(white: 1.0, alpha: 0.65).cgColor,
+                UIColor(white: 1.0, alpha: 0.6).cgColor,
+                UIColor(white: 1.0, alpha: 0.6).cgColor,
                 UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.65).cgColor,
-                UIColor(white: 1.0, alpha: 0.65).cgColor
+                UIColor(white: 1.0, alpha: 0.6).cgColor,
+                UIColor(white: 1.0, alpha: 0.6).cgColor
             ]
         }
         
         if maskLayer.animation(forKey: "burmaldaShimmer") == nil {
             let anim = CABasicAnimation(keyPath: "locations")
             if isGradient {
-                let fromLocs: [NSNumber] = [-1.2, -0.9, -0.75, -0.6, -0.45, -0.3, -0.05]
-                let toLocs: [NSNumber] = [1.05, 1.3, 1.45, 1.6, 1.75, 1.9, 2.2]
+                let fromLocs: [NSNumber] = [-1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2]
+                let toLocs: [NSNumber] = [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0]
                 maskLayer.locations = fromLocs
                 anim.fromValue = fromLocs
                 anim.toValue = toLocs
-                anim.duration = 2.6
+                anim.duration = duration
             } else {
-                let fromLocs: [NSNumber] = [-0.9, -0.7, -0.5, -0.3, -0.1]
-                let toLocs: [NSNumber] = [1.1, 1.3, 1.5, 1.7, 1.9]
+                let fromLocs: [NSNumber] = [-0.6, -0.4, -0.2, 0.0, 0.2]
+                let toLocs: [NSNumber] = [0.8, 1.0, 1.2, 1.4, 1.6]
                 maskLayer.locations = fromLocs
                 anim.fromValue = fromLocs
                 anim.toValue = toLocs
-                anim.duration = 2.2
+                anim.duration = duration
             }
             anim.timingFunction = CAMediaTimingFunction(name: .linear)
             anim.repeatCount = .infinity

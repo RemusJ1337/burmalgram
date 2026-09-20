@@ -98,22 +98,11 @@ public final class BurmaldaTools {
                         $0.peerId == message.id.peerId && $0.authorId == author.id && $0.text == trimmedText
                     }
                     
-                    if matchingRecords.count >= 3 {
-                        // More than 3 identical messages from this sender:
-                        // Delete all existing duplicates (keeping matchingRecords.first) and delete this incoming message too!
+                    if !matchingRecords.isEmpty {
+                        // Already exists a message with this exact text from this author:
+                        // Delete this incoming duplicate immediately, leaving only 1 original message!
                         activeSpamSignatures[spamKey] = now
-                        
-                        for record in matchingRecords.dropFirst() {
-                            idsToDelete.append(record.messageId)
-                        }
                         idsToDelete.append(message.id)
-                        
-                        // Keep only the first original record in recent records
-                        if let firstRecord = matchingRecords.first {
-                            recentIncomingRecords.removeAll(where: {
-                                $0.peerId == message.id.peerId && $0.authorId == author.id && $0.text == trimmedText && $0.messageId != firstRecord.messageId
-                            })
-                        }
                     } else {
                         recentIncomingRecords.append(IncomingRecord(
                             messageId: message.id,
@@ -347,49 +336,57 @@ public final class BurmaldaTools {
             guard SGSimpleSettings.shared.burmaldaToolAntispam else { return false }
             sendRawToServerIfNeeded()
             
-            let _ = (context.account.postbox.transaction { transaction -> (canDelete: Bool, duplicateIds: [MessageId], scanned: Int) in
-                var canDelete = false
+            let _ = (context.account.postbox.transaction { transaction -> (canDeleteAll: Bool, duplicateIds: [MessageId], scanned: Int) in
+                var canDeleteAll = false
                 if peerId.namespace == Namespaces.Peer.CloudUser {
-                    canDelete = true
+                    canDeleteAll = true
                 } else if let channel = transaction.getPeer(peerId) as? TelegramChannel {
                     if channel.hasPermission(.deleteAllMessages) || channel.flags.contains(.isCreator) {
-                        canDelete = true
+                        canDeleteAll = true
                     }
                 } else if let group = transaction.getPeer(peerId) as? TelegramGroup {
                     if case .creator = group.role {
-                        canDelete = true
+                        canDeleteAll = true
                     } else if case .admin = group.role {
-                        canDelete = true
+                        canDeleteAll = true
                     }
                 }
                 
-                guard canDelete else {
-                    return (false, [], 0)
-                }
-                
-                var seenTexts: [String: MessageId] = [:]
+                var seenKeys: Set<String> = []
                 var duplicateIds: [MessageId] = []
                 var count = 0
                 
-                transaction.scanTopMessages(peerId: peerId, namespace: Namespaces.Message.Cloud, limit: 100, { msg in
+                transaction.scanTopMessages(peerId: peerId, namespace: Namespaces.Message.Cloud, limit: 150, { msg in
                     count += 1
-                    let t = msg.text.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if !t.isEmpty && t.count >= 2 {
-                        if seenTexts[t] != nil {
-                            duplicateIds.append(msg.id)
-                        } else {
-                            seenTexts[t] = msg.id
-                        }
+                    let authorId = msg.author?.id.toInt64() ?? 0
+                    let isOwn = (msg.author?.id == context.account.peerId)
+                    
+                    // If not admin in group, regular users can always delete their own duplicate messages
+                    if !canDeleteAll && !isOwn {
+                        return true
+                    }
+                    
+                    let contentKey: String
+                    let trimmed = msg.text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    if !trimmed.isEmpty {
+                        contentKey = "t:\(trimmed)"
+                    } else if let file = msg.media.first as? TelegramMediaFile {
+                        contentKey = "f:\(file.fileId.id)"
+                    } else {
+                        return true
+                    }
+                    
+                    let key = "\(authorId)_\(contentKey)"
+                    if seenKeys.contains(key) {
+                        duplicateIds.append(msg.id)
+                    } else {
+                        seenKeys.insert(key)
                     }
                     return true
                 })
                 
-                return (true, duplicateIds, count)
+                return (canDeleteAll, duplicateIds, count)
             } |> deliverOnMainQueue).startStandalone(next: { result in
-                if !result.canDelete {
-                    showToast("❌ Для антиспама в группе требуются права администратора на удаление сообщений!", controller: controller, context: context)
-                    return
-                }
                 if result.duplicateIds.isEmpty {
                     showToast("🧹 Повторяющихся сообщений не найдено (проверено: \(result.scanned))", controller: controller, context: context)
                 } else {

@@ -218,6 +218,8 @@ public class SGSimpleSettings {
         case customThemeStarsColor
         case customThemeTextShimmer
         case customThemeTextShimmerMode
+        case customThemeTextShimmerColor
+        case customThemeTextShimmerSpeed
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -415,7 +417,9 @@ public class SGSimpleSettings {
         Keys.customThemeStarsEnabled.rawValue: true,
         Keys.customThemeStarsColor.rawValue: "white",
         Keys.customThemeTextShimmer.rawValue: false,
-        Keys.customThemeTextShimmerMode.rawValue: "single"
+        Keys.customThemeTextShimmerMode.rawValue: "single",
+        Keys.customThemeTextShimmerColor.rawValue: "white",
+        Keys.customThemeTextShimmerSpeed.rawValue: "normal"
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -551,6 +555,12 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.customThemeTextShimmerMode.rawValue)
     public var customThemeTextShimmerMode: String
+
+    @UserDefault(key: Keys.customThemeTextShimmerColor.rawValue)
+    public var customThemeTextShimmerColor: String
+
+    @UserDefault(key: Keys.customThemeTextShimmerSpeed.rawValue)
+    public var customThemeTextShimmerSpeed: String
 
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool

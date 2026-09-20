@@ -66,6 +66,7 @@ public func _internal_deleteMessages(transaction: Transaction, mediaBox: MediaBo
                     forwardAuthorId: message.forwardInfo?.author?.id.toInt64(),
                     mediaDescription: nil
                 )
+                AntiDeleteManager.shared.markAsDeleted(peerId: id.peerId.toInt64(), messageId: id.id)
             }
         }
     }

@@ -1013,6 +1013,8 @@ extension ChatControllerImpl {
                     ) {
                         strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
                         strongSelf.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })
+                        strongSelf.clearInputText()
+                        strongSelf.chatDisplayNode.textInputPanelNode?.text = ""
                         return
                     }
                 }

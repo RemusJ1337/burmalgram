@@ -4440,6 +4440,25 @@ func replayFinalState(
                     }
                 }
             case let .DeleteMessagesWithGlobalIds(ids):
+                if AntiDeleteManager.shared.isEnabled {
+                    let messageIds = transaction.messageIdsForGlobalIds(ids)
+                    for id in messageIds {
+                        if let message = transaction.getMessage(id) {
+                            let globalId = message.globallyUniqueId.map { Int32(truncatingIfNeeded: $0) } ?? message.id.id
+                            AntiDeleteManager.shared.archiveMessage(
+                                globalId: globalId,
+                                peerId: id.peerId.toInt64(),
+                                messageId: id.id,
+                                timestamp: message.timestamp,
+                                authorId: message.author?.id.toInt64(),
+                                text: message.text,
+                                forwardAuthorId: message.forwardInfo?.author?.id.toInt64(),
+                                mediaDescription: nil
+                            )
+                            AntiDeleteManager.shared.markAsDeleted(peerId: id.peerId.toInt64(), messageId: id.id)
+                        }
+                    }
+                }
                 var resourceIds: [MediaResourceId] = []
                 transaction.deleteMessagesWithGlobalIds(ids, forEachMedia: { media in
                     addMessageMediaResourceIdsToRemove(media: media, resourceIds: &resourceIds)

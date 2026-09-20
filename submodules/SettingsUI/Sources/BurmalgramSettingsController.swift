@@ -629,6 +629,8 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
     case headerShimmer(PresentationTheme, String)
     case shimmerToggle(PresentationTheme, String, Bool)
     case shimmerMode(PresentationTheme, String, String)
+    case shimmerColor(PresentationTheme, String, String)
+    case shimmerSpeed(PresentationTheme, String, String)
     case shimmerFooter(PresentationTheme, String)
     
     case headerVisuals(PresentationTheme, String)
@@ -665,7 +667,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return BurmalgramCustomizationSection.premium.rawValue
         case .headerThemes, .customThemeBuilder, .themeNeon, .themeTitanium, .themeSpace, .themeSparkling, .themeStandardPicker, .themeReset, .useDefaultThemeColors, .themeFooter:
             return BurmalgramCustomizationSection.themes.rawValue
-        case .headerShimmer, .shimmerToggle, .shimmerMode, .shimmerFooter:
+        case .headerShimmer, .shimmerToggle, .shimmerMode, .shimmerColor, .shimmerSpeed, .shimmerFooter:
             return BurmalgramCustomizationSection.shimmer.rawValue
         case .headerVisuals, .customFont, .customPhone, .hidePhone, .showProfileId, .showDC, .showRegDate, .showCreationDate:
             return BurmalgramCustomizationSection.visuals.rawValue
@@ -696,7 +698,9 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case .headerShimmer: return 20
         case .shimmerToggle: return 21
         case .shimmerMode: return 22
-        case .shimmerFooter: return 23
+        case .shimmerColor: return 23
+        case .shimmerSpeed: return 24
+        case .shimmerFooter: return 25
         
         case .headerVisuals: return 30
         case .customFont: return 31
@@ -777,6 +781,12 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return false
         case let .shimmerMode(lhsTheme, lhsText, lhsValue):
             if case let .shimmerMode(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .shimmerColor(lhsTheme, lhsText, lhsValue):
+            if case let .shimmerColor(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .shimmerSpeed(lhsTheme, lhsText, lhsValue):
+            if case let .shimmerSpeed(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .shimmerFooter(lhsTheme, lhsText):
             if case let .shimmerFooter(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
@@ -920,6 +930,14 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.pickTextShimmerMode()
             })
+        case let .shimmerColor(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickTextShimmerColor()
+            })
+        case let .shimmerSpeed(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickTextShimmerSpeed()
+            })
         case let .shimmerFooter(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         case let .headerVisuals(_, text):
@@ -1027,6 +1045,8 @@ private final class BurmalgramCustomizationArguments {
     let toggleUseDefaultThemeColors: (Bool) -> Void
     let toggleTextShimmer: (Bool) -> Void
     let pickTextShimmerMode: () -> Void
+    let pickTextShimmerColor: () -> Void
+    let pickTextShimmerSpeed: () -> Void
     let openStandardThemes: () -> Void
     let selectFont: () -> Void
     let editCustomPhone: () -> Void
@@ -1058,6 +1078,8 @@ private final class BurmalgramCustomizationArguments {
         toggleUseDefaultThemeColors: @escaping (Bool) -> Void,
         toggleTextShimmer: @escaping (Bool) -> Void,
         pickTextShimmerMode: @escaping () -> Void,
+        pickTextShimmerColor: @escaping () -> Void,
+        pickTextShimmerSpeed: @escaping () -> Void,
         openStandardThemes: @escaping () -> Void,
         selectFont: @escaping () -> Void,
         editCustomPhone: @escaping () -> Void,
@@ -1088,6 +1110,8 @@ private final class BurmalgramCustomizationArguments {
         self.toggleUseDefaultThemeColors = toggleUseDefaultThemeColors
         self.toggleTextShimmer = toggleTextShimmer
         self.pickTextShimmerMode = pickTextShimmerMode
+        self.pickTextShimmerColor = pickTextShimmerColor
+        self.pickTextShimmerSpeed = pickTextShimmerSpeed
         self.openStandardThemes = openStandardThemes
         self.selectFont = selectFont
         self.editCustomPhone = editCustomPhone
@@ -1146,17 +1170,60 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         },
         toggleUseDefaultThemeColors: { val in
             SGSimpleSettings.shared.useDefaultThemeColors = val
-            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
+            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+                var current = current
+                var accents = current.themeSpecificAccentColors
+                accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
+                return current.withUpdatedThemeSpecificAccentColors(accents)
+            }).start()
             reloadPromise.set(true)
         },
         toggleTextShimmer: { val in
             SGSimpleSettings.shared.customThemeTextShimmer = val
+            let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+                var current = current
+                var accents = current.themeSpecificAccentColors
+                accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
+                return current.withUpdatedThemeSpecificAccentColors(accents)
+            }).start()
             reloadPromise.set(true)
         },
         pickTextShimmerMode: {
             presentBurmalgramShimmerModePicker(onSelect: { mode in
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerMode = mode
+                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+                    var current = current
+                    var accents = current.themeSpecificAccentColors
+                    accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
+                    return current.withUpdatedThemeSpecificAccentColors(accents)
+                }).start()
+                reloadPromise.set(true)
+            })
+        },
+        pickTextShimmerColor: {
+            presentBurmalgramShimmerColorPicker(onSelect: { color in
+                SGSimpleSettings.shared.customThemeTextShimmer = true
+                SGSimpleSettings.shared.customThemeTextShimmerColor = color
+                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+                    var current = current
+                    var accents = current.themeSpecificAccentColors
+                    accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
+                    return current.withUpdatedThemeSpecificAccentColors(accents)
+                }).start()
+                reloadPromise.set(true)
+            })
+        },
+        pickTextShimmerSpeed: {
+            presentBurmalgramShimmerSpeedPicker(onSelect: { speed in
+                SGSimpleSettings.shared.customThemeTextShimmer = true
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = speed
+                let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+                    var current = current
+                    var accents = current.themeSpecificAccentColors
+                    accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
+                    return current.withUpdatedThemeSpecificAccentColors(accents)
+                }).start()
                 reloadPromise.set(true)
             })
         },
@@ -1287,7 +1354,27 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         entries.append(.shimmerToggle(presentationData.theme, "Переливание текста сообщений", SGSimpleSettings.shared.customThemeTextShimmer))
         let shimmerModeTitle = SGSimpleSettings.shared.customThemeTextShimmerMode == "gradient" ? "🌈 Радужный градиент" : "✨ Одиночная волна"
         entries.append(.shimmerMode(presentationData.theme, "Режим переливания", shimmerModeTitle))
-        entries.append(.shimmerFooter(presentationData.theme, "Плавное переливание текста сообщений в чатах без рывков. Цвет текста, сообщений, фон и звёзды можно также настроить в Конструкторе кастомных тем."))
+        let shimmerColorTitle: String
+        switch SGSimpleSettings.shared.customThemeTextShimmerColor {
+        case "gold": shimmerColorTitle = "🌟 Золотой"
+        case "cyan": shimmerColorTitle = "💎 Неоновый синий"
+        case "pink": shimmerColorTitle = "🌸 Розовый"
+        case "emerald": shimmerColorTitle = "🍀 Изумрудный"
+        case "purple": shimmerColorTitle = "🔮 Фиолетовый"
+        case "red": shimmerColorTitle = "🔥 Огненный"
+        case "rainbow": shimmerColorTitle = "🌈 Радужная волна"
+        default: shimmerColorTitle = "✨ Белый кристалл"
+        }
+        entries.append(.shimmerColor(presentationData.theme, "Цвет переливания", shimmerColorTitle))
+        let shimmerSpeedTitle: String
+        switch SGSimpleSettings.shared.customThemeTextShimmerSpeed {
+        case "turbo": shimmerSpeedTitle = "⚡ Турбо (0.8с)"
+        case "fast": shimmerSpeedTitle = "🚀 Быстро (1.3с)"
+        case "slow": shimmerSpeedTitle = "🌊 Плавно (3.2с)"
+        default: shimmerSpeedTitle = "⏱️ Стандартно (2.0с)"
+        }
+        entries.append(.shimmerSpeed(presentationData.theme, "Скорость анимации", shimmerSpeedTitle))
+        entries.append(.shimmerFooter(presentationData.theme, "Плавное переливание текста сообщений в чатах без рывков. Скорость, цвет и режим применяются моментально."))
         
         entries.append(.headerVisuals(presentationData.theme, "ШРИФТ И ПРОФИЛЬ"))
         entries.append(.customFont(presentationData.theme, "Шрифт интерфейса", burmalgramFontDisplayName(SGSimpleSettings.shared.customFont)))
@@ -3110,6 +3197,50 @@ private func presentBurmalgramShimmerModePicker(onSelect: @escaping (String) -> 
     }
 }
 
+private func presentBurmalgramShimmerColorPicker(onSelect: @escaping (String) -> Void) {
+    let alert = UIAlertController(title: "Цвет переливания текста", message: "Выберите оттенок текста и бегущей световой волны:", preferredStyle: .actionSheet)
+    let colors: [(String, String)] = [
+        ("✨ Белый кристалл", "white"),
+        ("🌟 Золотой", "gold"),
+        ("💎 Неоновый синий", "cyan"),
+        ("🌸 Розовый", "pink"),
+        ("🍀 Изумрудный", "emerald"),
+        ("🔮 Фиолетовый", "purple"),
+        ("🔥 Огненный", "red"),
+        ("🌈 Радужная волна", "rainbow")
+    ]
+    for (title, key) in colors {
+        alert.addAction(UIAlertAction(title: title, style: .default, handler: { _ in
+            onSelect(key)
+        }))
+    }
+    alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+       let rootVC = window.rootViewController {
+        rootVC.present(alert, animated: true, completion: nil)
+    }
+}
+
+private func presentBurmalgramShimmerSpeedPicker(onSelect: @escaping (String) -> Void) {
+    let alert = UIAlertController(title: "Скорость переливания", message: "Выберите темп движения световой волны:", preferredStyle: .actionSheet)
+    let speeds: [(String, String)] = [
+        ("⚡ Турбо (0.8с)", "turbo"),
+        ("🚀 Быстро (1.3с)", "fast"),
+        ("⏱️ Стандартно (2.0с)", "normal"),
+        ("🌊 Плавно (3.2с)", "slow")
+    ]
+    for (title, key) in speeds {
+        alert.addAction(UIAlertAction(title: title, style: .default, handler: { _ in
+            onSelect(key)
+        }))
+    }
+    alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+       let rootVC = window.rootViewController {
+        rootVC.present(alert, animated: true, completion: nil)
+    }
+}
+
 private enum BurmalgramCustomThemeSection: Int32 {
     case master
     case presets
@@ -3151,6 +3282,8 @@ private enum BurmalgramCustomThemeEntry: ItemListNodeEntry {
     case headerShimmer(PresentationTheme, String)
     case shimmerToggle(PresentationTheme, String, Bool)
     case shimmerMode(PresentationTheme, String, String)
+    case shimmerColor(PresentationTheme, String, String)
+    case shimmerSpeed(PresentationTheme, String, String)
     case shimmerFooter(PresentationTheme, String)
     
     case headerReset(PresentationTheme, String)
@@ -3168,7 +3301,7 @@ private enum BurmalgramCustomThemeEntry: ItemListNodeEntry {
             return BurmalgramCustomThemeSection.bubbles.rawValue
         case .headerStars, .starsToggle, .starsColor:
             return BurmalgramCustomThemeSection.stars.rawValue
-        case .headerShimmer, .shimmerToggle, .shimmerMode, .shimmerFooter:
+        case .headerShimmer, .shimmerToggle, .shimmerMode, .shimmerColor, .shimmerSpeed, .shimmerFooter:
             return BurmalgramCustomThemeSection.shimmer.rawValue
         case .headerReset, .resetItem:
             return BurmalgramCustomThemeSection.reset.rawValue
@@ -3207,7 +3340,9 @@ private enum BurmalgramCustomThemeEntry: ItemListNodeEntry {
         case .headerShimmer: return 50
         case .shimmerToggle: return 51
         case .shimmerMode: return 52
-        case .shimmerFooter: return 53
+        case .shimmerColor: return 53
+        case .shimmerSpeed: return 54
+        case .shimmerFooter: return 55
         
         case .headerReset: return 60
         case .resetItem: return 61
@@ -3295,6 +3430,12 @@ private enum BurmalgramCustomThemeEntry: ItemListNodeEntry {
             return false
         case let .shimmerMode(lTheme, lText, lVal):
             if case let .shimmerMode(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .shimmerColor(lTheme, lText, lVal):
+            if case let .shimmerColor(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .shimmerSpeed(lTheme, lText, lVal):
+            if case let .shimmerSpeed(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
             return false
         case let .shimmerFooter(lTheme, lText):
             if case let .shimmerFooter(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
@@ -3405,6 +3546,14 @@ private enum BurmalgramCustomThemeEntry: ItemListNodeEntry {
             return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.pickTextShimmerMode()
             })
+        case let .shimmerColor(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickTextShimmerColor()
+            })
+        case let .shimmerSpeed(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickTextShimmerSpeed()
+            })
         case let .shimmerFooter(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
             
@@ -3431,6 +3580,8 @@ private final class BurmalgramCustomThemeArguments {
     let pickStarsColor: () -> Void
     let toggleTextShimmer: (Bool) -> Void
     let pickTextShimmerMode: () -> Void
+    let pickTextShimmerColor: () -> Void
+    let pickTextShimmerSpeed: () -> Void
     let resetToDefault: () -> Void
     
     init(
@@ -3446,6 +3597,8 @@ private final class BurmalgramCustomThemeArguments {
         pickStarsColor: @escaping () -> Void,
         toggleTextShimmer: @escaping (Bool) -> Void,
         pickTextShimmerMode: @escaping () -> Void,
+        pickTextShimmerColor: @escaping () -> Void,
+        pickTextShimmerSpeed: @escaping () -> Void,
         resetToDefault: @escaping () -> Void
     ) {
         self.toggleEnabled = toggleEnabled
@@ -3460,6 +3613,8 @@ private final class BurmalgramCustomThemeArguments {
         self.pickStarsColor = pickStarsColor
         self.toggleTextShimmer = toggleTextShimmer
         self.pickTextShimmerMode = pickTextShimmerMode
+        self.pickTextShimmerColor = pickTextShimmerColor
+        self.pickTextShimmerSpeed = pickTextShimmerSpeed
         self.resetToDefault = resetToDefault
     }
 }
@@ -3468,7 +3623,12 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
     let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
     
     let refreshTheme: () -> Void = {
-        let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
+        let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { current in
+            var current = current
+            var accents = current.themeSpecificAccentColors
+            accents[Int64(-999)] = (accents[Int64(-999)] == 1) ? 2 : 1
+            return current.withUpdatedThemeSpecificAccentColors(accents)
+        }).start()
         reloadPromise.set(true)
     }
     
@@ -3492,6 +3652,8 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
                 SGSimpleSettings.shared.customThemeStarsColor = "cyan"
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerMode = "single"
+                SGSimpleSettings.shared.customThemeTextShimmerColor = "cyan"
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = "normal"
             case "neon":
                 SGSimpleSettings.shared.customThemeBgColor1 = "0A0E17"
                 SGSimpleSettings.shared.customThemeBgColor2 = "151C2C"
@@ -3503,6 +3665,8 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
                 SGSimpleSettings.shared.customThemeStarsColor = "cyan"
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerMode = "gradient"
+                SGSimpleSettings.shared.customThemeTextShimmerColor = "cyan"
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = "fast"
             case "emerald":
                 SGSimpleSettings.shared.customThemeBgColor1 = "041C15"
                 SGSimpleSettings.shared.customThemeBgColor2 = "093028"
@@ -3513,6 +3677,8 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
                 SGSimpleSettings.shared.customThemeStarsEnabled = true
                 SGSimpleSettings.shared.customThemeStarsColor = "green"
                 SGSimpleSettings.shared.customThemeTextShimmer = false
+                SGSimpleSettings.shared.customThemeTextShimmerColor = "emerald"
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = "normal"
             case "amethyst":
                 SGSimpleSettings.shared.customThemeBgColor1 = "1A0B2E"
                 SGSimpleSettings.shared.customThemeBgColor2 = "2C1654"
@@ -3524,6 +3690,8 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
                 SGSimpleSettings.shared.customThemeStarsColor = "gold"
                 SGSimpleSettings.shared.customThemeTextShimmer = true
                 SGSimpleSettings.shared.customThemeTextShimmerMode = "gradient"
+                SGSimpleSettings.shared.customThemeTextShimmerColor = "pink"
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = "fast"
             case "ruby":
                 SGSimpleSettings.shared.customThemeBgColor1 = "1F070A"
                 SGSimpleSettings.shared.customThemeBgColor2 = "330C12"
@@ -3534,6 +3702,8 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
                 SGSimpleSettings.shared.customThemeStarsEnabled = true
                 SGSimpleSettings.shared.customThemeStarsColor = "red"
                 SGSimpleSettings.shared.customThemeTextShimmer = false
+                SGSimpleSettings.shared.customThemeTextShimmerColor = "red"
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = "normal"
             case "titanium":
                 SGSimpleSettings.shared.customThemeBgColor1 = "141416"
                 SGSimpleSettings.shared.customThemeBgColor2 = "1F2023"
@@ -3544,6 +3714,8 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
                 SGSimpleSettings.shared.customThemeStarsEnabled = false
                 SGSimpleSettings.shared.customThemeStarsColor = "white"
                 SGSimpleSettings.shared.customThemeTextShimmer = false
+                SGSimpleSettings.shared.customThemeTextShimmerColor = "white"
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = "slow"
             default:
                 break
             }
@@ -3611,6 +3783,18 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
                 refreshTheme()
             })
         },
+        pickTextShimmerColor: {
+            presentBurmalgramShimmerColorPicker(onSelect: { color in
+                SGSimpleSettings.shared.customThemeTextShimmerColor = color
+                refreshTheme()
+            })
+        },
+        pickTextShimmerSpeed: {
+            presentBurmalgramShimmerSpeedPicker(onSelect: { speed in
+                SGSimpleSettings.shared.customThemeTextShimmerSpeed = speed
+                refreshTheme()
+            })
+        },
         resetToDefault: {
             SGSimpleSettings.shared.customThemeEnabled = false
             SGSimpleSettings.shared.customThemePreset = "custom"
@@ -3624,6 +3808,8 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
             SGSimpleSettings.shared.customThemeStarsColor = "white"
             SGSimpleSettings.shared.customThemeTextShimmer = false
             SGSimpleSettings.shared.customThemeTextShimmerMode = "single"
+            SGSimpleSettings.shared.customThemeTextShimmerColor = "white"
+            SGSimpleSettings.shared.customThemeTextShimmerSpeed = "normal"
             refreshTheme()
         }
     )
@@ -3669,7 +3855,27 @@ public func burmalgramCustomThemeController(context: AccountContext) -> ViewCont
         entries.append(.shimmerToggle(presentationData.theme, "Эффект переливания текста", SGSimpleSettings.shared.customThemeTextShimmer))
         let modeTitle = SGSimpleSettings.shared.customThemeTextShimmerMode == "gradient" ? "Радужный градиент" : "Одиночная волна"
         entries.append(.shimmerMode(presentationData.theme, "Режим переливания", modeTitle))
-        entries.append(.shimmerFooter(presentationData.theme, "Анимированная светящаяся волна плавно скользит по тексту всех сообщений в чате."))
+        let shimmerColorTitle: String
+        switch SGSimpleSettings.shared.customThemeTextShimmerColor {
+        case "gold": shimmerColorTitle = "🌟 Золотой"
+        case "cyan": shimmerColorTitle = "💎 Неоновый синий"
+        case "pink": shimmerColorTitle = "🌸 Розовый"
+        case "emerald": shimmerColorTitle = "🍀 Изумрудный"
+        case "purple": shimmerColorTitle = "🔮 Фиолетовый"
+        case "red": shimmerColorTitle = "🔥 Огненный"
+        case "rainbow": shimmerColorTitle = "🌈 Радужная волна"
+        default: shimmerColorTitle = "✨ Белый кристалл"
+        }
+        entries.append(.shimmerColor(presentationData.theme, "Цвет переливания", shimmerColorTitle))
+        let shimmerSpeedTitle: String
+        switch SGSimpleSettings.shared.customThemeTextShimmerSpeed {
+        case "turbo": shimmerSpeedTitle = "⚡ Турбо (0.8с)"
+        case "fast": shimmerSpeedTitle = "🚀 Быстро (1.3с)"
+        case "slow": shimmerSpeedTitle = "🌊 Плавно (3.2с)"
+        default: shimmerSpeedTitle = "⏱️ Стандартно (2.0с)"
+        }
+        entries.append(.shimmerSpeed(presentationData.theme, "Скорость анимации", shimmerSpeedTitle))
+        entries.append(.shimmerFooter(presentationData.theme, "Анимированная светящаяся волна плавно скользит по тексту всех сообщений в чате. Скорость и цвета применяются мгновенно."))
         
         entries.append(.headerReset(presentationData.theme, "СБРОС"))
         entries.append(.resetItem(presentationData.theme, "Сбросить кастомную тему"))
