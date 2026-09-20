@@ -1718,8 +1718,10 @@ public final class ContextControllerActionsStackNodeImpl: ASDisplayNode, Context
                 effectView.update(theme: presentationData.theme)
             }
             transition.setPosition(view: self.contentContainer, position: CGRect(origin: CGPoint(), size: size).center)
-            transition.setBounds(view: self.contentContainer, bounds: CGRect(origin: CGPoint(), size: size))
             self.contentContainer.update(size: size, cornerRadius: min(30.0, size.height * 0.5), isDark: presentationData.theme.overallDarkAppearance, transition: transition)
+            self.contentContainer.backgroundColor = presentationData.theme.contextMenu.backgroundColor
+            self.contentContainer.layer.cornerRadius = min(30.0, size.height * 0.5)
+            self.contentContainer.clipsToBounds = true
             
             //let backgroundContainerFrame = CGRect(origin: CGPoint(), size: size).insetBy(dx: -self.backgroundContainerInset, dy: -self.backgroundContainerInset)
             

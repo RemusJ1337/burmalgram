@@ -206,6 +206,18 @@ public class SGSimpleSettings {
         case burmaldaToolSend
         case burmaldaToolEncrypt
         case burmaldaToolCat
+        case customThemeEnabled
+        case customThemePreset
+        case customThemeBgColor1
+        case customThemeBgColor2
+        case customThemeBubbleColor1
+        case customThemeBubbleColor2
+        case customThemeIncomingBubbleColor
+        case customThemeTextColor
+        case customThemeStarsEnabled
+        case customThemeStarsColor
+        case customThemeTextShimmer
+        case customThemeTextShimmerMode
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -380,7 +392,7 @@ public class SGSimpleSettings {
         Keys.burmaldaAutoanswerOn.rawValue: false,
         Keys.burmaldaAutoanswerText.rawValue: "Я сейчас не в сети.",
         Keys.burmaldaAutoanswerDelay.rawValue: 300,
-        Keys.burmaldaMutedPeerIds.rawValue: [] as [Int64],
+        Keys.burmaldaMutedPeerIds.rawValue: [] as [String],
         Keys.burmaldaAntispamOn.rawValue: true,
         Keys.burmaldaToolAntispam.rawValue: true,
         Keys.burmaldaToolMute.rawValue: true,
@@ -391,7 +403,19 @@ public class SGSimpleSettings {
         Keys.burmaldaToolDox.rawValue: true,
         Keys.burmaldaToolSend.rawValue: true,
         Keys.burmaldaToolEncrypt.rawValue: true,
-        Keys.burmaldaToolCat.rawValue: true
+        Keys.burmaldaToolCat.rawValue: true,
+        Keys.customThemeEnabled.rawValue: false,
+        Keys.customThemePreset.rawValue: "custom",
+        Keys.customThemeBgColor1.rawValue: "000C2A",
+        Keys.customThemeBgColor2.rawValue: "001744",
+        Keys.customThemeBubbleColor1.rawValue: "006CE6",
+        Keys.customThemeBubbleColor2.rawValue: "00BCFF",
+        Keys.customThemeIncomingBubbleColor.rawValue: "161C2E",
+        Keys.customThemeTextColor.rawValue: "FFFFFF",
+        Keys.customThemeStarsEnabled.rawValue: true,
+        Keys.customThemeStarsColor.rawValue: "white",
+        Keys.customThemeTextShimmer.rawValue: false,
+        Keys.customThemeTextShimmerMode.rawValue: "single"
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -481,7 +505,7 @@ public class SGSimpleSettings {
     public var burmaldaAutoanswerDelay: Int
 
     @UserDefault(key: Keys.burmaldaMutedPeerIds.rawValue)
-    public var burmaldaMutedPeerIds: [Int64]
+    public var burmaldaMutedPeerIds: [String]
 
     @UserDefault(key: Keys.burmaldaAntispamOn.rawValue)
     public var burmaldaAntispamOn: Bool
@@ -491,6 +515,42 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.burmaldaToolMute.rawValue)
     public var burmaldaToolMute: Bool
+
+    @UserDefault(key: Keys.customThemeEnabled.rawValue)
+    public var customThemeEnabled: Bool
+
+    @UserDefault(key: Keys.customThemePreset.rawValue)
+    public var customThemePreset: String
+
+    @UserDefault(key: Keys.customThemeBgColor1.rawValue)
+    public var customThemeBgColor1: String
+
+    @UserDefault(key: Keys.customThemeBgColor2.rawValue)
+    public var customThemeBgColor2: String
+
+    @UserDefault(key: Keys.customThemeBubbleColor1.rawValue)
+    public var customThemeBubbleColor1: String
+
+    @UserDefault(key: Keys.customThemeBubbleColor2.rawValue)
+    public var customThemeBubbleColor2: String
+
+    @UserDefault(key: Keys.customThemeIncomingBubbleColor.rawValue)
+    public var customThemeIncomingBubbleColor: String
+
+    @UserDefault(key: Keys.customThemeTextColor.rawValue)
+    public var customThemeTextColor: String
+
+    @UserDefault(key: Keys.customThemeStarsEnabled.rawValue)
+    public var customThemeStarsEnabled: Bool
+
+    @UserDefault(key: Keys.customThemeStarsColor.rawValue)
+    public var customThemeStarsColor: String
+
+    @UserDefault(key: Keys.customThemeTextShimmer.rawValue)
+    public var customThemeTextShimmer: Bool
+
+    @UserDefault(key: Keys.customThemeTextShimmerMode.rawValue)
+    public var customThemeTextShimmerMode: String
 
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool
@@ -769,6 +829,9 @@ extension SGSimpleSettings {
 
 extension SGSimpleSettings {
     public var isNYEnabled: Bool {
+        if customThemeEnabled && customThemeStarsEnabled {
+            return true
+        }
         return canUseNY && NYStyle(rawValue: nyStyle) != .default
     }
 }

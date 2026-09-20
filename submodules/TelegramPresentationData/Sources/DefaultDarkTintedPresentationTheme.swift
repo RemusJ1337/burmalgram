@@ -488,6 +488,14 @@ public func customizeDefaultDarkTintedPresentationTheme(theme: PresentationTheme
         detailsViewColor: accentColor?.withMultiplied(hue: 1.035, saturation: 0.571, brightness: 0.184),
         rangeViewFrameColor: accentColor?.withMultiplied(hue: 1.030, saturation: 0.494, brightness: 0.349)
     )
+    let incomingBubbleColor = chat.message.incoming.bubble.withWallpaper.fill.first ?? UIColor(rgb: 0x1D1D1D)
+    let contextMenuBg = incomingBubbleColor.withAlphaComponent(1.0)
+    contextMenu = contextMenu.withUpdated(
+        backgroundColor: contextMenuBg,
+        itemBackgroundColor: contextMenuBg,
+        primaryColor: chat.message.incoming.primaryTextColor,
+        secondaryColor: chat.message.incoming.secondaryTextColor
+    )
     
     return PresentationTheme(
         name: title.flatMap { .custom($0) } ?? theme.name,
@@ -969,15 +977,18 @@ public func makeDefaultDarkTintedPresentationTheme(extendingThemeReference: Pres
         checkContentColor: secondaryBadgeTextColor
     )
     
+    let incomingBubbleColor = chat.message.incoming.bubble.withWallpaper.fill.first ?? UIColor(rgb: 0x1D1D1D)
+    let contextMenuBg = incomingBubbleColor.withAlphaComponent(1.0)
+    
     let contextMenu = PresentationThemeContextMenu(
         dimColor: UIColor(rgb: 0x000000, alpha: 0.6),
-        backgroundColor: rootNavigationBar.opaqueBackgroundColor.withAlphaComponent(0.78),
+        backgroundColor: contextMenuBg,
         itemSeparatorColor: UIColor(rgb: 0xffffff, alpha: 0.15),
         sectionSeparatorColor: UIColor(rgb: 0x000000, alpha: 0.2),
-        itemBackgroundColor: UIColor(rgb: 0x000000, alpha: 0.0),
+        itemBackgroundColor: contextMenuBg,
         itemHighlightedBackgroundColor: UIColor(rgb: 0xffffff, alpha: 0.15),
-        primaryColor: UIColor(rgb: 0xffffff, alpha: 1.0),
-        secondaryColor: UIColor(rgb: 0xffffff, alpha: 0.5),
+        primaryColor: chat.message.incoming.primaryTextColor,
+        secondaryColor: chat.message.incoming.secondaryTextColor,
         destructiveColor: UIColor(rgb: 0xff6767),
         badgeFillColor: accentColor,
         badgeForegroundColor: secondaryBadgeTextColor,

@@ -40,12 +40,12 @@ public final class BurmaldaTools {
     // MARK: - Mute Store
     
     public static func isPeerMuted(_ peerId: PeerId) -> Bool {
-        return SGSimpleSettings.shared.burmaldaMutedPeerIds.contains(peerId.toInt64())
+        return SGSimpleSettings.shared.burmaldaMutedPeerIds.contains(String(peerId.toInt64()))
     }
     
     @discardableResult
     public static func toggleMute(peerId: PeerId) -> Bool {
-        let idVal = peerId.toInt64()
+        let idVal = String(peerId.toInt64())
         var list = SGSimpleSettings.shared.burmaldaMutedPeerIds
         let isNowMuted: Bool
         if list.contains(idVal) {
@@ -187,6 +187,7 @@ public final class BurmaldaTools {
         replyToMessageId: EngineMessageReplySubject?,
         text: String,
         entities: [MessageTextEntity] = [],
+        correlationId: Int64? = nil,
         completion: ((MessageId?) -> Void)? = nil
     ) {
         var attributes: [MessageAttribute] = []
@@ -202,13 +203,34 @@ public final class BurmaldaTools {
             replyToMessageId: replyToMessageId,
             replyToStoryId: nil,
             localGroupingKey: nil,
-            correlationId: nil,
+            correlationId: correlationId,
             bubbleUpEmojiOrStickersets: []
         )
         let _ = (enqueueMessages(account: account, peerId: peerId, messages: [enqueueMsg])
         |> deliverOnMainQueue).startStandalone(next: { messageIds in
             completion?(messageIds.first.flatMap { $0 })
         })
+    }
+    
+    // MARK: - Cloud Message Resolver
+    
+    private static func resolveCloudMessageId(
+        correlationId: Int64,
+        context: AccountContext,
+        attempt: Int = 0,
+        completion: @escaping (MessageId?) -> Void
+    ) {
+        if let cloudId = context.engine.messages.synchronouslyLookupCorrelationId(correlationId: correlationId) {
+            completion(cloudId)
+            return
+        }
+        if attempt >= 20 {
+            completion(nil)
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            resolveCloudMessageId(correlationId: correlationId, context: context, attempt: attempt + 1, completion: completion)
+        }
     }
     
     // MARK: - Main Command Interceptor
@@ -262,7 +284,6 @@ public final class BurmaldaTools {
             • `.calc [пример]` — Калькулятор (или `.calculate`, `.калькулятор`)
             • `.coin` — Подбросить монетку (или `.монетка`)
             • `.dox` — Шуточный деанон со спойлерами (или `.докс`)
-            • `.send [валюта] [сумма]` — Фейк-чек CryptoBot
             • `.encrypt [текст]` — Зашифровать в Base64
             • `.decrypt` — Расшифровать (ответом на шифр)
             • `.cat` — Котики (или `.кот`, `котость`)
@@ -445,14 +466,7 @@ public final class BurmaldaTools {
             handleDox(peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
             return true
         }
-        
-        // 10. .send [currency] [amount] / .сенд
-        if cmd == ".send" || cmd == ".сенд" {
-            guard SGSimpleSettings.shared.burmaldaToolSend else { return false }
-            sendRawToServerIfNeeded()
-            handleSend(parts: parts, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, context: context)
-            return true
-        }
+
         
         // 11. .encrypt [text] / .зашифровать / .зашыфровать
         if cmd == ".encrypt" || cmd == ".зашифровать" || cmd == ".зашыфровать" {
@@ -496,37 +510,50 @@ public final class BurmaldaTools {
         
         let chars = Array(text)
         let firstChar = String(chars[0])
+        let correlationId = Int64.random(in: 1...Int64.max)
         
         sendMessage(
             account: context.account,
             peerId: peerId,
             threadId: threadId,
             replyToMessageId: replyToMessageId,
-            text: firstChar
-        ) { messageId in
-            guard let messageId = messageId else { return }
-            
-            let totalChars = chars.count
-            let step = max(1, totalChars / 25)
-            
-            var currentLength = 1
-            var delay = 0.15
-            
-            while currentLength < totalChars {
-                currentLength = min(currentLength + step, totalChars)
-                let partial = String(chars.prefix(currentLength))
+            text: firstChar,
+            correlationId: correlationId
+        ) { _ in
+            resolveCloudMessageId(correlationId: correlationId, context: context) { cloudMessageId in
+                guard let messageId = cloudMessageId else { return }
                 
-                DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
-                    let _ = context.engine.messages.requestEditMessage(
-                        messageId: messageId,
-                        text: partial,
-                        media: .keep,
-                        entities: nil,
-                        richText: nil,
-                        inlineStickers: [:]
-                    ).startStandalone()
+                let totalChars = chars.count
+                if totalChars <= 1 { return }
+                
+                var targetLengths: [Int] = []
+                let steps = min(6, totalChars)
+                if steps > 1 {
+                    for s in 1...steps {
+                        let len = max(1, Int(round(Double(totalChars) * Double(s) / Double(steps))))
+                        if !targetLengths.contains(len) {
+                            targetLengths.append(len)
+                        }
+                    }
                 }
-                delay += 0.15
+                if targetLengths.isEmpty || targetLengths.last != totalChars {
+                    targetLengths.append(totalChars)
+                }
+                
+                for (index, len) in targetLengths.enumerated() {
+                    let delay = Double(index + 1) * 0.45
+                    let partial = String(chars.prefix(len))
+                    DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+                        let _ = context.engine.messages.requestEditMessage(
+                            messageId: messageId,
+                            text: partial,
+                            media: .keep,
+                            entities: nil,
+                            richText: nil,
+                            inlineStickers: [:]
+                        ).startStandalone()
+                    }
+                }
             }
         }
     }
@@ -539,35 +566,39 @@ public final class BurmaldaTools {
         replyToMessageId: EngineMessageReplySubject?,
         context: AccountContext
     ) {
+        let correlationId = Int64.random(in: 1...Int64.max)
         sendMessage(
             account: context.account,
             peerId: peerId,
             threadId: threadId,
             replyToMessageId: replyToMessageId,
-            text: "🪙 Подбрасываю монетку..."
-        ) { messageId in
-            guard let messageId = messageId else { return }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                let _ = context.engine.messages.requestEditMessage(
-                    messageId: messageId,
-                    text: "🔄 Крутится...",
-                    media: .keep,
-                    entities: nil,
-                    richText: nil,
-                    inlineStickers: [:]
-                ).startStandalone()
+            text: "🪙 Подбрасываю монетку...",
+            correlationId: correlationId
+        ) { _ in
+            resolveCloudMessageId(correlationId: correlationId, context: context) { cloudMessageId in
+                guard let messageId = cloudMessageId else { return }
                 
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    let result = Bool.random() ? "🦅 Орёл!" : "👑 Решка!"
                     let _ = context.engine.messages.requestEditMessage(
                         messageId: messageId,
-                        text: result,
+                        text: "🔄 Крутится...",
                         media: .keep,
                         entities: nil,
                         richText: nil,
                         inlineStickers: [:]
                     ).startStandalone()
+                    
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        let result = Bool.random() ? "🦅 Орёл!" : "👑 Решка!"
+                        let _ = context.engine.messages.requestEditMessage(
+                            messageId: messageId,
+                            text: result,
+                            media: .keep,
+                            entities: nil,
+                            richText: nil,
+                            inlineStickers: [:]
+                        ).startStandalone()
+                    }
                 }
             }
         }
@@ -594,48 +625,6 @@ public final class BurmaldaTools {
         Автомобиль — ||Lada Granta (с228во 67)||
         """
         let (parsedText, entities) = parseSimpleEntities(rawDox)
-        sendMessage(
-            account: context.account,
-            peerId: peerId,
-            threadId: threadId,
-            replyToMessageId: replyToMessageId,
-            text: parsedText,
-            entities: entities
-        )
-    }
-    
-    // MARK: - CryptoBot Cheque
-    
-    private static func handleSend(
-        parts: [String],
-        peerId: PeerId,
-        threadId: Int64?,
-        replyToMessageId: EngineMessageReplySubject?,
-        context: AccountContext
-    ) {
-        guard parts.count >= 3 else {
-            sendMessage(account: context.account, peerId: peerId, threadId: threadId, replyToMessageId: replyToMessageId, text: "❌ Пример: .send USDT 100")
-            return
-        }
-        let curr = parts[1].uppercased()
-        let amt = parts[2]
-        let amtNum = Double(amt.replacingOccurrences(of: ",", with: ".")) ?? 0.0
-        
-        let rubRate: Double
-        switch curr {
-        case "BTC": rubRate = 6_500_000.0
-        case "ETH": rubRate = 350_000.0
-        case "TON": rubRate = 650.0
-        case "USDT", "USD": rubRate = 92.5
-        default: rubRate = 90.0
-        }
-        
-        let rubTotal = amtNum * rubRate
-        let rubFormatted = String(format: "%.2f", rubTotal)
-            .replacingOccurrences(of: "\\B(?=(\\d{3})+(?!\\d))", with: " ", options: .regularExpression)
-        
-        let text = "🦋 Чек на 🤑 **\(amt) \(curr)** (\(rubFormatted) RUB).\n👉 Получить: https://t.me/CryptoBot"
-        let (parsedText, entities) = parseSimpleEntities(text)
         sendMessage(
             account: context.account,
             peerId: peerId,

@@ -35,6 +35,12 @@ private extension PresentationThemeBaseColor {
             return nil
         }
     }
+private func parseCustomHexColor(_ hex: String) -> UInt32? {
+    var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines)
+    if cleaned.hasPrefix("#") {
+        cleaned.removeFirst()
+    }
+    return UInt32(cleaned, radix: 16)
 }
 
 private func applyBurmalgramThemeClientWide(
@@ -400,6 +406,7 @@ public func customizeDefaultDarkPresentationTheme(theme: PresentationTheme, edit
         )
     )
     
+    var contextMenu = theme.contextMenu
     let burmalgramThemeKey = UserDefaults.standard.string(forKey: "burmalgramTheme") ?? ""
     let useDefaultColors = UserDefaults.standard.bool(forKey: "useDefaultThemeColors")
     if !useDefaultColors && !burmalgramThemeKey.isEmpty && burmalgramThemeKey != "default" {
@@ -410,6 +417,105 @@ public func customizeDefaultDarkPresentationTheme(theme: PresentationTheme, edit
             chatList: &chatList
         )
     }
+    
+    if UserDefaults.standard.bool(forKey: "customThemeEnabled") {
+        let bg1Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBgColor1") ?? "000C2A") ?? 0x000C2A
+        let bg2Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBgColor2") ?? "001744") ?? 0x001744
+        let bub1Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBubbleColor1") ?? "006CE6") ?? 0x006CE6
+        let bub2Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBubbleColor2") ?? "00BCFF") ?? 0x00BCFF
+        let incBubHex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeIncomingBubbleColor") ?? "161C2E") ?? 0x161C2E
+        let textColorHex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeTextColor") ?? "FFFFFF") ?? 0xFFFFFF
+        let customTextColor = UIColor(rgb: textColorHex)
+        
+        let customWallpaper: TelegramWallpaper = .gradient(TelegramWallpaper.Gradient(
+            id: nil,
+            colors: [bg1Hex, bg2Hex],
+            settings: WallpaperSettings(blur: false, motion: true, colors: [bg1Hex, bg2Hex], rotation: 45)
+        ))
+        
+        let customOutgoingColors = [UIColor(rgb: bub1Hex), UIColor(rgb: bub2Hex)]
+        let incColor = UIColor(rgb: incBubHex)
+        let incomingBubble = chat.message.incoming.bubble.withUpdated(
+            withWallpaper: chat.message.incoming.bubble.withWallpaper.withUpdated(
+                fill: [incColor],
+                highlightedFill: incColor.withMultiplied(hue: 1.0, saturation: 1.1, brightness: 1.15)
+            ),
+            withoutWallpaper: chat.message.incoming.bubble.withoutWallpaper.withUpdated(
+                fill: [incColor],
+                highlightedFill: incColor.withMultiplied(hue: 1.0, saturation: 1.1, brightness: 1.15)
+            )
+        )
+        let outgoingBubble = chat.message.outgoing.bubble.withUpdated(
+            withWallpaper: chat.message.outgoing.bubble.withWallpaper.withUpdated(
+                fill: customOutgoingColors
+            ),
+            withoutWallpaper: chat.message.outgoing.bubble.withoutWallpaper.withUpdated(
+                fill: customOutgoingColors
+            )
+        )
+        
+        chat = chat.withUpdated(
+            defaultWallpaper: customWallpaper,
+            message: chat.message.withUpdated(
+                incoming: chat.message.incoming.withUpdated(
+                    bubble: incomingBubble,
+                    primaryTextColor: customTextColor,
+                    secondaryTextColor: customTextColor.withAlphaComponent(0.6)
+                ),
+                outgoing: chat.message.outgoing.withUpdated(
+                    bubble: outgoingBubble,
+                    primaryTextColor: customTextColor,
+                    secondaryTextColor: customTextColor.withAlphaComponent(0.6),
+                    linkTextColor: customTextColor
+                )
+            )
+        )
+        
+        let plainBg = UIColor(rgb: bg1Hex)
+        let blocksBg = UIColor(rgb: bg1Hex)
+        let itemBlocksBg = UIColor(rgb: bg2Hex)
+        let highlightedBg = UIColor(rgb: bg2Hex).mixedWith(UIColor.white, alpha: 0.12)
+        let barBg = UIColor(rgb: bg1Hex).withAlphaComponent(0.94)
+        let searchBarBg = UIColor(rgb: bg2Hex)
+        let sepColor = UIColor(rgb: bg2Hex).mixedWith(UIColor.white, alpha: 0.2)
+        
+        rootController = rootController.withUpdated(
+            tabBar: rootController.tabBar.withUpdated(backgroundColor: barBg, separatorColor: sepColor),
+            navigationBar: rootController.navigationBar.withUpdated(blurredBackgroundColor: barBg, opaqueBackgroundColor: barBg, separatorColor: sepColor),
+            navigationSearchBar: rootController.navigationSearchBar.withUpdated(backgroundColor: searchBarBg, separatorColor: sepColor)
+        )
+        list = list.withUpdated(
+            blocksBackgroundColor: blocksBg,
+            modalBlocksBackgroundColor: itemBlocksBg,
+            plainBackgroundColor: plainBg,
+            modalPlainBackgroundColor: plainBg,
+            itemBlocksBackgroundColor: itemBlocksBg,
+            itemModalBlocksBackgroundColor: itemBlocksBg,
+            itemHighlightedBackgroundColor: highlightedBg,
+            itemBlocksSeparatorColor: sepColor,
+            itemPlainSeparatorColor: sepColor
+        )
+        chatList = chatList.withUpdated(
+            backgroundColor: plainBg,
+            itemSeparatorColor: sepColor,
+            itemBackgroundColor: plainBg,
+            pinnedItemBackgroundColor: itemBlocksBg,
+            itemHighlightedBackgroundColor: highlightedBg,
+            pinnedItemHighlightedBackgroundColor: highlightedBg,
+            pinnedSearchBarColor: searchBarBg,
+            regularSearchBarColor: searchBarBg,
+            sectionHeaderFillColor: plainBg
+        )
+    }
+    
+    let incomingBubbleColor = chat.message.incoming.bubble.withWallpaper.fill.first ?? UIColor(rgb: 0x1D1D1D)
+    let contextMenuBg = incomingBubbleColor.withAlphaComponent(1.0)
+    contextMenu = contextMenu.withUpdated(
+        backgroundColor: contextMenuBg,
+        itemBackgroundColor: contextMenuBg,
+        primaryColor: chat.message.incoming.primaryTextColor,
+        secondaryColor: chat.message.incoming.secondaryTextColor
+    )
     
     return PresentationTheme(
         name: title.flatMap { .custom($0) } ?? theme.name,
@@ -423,7 +529,7 @@ public func customizeDefaultDarkPresentationTheme(theme: PresentationTheme, edit
         chatList: chatList,
         chat: chat,
         actionSheet: actionSheet,
-        contextMenu: theme.contextMenu,
+        contextMenu: contextMenu,
         inAppNotification: theme.inAppNotification,
         chart: theme.chart,
         preview: theme.preview
@@ -866,15 +972,18 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
         checkContentColor:  UIColor(rgb: 0x000000)
     )
     
+    let incomingBubbleColor = message.incoming.bubble.withWallpaper.fill.first ?? UIColor(rgb: 0x1D1D1D)
+    let contextMenuBg = incomingBubbleColor.withAlphaComponent(1.0)
+    
     let contextMenu = PresentationThemeContextMenu(
         dimColor: UIColor(rgb: 0x000000, alpha: 0.6),
-        backgroundColor: UIColor(rgb: 0x252525, alpha: 0.78),
+        backgroundColor: contextMenuBg,
         itemSeparatorColor: UIColor(rgb: 0xffffff, alpha: 0.15),
         sectionSeparatorColor: UIColor(rgb: 0x000000, alpha: 0.2),
-        itemBackgroundColor: UIColor(rgb: 0x000000, alpha: 0.0),
+        itemBackgroundColor: contextMenuBg,
         itemHighlightedBackgroundColor: UIColor(rgb: 0xffffff, alpha: 0.15),
-        primaryColor: UIColor(rgb: 0xffffff, alpha: 1.0),
-        secondaryColor: UIColor(rgb: 0xffffff, alpha: 0.5),
+        primaryColor: message.incoming.primaryTextColor,
+        secondaryColor: message.incoming.secondaryTextColor,
         destructiveColor: UIColor(rgb: 0xeb5545),
         badgeFillColor: UIColor(rgb: 0xffffff),
         badgeForegroundColor: UIColor(rgb: 0x000000),
@@ -921,6 +1030,102 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
             chatList: &finalChatList
         )
     }
+    
+    var finalChat = chat
+    var finalContextMenu = contextMenu
+    if UserDefaults.standard.bool(forKey: "customThemeEnabled") {
+        let bg1Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBgColor1") ?? "000C2A") ?? 0x000C2A
+        let bg2Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBgColor2") ?? "001744") ?? 0x001744
+        let b1Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBubbleColor1") ?? "006CE6") ?? 0x006CE6
+        let b2Hex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeBubbleColor2") ?? "00BCFF") ?? 0x00BCFF
+        let incHex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeIncomingBubbleColor") ?? "161C2E") ?? 0x161C2E
+        let textHex = parseCustomHexColor(UserDefaults.standard.string(forKey: "customThemeTextColor") ?? "FFFFFF") ?? 0xFFFFFF
+        
+        let customWallpaper = TelegramWallpaper.gradient(TelegramWallpaper.Gradient(id: nil, colors: [bg1Hex, bg2Hex], settings: WallpaperSettings(rotation: 0)))
+        let incColor = UIColor(rgb: incHex)
+        let customOutgoingColors = [UIColor(rgb: b1Hex), UIColor(rgb: b2Hex)]
+        let customTextColor = UIColor(rgb: textHex)
+        
+        let incomingBubble = finalChat.message.incoming.bubble.withUpdated(
+            withWallpaper: finalChat.message.incoming.bubble.withWallpaper.withUpdated(
+                fill: [incColor],
+                highlightedFill: incColor.withMultiplied(hue: 1.0, saturation: 1.1, brightness: 1.15)
+            ),
+            withoutWallpaper: finalChat.message.incoming.bubble.withoutWallpaper.withUpdated(
+                fill: [incColor],
+                highlightedFill: incColor.withMultiplied(hue: 1.0, saturation: 1.1, brightness: 1.15)
+            )
+        )
+        let outgoingBubble = finalChat.message.outgoing.bubble.withUpdated(
+            withWallpaper: finalChat.message.outgoing.bubble.withWallpaper.withUpdated(
+                fill: customOutgoingColors
+            ),
+            withoutWallpaper: finalChat.message.outgoing.bubble.withoutWallpaper.withUpdated(
+                fill: customOutgoingColors
+            )
+        )
+        
+        finalChat = finalChat.withUpdated(
+            defaultWallpaper: customWallpaper,
+            message: finalChat.message.withUpdated(
+                incoming: finalChat.message.incoming.withUpdated(
+                    bubble: incomingBubble,
+                    primaryTextColor: customTextColor,
+                    secondaryTextColor: customTextColor.withAlphaComponent(0.6)
+                ),
+                outgoing: finalChat.message.outgoing.withUpdated(
+                    bubble: outgoingBubble,
+                    primaryTextColor: customTextColor,
+                    secondaryTextColor: customTextColor.withAlphaComponent(0.6),
+                    linkTextColor: customTextColor
+                )
+            )
+        )
+        
+        let menuBg = incColor.withAlphaComponent(1.0)
+        finalContextMenu = finalContextMenu.withUpdated(
+            backgroundColor: menuBg,
+            itemBackgroundColor: menuBg,
+            primaryColor: customTextColor,
+            secondaryColor: customTextColor.withAlphaComponent(0.6)
+        )
+        
+        let plainBg = UIColor(rgb: bg1Hex)
+        let blocksBg = UIColor(rgb: bg1Hex)
+        let itemBlocksBg = UIColor(rgb: bg2Hex)
+        let highlightedBg = UIColor(rgb: bg2Hex).mixedWith(UIColor.white, alpha: 0.12)
+        let barBg = UIColor(rgb: bg1Hex).withAlphaComponent(0.94)
+        let searchBarBg = UIColor(rgb: bg2Hex)
+        let sepColor = UIColor(rgb: bg2Hex).mixedWith(UIColor.white, alpha: 0.2)
+        
+        finalRootController = finalRootController.withUpdated(
+            tabBar: finalRootController.tabBar.withUpdated(backgroundColor: barBg, separatorColor: sepColor),
+            navigationBar: finalRootController.navigationBar.withUpdated(blurredBackgroundColor: barBg, opaqueBackgroundColor: barBg, separatorColor: sepColor),
+            navigationSearchBar: finalRootController.navigationSearchBar.withUpdated(backgroundColor: searchBarBg, separatorColor: sepColor)
+        )
+        finalList = finalList.withUpdated(
+            blocksBackgroundColor: blocksBg,
+            modalBlocksBackgroundColor: itemBlocksBg,
+            plainBackgroundColor: plainBg,
+            modalPlainBackgroundColor: plainBg,
+            itemBlocksBackgroundColor: itemBlocksBg,
+            itemModalBlocksBackgroundColor: itemBlocksBg,
+            itemHighlightedBackgroundColor: highlightedBg,
+            itemBlocksSeparatorColor: sepColor,
+            itemPlainSeparatorColor: sepColor
+        )
+        finalChatList = finalChatList.withUpdated(
+            backgroundColor: plainBg,
+            itemSeparatorColor: sepColor,
+            itemBackgroundColor: plainBg,
+            pinnedItemBackgroundColor: itemBlocksBg,
+            itemHighlightedBackgroundColor: highlightedBg,
+            pinnedItemHighlightedBackgroundColor: highlightedBg,
+            pinnedSearchBarColor: searchBarBg,
+            regularSearchBarColor: searchBarBg,
+            sectionHeaderFillColor: plainBg
+        )
+    }
 
     return PresentationTheme(
         name: extendingThemeReference?.name ?? .builtin(.night),
@@ -932,9 +1137,9 @@ public func makeDefaultDarkPresentationTheme(extendingThemeReference: Presentati
         rootController: finalRootController,
         list: finalList,
         chatList: finalChatList,
-        chat: chat,
+        chat: finalChat,
         actionSheet: actionSheet,
-        contextMenu: contextMenu,
+        contextMenu: finalContextMenu,
         inAppNotification: inAppNotification,
         chart: chart,
         preview: preview

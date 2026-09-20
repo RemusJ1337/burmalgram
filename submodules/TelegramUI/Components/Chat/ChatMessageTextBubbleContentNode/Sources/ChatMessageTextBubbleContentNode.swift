@@ -888,6 +888,7 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
                             ))
                             animation.animator.updatePosition(layer: strongSelf.textNode.textNode.layer, position: realTextFrame.center, completion: nil)
                             animation.animator.updateBounds(layer: strongSelf.textNode.textNode.layer, bounds: CGRect(origin: CGPoint(), size: realTextFrame.size), completion: nil)
+                            strongSelf.updateBurmaldaTextShimmer(size: realTextFrame.size)
                             
                             
                             switch strongSelf.visibility {
@@ -1836,5 +1837,63 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
             }
             self.containerNode.clipsToBounds = true
         })
+    }
+    
+    private func updateBurmaldaTextShimmer(size: CGSize) {
+        let textLayer = self.textNode.textNode.layer
+        guard UserDefaults.standard.bool(forKey: "customThemeTextShimmer") else {
+            if textLayer.mask?.name == "burmaldaTextShimmerMask" {
+                textLayer.mask = nil
+            }
+            return
+        }
+        
+        let isGradient = (UserDefaults.standard.string(forKey: "customThemeTextShimmerMode") ?? "single") == "gradient"
+        
+        let maskLayer: CAGradientLayer
+        if let existing = textLayer.mask as? CAGradientLayer, existing.name == "burmaldaTextShimmerMask" {
+            maskLayer = existing
+        } else {
+            maskLayer = CAGradientLayer()
+            maskLayer.name = "burmaldaTextShimmerMask"
+            maskLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
+            maskLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
+            textLayer.mask = maskLayer
+        }
+        
+        maskLayer.frame = CGRect(origin: .zero, size: size)
+        
+        if isGradient {
+            maskLayer.colors = [
+                UIColor(white: 1.0, alpha: 0.45).cgColor,
+                UIColor(white: 1.0, alpha: 1.0).cgColor,
+                UIColor(white: 1.0, alpha: 0.35).cgColor,
+                UIColor(white: 1.0, alpha: 1.0).cgColor,
+                UIColor(white: 1.0, alpha: 0.45).cgColor
+            ]
+            maskLayer.locations = [0.0, 0.25, 0.5, 0.75, 1.0]
+        } else {
+            maskLayer.colors = [
+                UIColor(white: 1.0, alpha: 0.55).cgColor,
+                UIColor(white: 1.0, alpha: 1.0).cgColor,
+                UIColor(white: 1.0, alpha: 0.55).cgColor
+            ]
+            maskLayer.locations = [0.0, 0.5, 1.0]
+        }
+        
+        if maskLayer.animation(forKey: "burmaldaShimmer") == nil {
+            let anim = CABasicAnimation(keyPath: "locations")
+            if isGradient {
+                anim.fromValue = [-0.6, -0.3, 0.0, 0.3, 0.6]
+                anim.toValue = [0.4, 0.7, 1.0, 1.3, 1.6]
+                anim.duration = 2.2
+            } else {
+                anim.fromValue = [-0.5, 0.0, 0.5]
+                anim.toValue = [0.5, 1.0, 1.5]
+                anim.duration = 1.6
+            }
+            anim.repeatCount = .infinity
+            maskLayer.add(anim, forKey: "burmaldaShimmer")
+        }
     }
 }

@@ -103,7 +103,10 @@ class WallpaperNYNode: ASDisplayNode {
     private var currentStyle: String?
     
     func updateLayout(size: CGSize) {
-        let style = SGSimpleSettings.shared.nyStyle
+        var style = SGSimpleSettings.shared.nyStyle
+        if SGSimpleSettings.shared.customThemeEnabled && SGSimpleSettings.shared.customThemeStarsEnabled {
+            style = SGSimpleSettings.NYStyle.stars.rawValue
+        }
         if !SGSimpleSettings.shared.isNYEnabled || style == SGSimpleSettings.NYStyle.default.rawValue {
             self.emitterLayer?.removeFromSuperlayer()
             self.emitterLayer = nil
@@ -111,12 +114,15 @@ class WallpaperNYNode: ASDisplayNode {
             return
         }
         
-        if self.emitterLayer == nil || self.currentStyle != style {
+        let customStarColor = SGSimpleSettings.shared.customThemeStarsColor
+        let styleSignature = "\(style)_\(customStarColor)"
+        
+        if self.emitterLayer == nil || self.currentStyle != styleSignature {
             self.emitterLayer?.removeFromSuperlayer()
             
             let particlesLayer = CAEmitterLayer()
             self.emitterLayer = particlesLayer
-            self.currentStyle = style
+            self.currentStyle = styleSignature
 
             self.layer.addSublayer(particlesLayer)
             self.layer.masksToBounds = true
@@ -140,7 +146,31 @@ class WallpaperNYNode: ASDisplayNode {
                 cell1.emissionRange = .pi * 2.0
                 cell1.spin = 0.3
                 cell1.spinRange = 0.6
-                cell1.color = UIColor(white: 1.0, alpha: 0.9).cgColor
+                
+                let starColorKey = customStarColor.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                let cleanHex = starColorKey.replacingOccurrences(of: "#", with: "")
+                let starColor: UIColor
+                if let hex = UInt32(cleanHex, radix: 16) {
+                    starColor = colorFromRgb(hex, alpha: 0.95)
+                } else {
+                    switch starColorKey {
+                    case "gold", "yellow":
+                        starColor = colorFromRgb(0xFFD700, alpha: 0.95)
+                    case "cyan", "blue":
+                        starColor = colorFromRgb(0x00E5FF, alpha: 0.95)
+                    case "pink":
+                        starColor = colorFromRgb(0xFF4081, alpha: 0.95)
+                    case "purple":
+                        starColor = colorFromRgb(0xBD10E0, alpha: 0.95)
+                    case "green":
+                        starColor = colorFromRgb(0x00E676, alpha: 0.95)
+                    case "red":
+                        starColor = colorFromRgb(0xFF5252, alpha: 0.95)
+                    default:
+                        starColor = UIColor(white: 1.0, alpha: 0.9)
+                    }
+                }
+                cell1.color = starColor.cgColor
                 cell1.alphaSpeed = -0.06
 
             case SGSimpleSettings.NYStyle.sparks.rawValue:

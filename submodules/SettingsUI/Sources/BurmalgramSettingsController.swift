@@ -615,6 +615,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
     case fakePremiumInfo(PresentationTheme, String)
     
     case headerThemes(PresentationTheme, String)
+    case customThemeBuilder(PresentationTheme, String, String)
     case themeNeon(PresentationTheme, String, String)
     case themeTitanium(PresentationTheme, String, String)
     case themeSpace(PresentationTheme, String, String)
@@ -656,7 +657,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         switch self {
         case .headerPremium, .fakePremium, .fakePremiumInfo:
             return BurmalgramCustomizationSection.premium.rawValue
-        case .headerThemes, .themeNeon, .themeTitanium, .themeSpace, .themeSparkling, .themeStandardPicker, .themeReset, .useDefaultThemeColors, .themeFooter:
+        case .headerThemes, .customThemeBuilder, .themeNeon, .themeTitanium, .themeSpace, .themeSparkling, .themeStandardPicker, .themeReset, .useDefaultThemeColors, .themeFooter:
             return BurmalgramCustomizationSection.themes.rawValue
         case .headerVisuals, .customFont, .customPhone, .hidePhone, .showProfileId, .showDC, .showRegDate, .showCreationDate:
             return BurmalgramCustomizationSection.visuals.rawValue
@@ -674,14 +675,15 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case .fakePremiumInfo: return 2
         
         case .headerThemes: return 10
-        case .themeNeon: return 11
-        case .themeTitanium: return 12
-        case .themeSpace: return 13
-        case .themeSparkling: return 14
-        case .themeStandardPicker: return 15
-        case .themeReset: return 16
-        case .useDefaultThemeColors: return 17
-        case .themeFooter: return 18
+        case .customThemeBuilder: return 11
+        case .themeNeon: return 12
+        case .themeTitanium: return 13
+        case .themeSpace: return 14
+        case .themeSparkling: return 15
+        case .themeStandardPicker: return 16
+        case .themeReset: return 17
+        case .useDefaultThemeColors: return 18
+        case .themeFooter: return 19
         
         case .headerVisuals: return 20
         case .customFont: return 21
@@ -726,6 +728,9 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return false
         case let .headerThemes(lhsTheme, lhsText):
             if case let .headerThemes(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        case let .customThemeBuilder(lhsTheme, lhsText, lhsValue):
+            if case let .customThemeBuilder(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
             return false
         case let .themeNeon(lhsTheme, lhsText, lhsValue):
             if case let .themeNeon(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
@@ -846,6 +851,10 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         case let .headerThemes(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .customThemeBuilder(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, icon: PresentationResourcesSettings.chatAppearance, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.openCustomThemeBuilder()
+            })
         case let .themeNeon(_, text, value):
             return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                 args.applyTheme("neon")
@@ -975,6 +984,7 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
 }
 
 private final class BurmalgramCustomizationArguments {
+    let openCustomThemeBuilder: () -> Void
     let toggleFakePremium: (Bool) -> Void
     let applyTheme: (String) -> Void
     let toggleUseDefaultThemeColors: (Bool) -> Void
@@ -1003,6 +1013,7 @@ private final class BurmalgramCustomizationArguments {
     let toggleHideChannelBottomButton: (Bool) -> Void
     
     init(
+        openCustomThemeBuilder: @escaping () -> Void,
         toggleFakePremium: @escaping (Bool) -> Void,
         applyTheme: @escaping (String) -> Void,
         toggleUseDefaultThemeColors: @escaping (Bool) -> Void,
@@ -1030,6 +1041,7 @@ private final class BurmalgramCustomizationArguments {
         toggleWideChannelPosts: @escaping (Bool) -> Void,
         toggleHideChannelBottomButton: @escaping (Bool) -> Void
     ) {
+        self.openCustomThemeBuilder = openCustomThemeBuilder
         self.toggleFakePremium = toggleFakePremium
         self.applyTheme = applyTheme
         self.toggleUseDefaultThemeColors = toggleUseDefaultThemeColors
@@ -1064,6 +1076,9 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
     var pushControllerImpl: ((ViewController) -> Void)?
     
     let arguments = BurmalgramCustomizationArguments(
+        openCustomThemeBuilder: {
+            pushControllerImpl?(burmalgramCustomThemeController(context: context))
+        },
         toggleFakePremium: { val in
             SGSimpleSettings.shared.fakePremium = val
             let _ = context.account.postbox.transaction { transaction -> Void in
@@ -1204,6 +1219,7 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         
         let currentTheme = SGSimpleSettings.shared.burmalgramTheme
         entries.append(.headerThemes(presentationData.theme, "ЭКСКЛЮЗИВНЫЕ ТЕМЫ BURMALGRAM (ИЗ ДИЗАЙНА)"))
+        entries.append(.customThemeBuilder(presentationData.theme, "🎨 Конструктор кастомных тем", SGSimpleSettings.shared.customThemeEnabled ? "Включен" : "Выключен"))
         entries.append(.themeNeon(presentationData.theme, "⚡ Неон (Cyber Neon)", currentTheme == "neon" ? "Активна" : ""))
         entries.append(.themeTitanium(presentationData.theme, "🛡️ Титан (Titanium Metal)", currentTheme == "titanium" ? "Активна" : ""))
         entries.append(.themeSpace(presentationData.theme, "🌌 Космос (Deep Space)", (currentTheme == "space" || currentTheme == "midnight") ? "Активна" : ""))
@@ -2487,7 +2503,6 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
     case calcToggle(PresentationTheme, String, Bool)
     case coinToggle(PresentationTheme, String, Bool)
     case doxToggle(PresentationTheme, String, Bool)
-    case sendToggle(PresentationTheme, String, Bool)
     case encryptToggle(PresentationTheme, String, Bool)
     case catToggle(PresentationTheme, String, Bool)
     case footer(PresentationTheme, String)
@@ -2502,7 +2517,7 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
             return BurmaldaToolsSection.autoanswer.rawValue
         case .antispamHeader, .antispamToggle:
             return BurmaldaToolsSection.antispam.rawValue
-        case .commandsHeader, .antispamCmdToggle, .muteCmdToggle, .spamToggle, .textToggle, .calcToggle, .coinToggle, .doxToggle, .sendToggle, .encryptToggle, .catToggle, .footer:
+        case .commandsHeader, .antispamCmdToggle, .muteCmdToggle, .spamToggle, .textToggle, .calcToggle, .coinToggle, .doxToggle, .encryptToggle, .catToggle, .footer:
             return BurmaldaToolsSection.commands.rawValue
         }
     }
@@ -2528,9 +2543,8 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
         case .calcToggle: return 45
         case .coinToggle: return 46
         case .doxToggle: return 47
-        case .sendToggle: return 48
-        case .encryptToggle: return 49
-        case .catToggle: return 50
+        case .encryptToggle: return 48
+        case .catToggle: return 49
         case .footer: return 100
         }
     }
@@ -2593,9 +2607,6 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
             return false
         case let .doxToggle(lTheme, lText, lVal):
             if case let .doxToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
-            return false
-        case let .sendToggle(lTheme, lText, lVal):
-            if case let .sendToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
             return false
         case let .encryptToggle(lTheme, lText, lVal):
             if case let .encryptToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
@@ -2682,10 +2693,6 @@ private enum BurmaldaToolsEntry: ItemListNodeEntry {
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleDox(val)
             })
-        case let .sendToggle(_, text, value):
-            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
-                args.toggleSend(val)
-            })
         case let .encryptToggle(_, text, value):
             return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
                 args.toggleEncrypt(val)
@@ -2763,7 +2770,6 @@ private final class BurmaldaToolsControllerArguments {
     let toggleCalc: (Bool) -> Void
     let toggleCoin: (Bool) -> Void
     let toggleDox: (Bool) -> Void
-    let toggleSend: (Bool) -> Void
     let toggleEncrypt: (Bool) -> Void
     let toggleCat: (Bool) -> Void
     
@@ -2782,7 +2788,6 @@ private final class BurmaldaToolsControllerArguments {
         toggleCalc: @escaping (Bool) -> Void,
         toggleCoin: @escaping (Bool) -> Void,
         toggleDox: @escaping (Bool) -> Void,
-        toggleSend: @escaping (Bool) -> Void,
         toggleEncrypt: @escaping (Bool) -> Void,
         toggleCat: @escaping (Bool) -> Void
     ) {
@@ -2800,7 +2805,6 @@ private final class BurmaldaToolsControllerArguments {
         self.toggleCalc = toggleCalc
         self.toggleCoin = toggleCoin
         self.toggleDox = toggleDox
-        self.toggleSend = toggleSend
         self.toggleEncrypt = toggleEncrypt
         self.toggleCat = toggleCat
     }
@@ -2868,10 +2872,6 @@ public func burmaldaToolsSettingsController(context: AccountContext) -> ViewCont
             SGSimpleSettings.shared.burmaldaToolDox = val
             reloadPromise.set(true)
         },
-        toggleSend: { val in
-            SGSimpleSettings.shared.burmaldaToolSend = val
-            reloadPromise.set(true)
-        },
         toggleEncrypt: { val in
             SGSimpleSettings.shared.burmaldaToolEncrypt = val
             reloadPromise.set(true)
@@ -2916,7 +2916,6 @@ public func burmaldaToolsSettingsController(context: AccountContext) -> ViewCont
             entries.append(.calcToggle(presentationData.theme, "🧮 .calc [пример]", SGSimpleSettings.shared.burmaldaToolCalc))
             entries.append(.coinToggle(presentationData.theme, "🪙 .coin (монетка)", SGSimpleSettings.shared.burmaldaToolCoin))
             entries.append(.doxToggle(presentationData.theme, "🗂 .dox (деанон со спойлерами)", SGSimpleSettings.shared.burmaldaToolDox))
-            entries.append(.sendToggle(presentationData.theme, "🦋 .send [валюта] [сумма]", SGSimpleSettings.shared.burmaldaToolSend))
             entries.append(.encryptToggle(presentationData.theme, "🔐 .encrypt / .decrypt", SGSimpleSettings.shared.burmaldaToolEncrypt))
             entries.append(.catToggle(presentationData.theme, "🐱 .cat (котики)", SGSimpleSettings.shared.burmaldaToolCat))
         }
@@ -2943,3 +2942,696 @@ public func burmaldaToolsSettingsController(context: AccountContext) -> ViewCont
     let controller = ItemListController(context: context, state: signal)
     return controller
 }
+
+// MARK: - 6. Sub-Menu: BurmalgramCustomThemeController (Custom Theme Builder)
+
+private func burmalgramStarColorDisplayName(_ color: String) -> String {
+    switch color.lowercased() {
+    case "white": return "⚪ Белый"
+    case "gold": return "🟡 Золотой"
+    case "cyan": return "🔷 Циан"
+    case "pink": return "🌸 Розовый"
+    case "purple": return "🟣 Фиолетовый"
+    case "green": return "🟢 Зелёный"
+    case "red": return "🔴 Красный"
+    default: return "#\(color)"
+    }
+}
+
+private func presentBurmalgramColorPicker(title: String, currentColor: String, onSelect: @escaping (String) -> Void) {
+    let cleanHex = currentColor.replacingOccurrences(of: "0x", with: "").replacingOccurrences(of: "#", with: "")
+    let alert = UIAlertController(
+        title: title,
+        message: "Текущий цвет: #\(cleanHex)\nВыберите готовый оттенок или введите свой HEX:",
+        preferredStyle: .actionSheet
+    )
+    
+    let presets: [(String, String)] = [
+        ("🔵 Неоновый синий (#00BCFF)", "00BCFF"),
+        ("🟣 Неоновый фиолетовый (#8E2DE2)", "8E2DE2"),
+        ("🟢 Изумрудный (#38EF7D)", "38EF7D"),
+        ("🔴 Рубиновый (#ED213A)", "ED213A"),
+        ("🟡 Золотой / Желтый (#FEE140)", "FEE140"),
+        ("🌸 Розовый (#FA709A)", "FA709A"),
+        ("⚪ Белый (#FFFFFF)", "FFFFFF"),
+        ("⚫ Тёмно-серый (#1E2438)", "1E2438"),
+        ("🌌 Глубокий космос (#0A0E17)", "0A0E17")
+    ]
+    
+    for (name, hex) in presets {
+        alert.addAction(UIAlertAction(title: name, style: .default, handler: { _ in
+            onSelect(hex)
+        }))
+    }
+    
+    alert.addAction(UIAlertAction(title: "✏️ Ввести свой HEX-код...", style: .default, handler: { _ in
+        let hexAlert = UIAlertController(title: title, message: "Введите HEX-код цвета (напр. FF0055 или #00FFCC):", preferredStyle: .alert)
+        hexAlert.addTextField { textField in
+            textField.text = cleanHex
+            textField.placeholder = "RRGGBB"
+        }
+        hexAlert.addAction(UIAlertAction(title: "Сохранить", style: .default, handler: { _ in
+            var text = hexAlert.textFields?.first?.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? cleanHex
+            text = text.replacingOccurrences(of: "#", with: "").replacingOccurrences(of: "0x", with: "")
+            if !text.isEmpty {
+                onSelect(text)
+            }
+        }))
+        hexAlert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+        if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+           let rootVC = window.rootViewController {
+            rootVC.present(hexAlert, animated: true, completion: nil)
+        }
+    }))
+    
+    alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+    
+    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+       let rootVC = window.rootViewController {
+        rootVC.present(alert, animated: true, completion: nil)
+    }
+}
+
+private func presentBurmalgramStarColorPicker(onSelect: @escaping (String) -> Void) {
+    let alert = UIAlertController(title: "Цвет анимированных звёзд", message: "Выберите цвет мерцающих звёзд на фоне чатов:", preferredStyle: .actionSheet)
+    let colors = [
+        ("⚪ Белый", "white"),
+        ("🟡 Золотой", "gold"),
+        ("🔷 Голубой / Циан", "cyan"),
+        ("🌸 Розовый", "pink"),
+        ("🟣 Фиолетовый", "purple"),
+        ("🟢 Зелёный", "green"),
+        ("🔴 Красный", "red")
+    ]
+    for (name, val) in colors {
+        alert.addAction(UIAlertAction(title: name, style: .default, handler: { _ in
+            onSelect(val)
+        }))
+    }
+    alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+       let rootVC = window.rootViewController {
+        rootVC.present(alert, animated: true, completion: nil)
+    }
+}
+
+private func presentBurmalgramShimmerModePicker(onSelect: @escaping (String) -> Void) {
+    let alert = UIAlertController(title: "Режим переливания текста", message: "Выберите анимацию бегущей волны по тексту сообщений:", preferredStyle: .actionSheet)
+    alert.addAction(UIAlertAction(title: "✨ Одиночная волна яркости (Single Color)", style: .default, handler: { _ in
+        onSelect("single")
+    }))
+    alert.addAction(UIAlertAction(title: "🌈 Радужный градиент (Rainbow Wave)", style: .default, handler: { _ in
+        onSelect("gradient")
+    }))
+    alert.addAction(UIAlertAction(title: "Отмена", style: .cancel, handler: nil))
+    if let window = UIApplication.shared.windows.first(where: { $0.isKeyWindow }) ?? UIApplication.shared.windows.first,
+       let rootVC = window.rootViewController {
+        rootVC.present(alert, animated: true, completion: nil)
+    }
+}
+
+private enum BurmalgramCustomThemeSection: Int32 {
+    case master
+    case presets
+    case wallpaper
+    case bubbles
+    case stars
+    case shimmer
+    case reset
+}
+
+private enum BurmalgramCustomThemeEntry: ItemListNodeEntry {
+    case headerMaster(PresentationTheme, String)
+    case enabledToggle(PresentationTheme, String, Bool)
+    case masterFooter(PresentationTheme, String)
+    
+    case headerPresets(PresentationTheme, String)
+    case presetSpace(PresentationTheme, String, String)
+    case presetNeon(PresentationTheme, String, String)
+    case presetEmerald(PresentationTheme, String, String)
+    case presetAmethyst(PresentationTheme, String, String)
+    case presetRuby(PresentationTheme, String, String)
+    case presetTitanium(PresentationTheme, String, String)
+    case presetsFooter(PresentationTheme, String)
+    
+    case headerWallpaper(PresentationTheme, String)
+    case bgColor1(PresentationTheme, String, String)
+    case bgColor2(PresentationTheme, String, String)
+    
+    case headerBubbles(PresentationTheme, String)
+    case bubbleColor1(PresentationTheme, String, String)
+    case bubbleColor2(PresentationTheme, String, String)
+    case incomingBubbleColor(PresentationTheme, String, String)
+    case textColor(PresentationTheme, String, String)
+    
+    case headerStars(PresentationTheme, String)
+    case starsToggle(PresentationTheme, String, Bool)
+    case starsColor(PresentationTheme, String, String)
+    
+    case headerShimmer(PresentationTheme, String)
+    case shimmerToggle(PresentationTheme, String, Bool)
+    case shimmerMode(PresentationTheme, String, String)
+    case shimmerFooter(PresentationTheme, String)
+    
+    case headerReset(PresentationTheme, String)
+    case resetItem(PresentationTheme, String)
+    
+    var section: ItemListSectionId {
+        switch self {
+        case .headerMaster, .enabledToggle, .masterFooter:
+            return BurmalgramCustomThemeSection.master.rawValue
+        case .headerPresets, .presetSpace, .presetNeon, .presetEmerald, .presetAmethyst, .presetRuby, .presetTitanium, .presetsFooter:
+            return BurmalgramCustomThemeSection.presets.rawValue
+        case .headerWallpaper, .bgColor1, .bgColor2:
+            return BurmalgramCustomThemeSection.wallpaper.rawValue
+        case .headerBubbles, .bubbleColor1, .bubbleColor2, .incomingBubbleColor, .textColor:
+            return BurmalgramCustomThemeSection.bubbles.rawValue
+        case .headerStars, .starsToggle, .starsColor:
+            return BurmalgramCustomThemeSection.stars.rawValue
+        case .headerShimmer, .shimmerToggle, .shimmerMode, .shimmerFooter:
+            return BurmalgramCustomThemeSection.shimmer.rawValue
+        case .headerReset, .resetItem:
+            return BurmalgramCustomThemeSection.reset.rawValue
+        }
+    }
+    
+    var stableId: Int32 {
+        switch self {
+        case .headerMaster: return 0
+        case .enabledToggle: return 1
+        case .masterFooter: return 2
+        
+        case .headerPresets: return 10
+        case .presetSpace: return 11
+        case .presetNeon: return 12
+        case .presetEmerald: return 13
+        case .presetAmethyst: return 14
+        case .presetRuby: return 15
+        case .presetTitanium: return 16
+        case .presetsFooter: return 17
+        
+        case .headerWallpaper: return 20
+        case .bgColor1: return 21
+        case .bgColor2: return 22
+        
+        case .headerBubbles: return 30
+        case .bubbleColor1: return 31
+        case .bubbleColor2: return 32
+        case .incomingBubbleColor: return 33
+        case .textColor: return 34
+        
+        case .headerStars: return 40
+        case .starsToggle: return 41
+        case .starsColor: return 42
+        
+        case .headerShimmer: return 50
+        case .shimmerToggle: return 51
+        case .shimmerMode: return 52
+        case .shimmerFooter: return 53
+        
+        case .headerReset: return 60
+        case .resetItem: return 61
+        }
+    }
+    
+    static func ==(lhs: BurmalgramCustomThemeEntry, rhs: BurmalgramCustomThemeEntry) -> Bool {
+        switch lhs {
+        case let .headerMaster(lTheme, lText):
+            if case let .headerMaster(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .enabledToggle(lTheme, lText, lVal):
+            if case let .enabledToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .masterFooter(lTheme, lText):
+            if case let .masterFooter(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+            
+        case let .headerPresets(lTheme, lText):
+            if case let .headerPresets(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .presetSpace(lTheme, lText, lVal):
+            if case let .presetSpace(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .presetNeon(lTheme, lText, lVal):
+            if case let .presetNeon(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .presetEmerald(lTheme, lText, lVal):
+            if case let .presetEmerald(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .presetAmethyst(lTheme, lText, lVal):
+            if case let .presetAmethyst(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .presetRuby(lTheme, lText, lVal):
+            if case let .presetRuby(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .presetTitanium(lTheme, lText, lVal):
+            if case let .presetTitanium(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .presetsFooter(lTheme, lText):
+            if case let .presetsFooter(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+            
+        case let .headerWallpaper(lTheme, lText):
+            if case let .headerWallpaper(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .bgColor1(lTheme, lText, lVal):
+            if case let .bgColor1(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .bgColor2(lTheme, lText, lVal):
+            if case let .bgColor2(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+            
+        case let .headerBubbles(lTheme, lText):
+            if case let .headerBubbles(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .bubbleColor1(lTheme, lText, lVal):
+            if case let .bubbleColor1(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .bubbleColor2(lTheme, lText, lVal):
+            if case let .bubbleColor2(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .incomingBubbleColor(lTheme, lText, lVal):
+            if case let .incomingBubbleColor(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .textColor(lTheme, lText, lVal):
+            if case let .textColor(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+            
+        case let .headerStars(lTheme, lText):
+            if case let .headerStars(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .starsToggle(lTheme, lText, lVal):
+            if case let .starsToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .starsColor(lTheme, lText, lVal):
+            if case let .starsColor(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+            
+        case let .headerShimmer(lTheme, lText):
+            if case let .headerShimmer(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .shimmerToggle(lTheme, lText, lVal):
+            if case let .shimmerToggle(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .shimmerMode(lTheme, lText, lVal):
+            if case let .shimmerMode(rTheme, rText, rVal) = rhs, lTheme === rTheme, lText == rText, lVal == rVal { return true }
+            return false
+        case let .shimmerFooter(lTheme, lText):
+            if case let .shimmerFooter(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+            
+        case let .headerReset(lTheme, lText):
+            if case let .headerReset(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        case let .resetItem(lTheme, lText):
+            if case let .resetItem(rTheme, rText) = rhs, lTheme === rTheme, lText == rText { return true }
+            return false
+        }
+    }
+    
+    static func <(lhs: BurmalgramCustomThemeEntry, rhs: BurmalgramCustomThemeEntry) -> Bool {
+        return lhs.stableId < rhs.stableId
+    }
+    
+    func item(presentationData: ItemListPresentationData, arguments: Any) -> ListViewItem {
+        let args = arguments as! BurmalgramCustomThemeArguments
+        switch self {
+        case let .headerMaster(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .enabledToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleEnabled(val)
+            })
+        case let .masterFooter(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+            
+        case let .headerPresets(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .presetSpace(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyPreset("space")
+            })
+        case let .presetNeon(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyPreset("neon")
+            })
+        case let .presetEmerald(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyPreset("emerald")
+            })
+        case let .presetAmethyst(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyPreset("amethyst")
+            })
+        case let .presetRuby(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyPreset("ruby")
+            })
+        case let .presetTitanium(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.applyPreset("titanium")
+            })
+        case let .presetsFooter(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+            
+        case let .headerWallpaper(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .bgColor1(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickBgColor1()
+            })
+        case let .bgColor2(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickBgColor2()
+            })
+            
+        case let .headerBubbles(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .bubbleColor1(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickBubbleColor1()
+            })
+        case let .bubbleColor2(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickBubbleColor2()
+            })
+        case let .incomingBubbleColor(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickIncomingBubbleColor()
+            })
+        case let .textColor(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickTextColor()
+            })
+            
+        case let .headerStars(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .starsToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleStars(val)
+            })
+        case let .starsColor(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickStarsColor()
+            })
+            
+        case let .headerShimmer(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .shimmerToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleTextShimmer(val)
+            })
+        case let .shimmerMode(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickTextShimmerMode()
+            })
+        case let .shimmerFooter(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+            
+        case let .headerReset(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .resetItem(_, text):
+            return ItemListActionItem(presentationData: presentationData, title: text, kind: .destructive, alignment: .natural, sectionId: self.section, style: .blocks, action: {
+                args.resetToDefault()
+            })
+        }
+    }
+}
+
+private final class BurmalgramCustomThemeArguments {
+    let toggleEnabled: (Bool) -> Void
+    let applyPreset: (String) -> Void
+    let pickBgColor1: () -> Void
+    let pickBgColor2: () -> Void
+    let pickBubbleColor1: () -> Void
+    let pickBubbleColor2: () -> Void
+    let pickIncomingBubbleColor: () -> Void
+    let pickTextColor: () -> Void
+    let toggleStars: (Bool) -> Void
+    let pickStarsColor: () -> Void
+    let toggleTextShimmer: (Bool) -> Void
+    let pickTextShimmerMode: () -> Void
+    let resetToDefault: () -> Void
+    
+    init(
+        toggleEnabled: @escaping (Bool) -> Void,
+        applyPreset: @escaping (String) -> Void,
+        pickBgColor1: @escaping () -> Void,
+        pickBgColor2: @escaping () -> Void,
+        pickBubbleColor1: @escaping () -> Void,
+        pickBubbleColor2: @escaping () -> Void,
+        pickIncomingBubbleColor: @escaping () -> Void,
+        pickTextColor: @escaping () -> Void,
+        toggleStars: @escaping (Bool) -> Void,
+        pickStarsColor: @escaping () -> Void,
+        toggleTextShimmer: @escaping (Bool) -> Void,
+        pickTextShimmerMode: @escaping () -> Void,
+        resetToDefault: @escaping () -> Void
+    ) {
+        self.toggleEnabled = toggleEnabled
+        self.applyPreset = applyPreset
+        self.pickBgColor1 = pickBgColor1
+        self.pickBgColor2 = pickBgColor2
+        self.pickBubbleColor1 = pickBubbleColor1
+        self.pickBubbleColor2 = pickBubbleColor2
+        self.pickIncomingBubbleColor = pickIncomingBubbleColor
+        self.pickTextColor = pickTextColor
+        self.toggleStars = toggleStars
+        self.pickStarsColor = pickStarsColor
+        self.toggleTextShimmer = toggleTextShimmer
+        self.pickTextShimmerMode = pickTextShimmerMode
+        self.resetToDefault = resetToDefault
+    }
+}
+
+public func burmalgramCustomThemeController(context: AccountContext) -> ViewController {
+    let reloadPromise = ValuePromise<Bool>(true, ignoreRepeated: false)
+    
+    let refreshTheme: () -> Void = {
+        let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
+        reloadPromise.set(true)
+    }
+    
+    let arguments = BurmalgramCustomThemeArguments(
+        toggleEnabled: { val in
+            SGSimpleSettings.shared.customThemeEnabled = val
+            refreshTheme()
+        },
+        applyPreset: { preset in
+            SGSimpleSettings.shared.customThemeEnabled = true
+            SGSimpleSettings.shared.customThemePreset = preset
+            switch preset {
+            case "space":
+                SGSimpleSettings.shared.customThemeBgColor1 = "050714"
+                SGSimpleSettings.shared.customThemeBgColor2 = "0C1026"
+                SGSimpleSettings.shared.customThemeBubbleColor1 = "4A00E0"
+                SGSimpleSettings.shared.customThemeBubbleColor2 = "8E2DE2"
+                SGSimpleSettings.shared.customThemeIncomingBubbleColor = "12182E"
+                SGSimpleSettings.shared.customThemeTextColor = "FFFFFF"
+                SGSimpleSettings.shared.customThemeStarsEnabled = true
+                SGSimpleSettings.shared.customThemeStarsColor = "cyan"
+                SGSimpleSettings.shared.customThemeTextShimmer = true
+                SGSimpleSettings.shared.customThemeTextShimmerMode = "single"
+            case "neon":
+                SGSimpleSettings.shared.customThemeBgColor1 = "0A0E17"
+                SGSimpleSettings.shared.customThemeBgColor2 = "151C2C"
+                SGSimpleSettings.shared.customThemeBubbleColor1 = "00F2FE"
+                SGSimpleSettings.shared.customThemeBubbleColor2 = "4FACFE"
+                SGSimpleSettings.shared.customThemeIncomingBubbleColor = "192231"
+                SGSimpleSettings.shared.customThemeTextColor = "FFFFFF"
+                SGSimpleSettings.shared.customThemeStarsEnabled = true
+                SGSimpleSettings.shared.customThemeStarsColor = "cyan"
+                SGSimpleSettings.shared.customThemeTextShimmer = true
+                SGSimpleSettings.shared.customThemeTextShimmerMode = "gradient"
+            case "emerald":
+                SGSimpleSettings.shared.customThemeBgColor1 = "041C15"
+                SGSimpleSettings.shared.customThemeBgColor2 = "093028"
+                SGSimpleSettings.shared.customThemeBubbleColor1 = "11998E"
+                SGSimpleSettings.shared.customThemeBubbleColor2 = "38EF7D"
+                SGSimpleSettings.shared.customThemeIncomingBubbleColor = "0F2B24"
+                SGSimpleSettings.shared.customThemeTextColor = "FFFFFF"
+                SGSimpleSettings.shared.customThemeStarsEnabled = true
+                SGSimpleSettings.shared.customThemeStarsColor = "green"
+                SGSimpleSettings.shared.customThemeTextShimmer = false
+            case "amethyst":
+                SGSimpleSettings.shared.customThemeBgColor1 = "1A0B2E"
+                SGSimpleSettings.shared.customThemeBgColor2 = "2C1654"
+                SGSimpleSettings.shared.customThemeBubbleColor1 = "FA709A"
+                SGSimpleSettings.shared.customThemeBubbleColor2 = "FEE140"
+                SGSimpleSettings.shared.customThemeIncomingBubbleColor = "26173D"
+                SGSimpleSettings.shared.customThemeTextColor = "FFFFFF"
+                SGSimpleSettings.shared.customThemeStarsEnabled = true
+                SGSimpleSettings.shared.customThemeStarsColor = "gold"
+                SGSimpleSettings.shared.customThemeTextShimmer = true
+                SGSimpleSettings.shared.customThemeTextShimmerMode = "gradient"
+            case "ruby":
+                SGSimpleSettings.shared.customThemeBgColor1 = "1F070A"
+                SGSimpleSettings.shared.customThemeBgColor2 = "330C12"
+                SGSimpleSettings.shared.customThemeBubbleColor1 = "ED213A"
+                SGSimpleSettings.shared.customThemeBubbleColor2 = "93291E"
+                SGSimpleSettings.shared.customThemeIncomingBubbleColor = "2B1115"
+                SGSimpleSettings.shared.customThemeTextColor = "FFFFFF"
+                SGSimpleSettings.shared.customThemeStarsEnabled = true
+                SGSimpleSettings.shared.customThemeStarsColor = "red"
+                SGSimpleSettings.shared.customThemeTextShimmer = false
+            case "titanium":
+                SGSimpleSettings.shared.customThemeBgColor1 = "141416"
+                SGSimpleSettings.shared.customThemeBgColor2 = "1F2023"
+                SGSimpleSettings.shared.customThemeBubbleColor1 = "434343"
+                SGSimpleSettings.shared.customThemeBubbleColor2 = "000000"
+                SGSimpleSettings.shared.customThemeIncomingBubbleColor = "242529"
+                SGSimpleSettings.shared.customThemeTextColor = "E0E0E0"
+                SGSimpleSettings.shared.customThemeStarsEnabled = false
+                SGSimpleSettings.shared.customThemeStarsColor = "white"
+                SGSimpleSettings.shared.customThemeTextShimmer = false
+            default:
+                break
+            }
+            refreshTheme()
+        },
+        pickBgColor1: {
+            presentBurmalgramColorPicker(title: "Верхний цвет фона", currentColor: SGSimpleSettings.shared.customThemeBgColor1, onSelect: { hex in
+                SGSimpleSettings.shared.customThemeBgColor1 = hex
+                SGSimpleSettings.shared.customThemeEnabled = true
+                refreshTheme()
+            })
+        },
+        pickBgColor2: {
+            presentBurmalgramColorPicker(title: "Нижний цвет фона", currentColor: SGSimpleSettings.shared.customThemeBgColor2, onSelect: { hex in
+                SGSimpleSettings.shared.customThemeBgColor2 = hex
+                SGSimpleSettings.shared.customThemeEnabled = true
+                refreshTheme()
+            })
+        },
+        pickBubbleColor1: {
+            presentBurmalgramColorPicker(title: "Исходящие: Цвет 1 (градиент)", currentColor: SGSimpleSettings.shared.customThemeBubbleColor1, onSelect: { hex in
+                SGSimpleSettings.shared.customThemeBubbleColor1 = hex
+                SGSimpleSettings.shared.customThemeEnabled = true
+                refreshTheme()
+            })
+        },
+        pickBubbleColor2: {
+            presentBurmalgramColorPicker(title: "Исходящие: Цвет 2 (градиент)", currentColor: SGSimpleSettings.shared.customThemeBubbleColor2, onSelect: { hex in
+                SGSimpleSettings.shared.customThemeBubbleColor2 = hex
+                SGSimpleSettings.shared.customThemeEnabled = true
+                refreshTheme()
+            })
+        },
+        pickIncomingBubbleColor: {
+            presentBurmalgramColorPicker(title: "Входящие сообщения", currentColor: SGSimpleSettings.shared.customThemeIncomingBubbleColor, onSelect: { hex in
+                SGSimpleSettings.shared.customThemeIncomingBubbleColor = hex
+                SGSimpleSettings.shared.customThemeEnabled = true
+                refreshTheme()
+            })
+        },
+        pickTextColor: {
+            presentBurmalgramColorPicker(title: "Цвет текста сообщений", currentColor: SGSimpleSettings.shared.customThemeTextColor, onSelect: { hex in
+                SGSimpleSettings.shared.customThemeTextColor = hex
+                SGSimpleSettings.shared.customThemeEnabled = true
+                refreshTheme()
+            })
+        },
+        toggleStars: { val in
+            SGSimpleSettings.shared.customThemeStarsEnabled = val
+            refreshTheme()
+        },
+        pickStarsColor: {
+            presentBurmalgramStarColorPicker(onSelect: { color in
+                SGSimpleSettings.shared.customThemeStarsColor = color
+                refreshTheme()
+            })
+        },
+        toggleTextShimmer: { val in
+            SGSimpleSettings.shared.customThemeTextShimmer = val
+            refreshTheme()
+        },
+        pickTextShimmerMode: {
+            presentBurmalgramShimmerModePicker(onSelect: { mode in
+                SGSimpleSettings.shared.customThemeTextShimmerMode = mode
+                refreshTheme()
+            })
+        },
+        resetToDefault: {
+            SGSimpleSettings.shared.customThemeEnabled = false
+            SGSimpleSettings.shared.customThemePreset = "custom"
+            SGSimpleSettings.shared.customThemeBgColor1 = "000C2A"
+            SGSimpleSettings.shared.customThemeBgColor2 = "001744"
+            SGSimpleSettings.shared.customThemeBubbleColor1 = "006CE6"
+            SGSimpleSettings.shared.customThemeBubbleColor2 = "00BCFF"
+            SGSimpleSettings.shared.customThemeIncomingBubbleColor = "161C2E"
+            SGSimpleSettings.shared.customThemeTextColor = "FFFFFF"
+            SGSimpleSettings.shared.customThemeStarsEnabled = true
+            SGSimpleSettings.shared.customThemeStarsColor = "white"
+            SGSimpleSettings.shared.customThemeTextShimmer = false
+            SGSimpleSettings.shared.customThemeTextShimmerMode = "single"
+            refreshTheme()
+        }
+    )
+    
+    let signal = combineLatest(
+        queue: .mainQueue(),
+        context.sharedContext.presentationData,
+        reloadPromise.get()
+    )
+    |> map { presentationData, _ -> (ItemListControllerState, (ItemListNodeState, Any)) in
+        var entries: [BurmalgramCustomThemeEntry] = []
+        let isEnabled = SGSimpleSettings.shared.customThemeEnabled
+        let preset = SGSimpleSettings.shared.customThemePreset
+        
+        entries.append(.headerMaster(presentationData.theme, "ОСНОВНОЙ ПЕРЕКЛЮЧАТЕЛЬ"))
+        entries.append(.enabledToggle(presentationData.theme, "Включить кастомную тему", isEnabled))
+        entries.append(.masterFooter(presentationData.theme, "При включении ваши кастомные цвета фона, сообщений, анимированные звёзды и переливание текста будут применены к чатам и интерфейсу."))
+        
+        entries.append(.headerPresets(presentationData.theme, "ГОТОВЫЕ ПРЕСЕТЫ"))
+        entries.append(.presetSpace(presentationData.theme, "🌌 Deep Space (Глубокий космос)", (isEnabled && preset == "space") ? "Активен" : ""))
+        entries.append(.presetNeon(presentationData.theme, "⚡ Cyber Neon (Кибер-неон)", (isEnabled && preset == "neon") ? "Активен" : ""))
+        entries.append(.presetEmerald(presentationData.theme, "💎 Emerald Night (Изумруд)", (isEnabled && preset == "emerald") ? "Активен" : ""))
+        entries.append(.presetAmethyst(presentationData.theme, "🌇 Amethyst Sunset (Аметистовый закат)", (isEnabled && preset == "amethyst") ? "Активен" : ""))
+        entries.append(.presetRuby(presentationData.theme, "🔥 Ruby Fire (Рубиновое пламя)", (isEnabled && preset == "ruby") ? "Активен" : ""))
+        entries.append(.presetTitanium(presentationData.theme, "🌑 Titanium Metal (Титан)", (isEnabled && preset == "titanium") ? "Активен" : ""))
+        entries.append(.presetsFooter(presentationData.theme, "Нажмите на любой пресет, чтобы мгновенно применить цветовую схему и эффекты."))
+        
+        entries.append(.headerWallpaper(presentationData.theme, "ФОН ЧАТОВ И ИНТЕРФЕЙСА (ГРАДИЕНТ)"))
+        entries.append(.bgColor1(presentationData.theme, "Верхний цвет фона", "#\(SGSimpleSettings.shared.customThemeBgColor1.replacingOccurrences(of: "#", with: "").replacingOccurrences(of: "0x", with: ""))"))
+        entries.append(.bgColor2(presentationData.theme, "Нижний цвет фона", "#\(SGSimpleSettings.shared.customThemeBgColor2.replacingOccurrences(of: "#", with: "").replacingOccurrences(of: "0x", with: ""))"))
+        
+        entries.append(.headerBubbles(presentationData.theme, "ЦВЕТА СООБЩЕНИЙ"))
+        entries.append(.bubbleColor1(presentationData.theme, "Исходящие: Верхний цвет (градиент)", "#\(SGSimpleSettings.shared.customThemeBubbleColor1.replacingOccurrences(of: "#", with: "").replacingOccurrences(of: "0x", with: ""))"))
+        entries.append(.bubbleColor2(presentationData.theme, "Исходящие: Нижний цвет (градиент)", "#\(SGSimpleSettings.shared.customThemeBubbleColor2.replacingOccurrences(of: "#", with: "").replacingOccurrences(of: "0x", with: ""))"))
+        entries.append(.incomingBubbleColor(presentationData.theme, "Входящие сообщения", "#\(SGSimpleSettings.shared.customThemeIncomingBubbleColor.replacingOccurrences(of: "#", with: "").replacingOccurrences(of: "0x", with: ""))"))
+        entries.append(.textColor(presentationData.theme, "Цвет текста сообщений", "#\(SGSimpleSettings.shared.customThemeTextColor.replacingOccurrences(of: "#", with: "").replacingOccurrences(of: "0x", with: ""))"))
+        
+        entries.append(.headerStars(presentationData.theme, "АНИМИРОВАННЫЕ ЗВЁЗДЫ"))
+        entries.append(.starsToggle(presentationData.theme, "Мерцающие звёзды на фоне", SGSimpleSettings.shared.customThemeStarsEnabled))
+        entries.append(.starsColor(presentationData.theme, "Цвет звёзд", burmalgramStarColorDisplayName(SGSimpleSettings.shared.customThemeStarsColor)))
+        
+        entries.append(.headerShimmer(presentationData.theme, "ПЕРЕЛИВАНИЕ ТЕКСТА СООБЩЕНИЙ"))
+        entries.append(.shimmerToggle(presentationData.theme, "Эффект переливания текста", SGSimpleSettings.shared.customThemeTextShimmer))
+        let modeTitle = SGSimpleSettings.shared.customThemeTextShimmerMode == "gradient" ? "Радужный градиент" : "Одиночная волна"
+        entries.append(.shimmerMode(presentationData.theme, "Режим переливания", modeTitle))
+        entries.append(.shimmerFooter(presentationData.theme, "Анимированная светящаяся волна плавно скользит по тексту всех сообщений в чате."))
+        
+        entries.append(.headerReset(presentationData.theme, "СБРОС"))
+        entries.append(.resetItem(presentationData.theme, "Сбросить кастомную тему"))
+        
+        let controllerState = ItemListControllerState(
+            presentationData: ItemListPresentationData(presentationData),
+            title: .text("Конструктор тем"),
+            leftNavigationButton: nil,
+            rightNavigationButton: nil,
+            backNavigationButton: ItemListBackButton(title: presentationData.strings.Common_Back),
+            animateChanges: false
+        )
+        let listState = ItemListNodeState(
+            presentationData: ItemListPresentationData(presentationData),
+            entries: entries,
+            style: .blocks,
+            animateChanges: false
+        )
+        return (controllerState, (listState, arguments))
+    }
+    
+    let controller = ItemListController(context: context, state: signal)
+    return controller
+}
+

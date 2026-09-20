@@ -76,13 +76,26 @@ public class UserDefault<T> /*where T: AllowedUserDefaultTypes*/ {
             return (userDefaults.data(forKey: key) as! T)
         case is URL.Type:
             return (userDefaults.url(forKey: key) as! T)
+        case is UInt32.Type:
+            return (UInt32(truncatingIfNeeded: userDefaults.integer(forKey: key)) as! T)
         case is Array<String>.Type:
-            return (userDefaults.stringArray(forKey: key) as! T)
+            return ((userDefaults.stringArray(forKey: key) ?? []) as! T)
+        case is Array<Int64>.Type:
+            let list = userDefaults.array(forKey: key) as? [Int64] ?? (userDefaults.stringArray(forKey: key)?.compactMap { Int64($0) } ?? [])
+            return (list as! T)
+        case is Array<Int>.Type:
+            let list = userDefaults.array(forKey: key) as? [Int] ?? (userDefaults.stringArray(forKey: key)?.compactMap { Int($0) } ?? [])
+            return (list as! T)
         case is Array<Any>.Type:
-            return (userDefaults.array(forKey: key) as! T)
+            return ((userDefaults.array(forKey: key) ?? []) as! T)
         default:
+            if let obj = userDefaults.object(forKey: key) as? T {
+                return obj
+            }
+            if let val = userDefaults.value(forKey: key) as? T {
+                return val
+            }
             fatalError("Unsupported UserDefault type \(T.self)")
-            // cachedValue = (userDefaults.object(forKey: key) as! T)
         }
     }
 }
