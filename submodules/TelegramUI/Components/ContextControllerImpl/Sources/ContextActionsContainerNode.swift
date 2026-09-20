@@ -87,7 +87,8 @@ private final class InnerActionsContainerNode: ASDisplayNode {
         self.containerNode = ASDisplayNode()
         self.containerNode.clipsToBounds = true
         self.containerNode.cornerRadius = 14.0
-        self.containerNode.backgroundColor = presentationData.theme.contextMenu.backgroundColor
+        let incomingBubbleColor = presentationData.theme.chat.message.incoming.bubble.withWallpaper.fill.first ?? presentationData.theme.chat.message.incoming.bubble.withoutWallpaper.fill.first ?? presentationData.theme.contextMenu.backgroundColor
+        self.containerNode.backgroundColor = incomingBubbleColor.withAlphaComponent(1.0)
 
         var requestUpdateAction: ((AnyHashable, ContextMenuActionItem) -> Void)?
         

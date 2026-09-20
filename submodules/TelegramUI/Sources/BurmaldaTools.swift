@@ -13,6 +13,7 @@ public final class BurmaldaTools {
     // MARK: - State Cache
     
     private struct IncomingRecord {
+        let messageId: MessageId
         let peerId: PeerId
         let authorId: PeerId
         let text: String
@@ -20,6 +21,7 @@ public final class BurmaldaTools {
     }
     
     private static var recentIncomingRecords: [IncomingRecord] = []
+    private static var activeSpamSignatures: [String: Double] = [:]
     private static var lastAutoanswerTimestamps: [PeerId: Double] = [:]
     private static let lock = NSLock()
     
@@ -79,27 +81,53 @@ public final class BurmaldaTools {
             let trimmedText = message.text.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmedText.isEmpty {
                 let now = Date().timeIntervalSince1970
-                var shouldDelete = false
+                var idsToDelete: [MessageId] = []
                 
                 lock.lock()
                 recentIncomingRecords.removeAll(where: { now - $0.timestamp > 180.0 })
-                let duplicates = recentIncomingRecords.filter {
-                    $0.peerId == message.id.peerId && $0.authorId == author.id && $0.text == trimmedText
-                }
-                if duplicates.count >= 3 {
-                    shouldDelete = true
+                activeSpamSignatures = activeSpamSignatures.filter { now - $0.value < 300.0 }
+                
+                let spamKey = "\(message.id.peerId.toInt64()):\(author.id.toInt64()):\(trimmedText)"
+                
+                if activeSpamSignatures[spamKey] != nil {
+                    // Already flagged as spam: delete this incoming duplicate immediately
+                    activeSpamSignatures[spamKey] = now
+                    idsToDelete.append(message.id)
                 } else {
-                    recentIncomingRecords.append(IncomingRecord(
-                        peerId: message.id.peerId,
-                        authorId: author.id,
-                        text: trimmedText,
-                        timestamp: now
-                    ))
+                    let matchingRecords = recentIncomingRecords.filter {
+                        $0.peerId == message.id.peerId && $0.authorId == author.id && $0.text == trimmedText
+                    }
+                    
+                    if matchingRecords.count >= 3 {
+                        // More than 3 identical messages from this sender:
+                        // Delete all existing duplicates (keeping matchingRecords.first) and delete this incoming message too!
+                        activeSpamSignatures[spamKey] = now
+                        
+                        for record in matchingRecords.dropFirst() {
+                            idsToDelete.append(record.messageId)
+                        }
+                        idsToDelete.append(message.id)
+                        
+                        // Keep only the first original record in recent records
+                        if let firstRecord = matchingRecords.first {
+                            recentIncomingRecords.removeAll(where: {
+                                $0.peerId == message.id.peerId && $0.authorId == author.id && $0.text == trimmedText && $0.messageId != firstRecord.messageId
+                            })
+                        }
+                    } else {
+                        recentIncomingRecords.append(IncomingRecord(
+                            messageId: message.id,
+                            peerId: message.id.peerId,
+                            authorId: author.id,
+                            text: trimmedText,
+                            timestamp: now
+                        ))
+                    }
                 }
                 lock.unlock()
                 
-                if shouldDelete {
-                    let _ = context.engine.messages.deleteMessagesInteractively(messageIds: [message.id], type: .forEveryone).startStandalone()
+                if !idsToDelete.isEmpty {
+                    let _ = context.engine.messages.deleteMessagesInteractively(messageIds: idsToDelete, type: .forEveryone).startStandalone()
                     return
                 }
             }

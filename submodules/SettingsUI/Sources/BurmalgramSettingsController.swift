@@ -604,6 +604,7 @@ public func burmalgramSettingsController(context: AccountContext) -> ViewControl
 private enum BurmalgramCustomizationSection: Int32 {
     case premium
     case themes
+    case shimmer
     case visuals
     case tabsAndFolders
     case chatList
@@ -624,6 +625,11 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
     case themeReset(PresentationTheme, String, String)
     case useDefaultThemeColors(PresentationTheme, String, Bool)
     case themeFooter(PresentationTheme, String)
+    
+    case headerShimmer(PresentationTheme, String)
+    case shimmerToggle(PresentationTheme, String, Bool)
+    case shimmerMode(PresentationTheme, String, String)
+    case shimmerFooter(PresentationTheme, String)
     
     case headerVisuals(PresentationTheme, String)
     case customFont(PresentationTheme, String, String)
@@ -659,6 +665,8 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return BurmalgramCustomizationSection.premium.rawValue
         case .headerThemes, .customThemeBuilder, .themeNeon, .themeTitanium, .themeSpace, .themeSparkling, .themeStandardPicker, .themeReset, .useDefaultThemeColors, .themeFooter:
             return BurmalgramCustomizationSection.themes.rawValue
+        case .headerShimmer, .shimmerToggle, .shimmerMode, .shimmerFooter:
+            return BurmalgramCustomizationSection.shimmer.rawValue
         case .headerVisuals, .customFont, .customPhone, .hidePhone, .showProfileId, .showDC, .showRegDate, .showCreationDate:
             return BurmalgramCustomizationSection.visuals.rawValue
         case .headerTabsAndFolders, .foldersAtBottom, .allChatsHidden, .compactFolderNames, .rememberLastFolder, .wideTabBar, .tabBarSearchEnabled, .hideTabBar, .showTabNames:
@@ -685,33 +693,38 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
         case .useDefaultThemeColors: return 18
         case .themeFooter: return 19
         
-        case .headerVisuals: return 20
-        case .customFont: return 21
-        case .customPhone: return 22
-        case .hidePhone: return 23
-        case .showProfileId: return 24
-        case .showDC: return 25
-        case .showRegDate: return 26
-        case .showCreationDate: return 27
+        case .headerShimmer: return 20
+        case .shimmerToggle: return 21
+        case .shimmerMode: return 22
+        case .shimmerFooter: return 23
         
-        case .headerTabsAndFolders: return 30
-        case .foldersAtBottom: return 31
-        case .allChatsHidden: return 32
-        case .compactFolderNames: return 33
-        case .rememberLastFolder: return 34
-        case .wideTabBar: return 35
-        case .tabBarSearchEnabled: return 36
-        case .hideTabBar: return 37
-        case .showTabNames: return 38
+        case .headerVisuals: return 30
+        case .customFont: return 31
+        case .customPhone: return 32
+        case .hidePhone: return 33
+        case .showProfileId: return 34
+        case .showDC: return 35
+        case .showRegDate: return 36
+        case .showCreationDate: return 37
         
-        case .headerChatList: return 40
-        case .compactChatList: return 41
-        case .compactPreview: return 42
-        case .disableChatSwipeOptions: return 43
-        case .disableDeleteChatSwipeOption: return 44
-        case .hideReactions: return 45
-        case .wideChannelPosts: return 46
-        case .hideChannelBottomButton: return 47
+        case .headerTabsAndFolders: return 40
+        case .foldersAtBottom: return 41
+        case .allChatsHidden: return 42
+        case .compactFolderNames: return 43
+        case .rememberLastFolder: return 44
+        case .wideTabBar: return 45
+        case .tabBarSearchEnabled: return 46
+        case .hideTabBar: return 47
+        case .showTabNames: return 48
+        
+        case .headerChatList: return 50
+        case .compactChatList: return 51
+        case .compactPreview: return 52
+        case .disableChatSwipeOptions: return 53
+        case .disableDeleteChatSwipeOption: return 54
+        case .hideReactions: return 55
+        case .wideChannelPosts: return 56
+        case .hideChannelBottomButton: return 57
         }
     }
     
@@ -755,6 +768,18 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             return false
         case let .themeFooter(lhsTheme, lhsText):
             if case let .themeFooter(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        case let .headerShimmer(lhsTheme, lhsText):
+            if case let .headerShimmer(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
+            return false
+        case let .shimmerToggle(lhsTheme, lhsText, lhsValue):
+            if case let .shimmerToggle(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .shimmerMode(lhsTheme, lhsText, lhsValue):
+            if case let .shimmerMode(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue { return true }
+            return false
+        case let .shimmerFooter(lhsTheme, lhsText):
+            if case let .shimmerFooter(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
             return false
         case let .headerVisuals(lhsTheme, lhsText):
             if case let .headerVisuals(rhsTheme, rhsText) = rhs, lhsTheme === rhsTheme, lhsText == rhsText { return true }
@@ -885,6 +910,18 @@ private enum BurmalgramCustomizationEntry: ItemListNodeEntry {
             })
         case let .themeFooter(_, text):
             return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
+        case let .headerShimmer(_, text):
+            return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
+        case let .shimmerToggle(_, text, value):
+            return ItemListSwitchItem(presentationData: presentationData, title: text, value: value, sectionId: self.section, style: .blocks, updated: { val in
+                args.toggleTextShimmer(val)
+            })
+        case let .shimmerMode(_, text, value):
+            return ItemListDisclosureItem(presentationData: presentationData, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                args.pickTextShimmerMode()
+            })
+        case let .shimmerFooter(_, text):
+            return ItemListTextItem(presentationData: presentationData, text: .plain(text), sectionId: self.section)
         case let .headerVisuals(_, text):
             return ItemListSectionHeaderItem(presentationData: presentationData, text: text, sectionId: self.section)
         case let .customFont(_, text, value):
@@ -988,6 +1025,8 @@ private final class BurmalgramCustomizationArguments {
     let toggleFakePremium: (Bool) -> Void
     let applyTheme: (String) -> Void
     let toggleUseDefaultThemeColors: (Bool) -> Void
+    let toggleTextShimmer: (Bool) -> Void
+    let pickTextShimmerMode: () -> Void
     let openStandardThemes: () -> Void
     let selectFont: () -> Void
     let editCustomPhone: () -> Void
@@ -1017,6 +1056,8 @@ private final class BurmalgramCustomizationArguments {
         toggleFakePremium: @escaping (Bool) -> Void,
         applyTheme: @escaping (String) -> Void,
         toggleUseDefaultThemeColors: @escaping (Bool) -> Void,
+        toggleTextShimmer: @escaping (Bool) -> Void,
+        pickTextShimmerMode: @escaping () -> Void,
         openStandardThemes: @escaping () -> Void,
         selectFont: @escaping () -> Void,
         editCustomPhone: @escaping () -> Void,
@@ -1045,6 +1086,8 @@ private final class BurmalgramCustomizationArguments {
         self.toggleFakePremium = toggleFakePremium
         self.applyTheme = applyTheme
         self.toggleUseDefaultThemeColors = toggleUseDefaultThemeColors
+        self.toggleTextShimmer = toggleTextShimmer
+        self.pickTextShimmerMode = pickTextShimmerMode
         self.openStandardThemes = openStandardThemes
         self.selectFont = selectFont
         self.editCustomPhone = editCustomPhone
@@ -1105,6 +1148,17 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
             SGSimpleSettings.shared.useDefaultThemeColors = val
             let _ = updatePresentationThemeSettingsInteractively(accountManager: context.sharedContext.accountManager, { $0 }).start()
             reloadPromise.set(true)
+        },
+        toggleTextShimmer: { val in
+            SGSimpleSettings.shared.customThemeTextShimmer = val
+            reloadPromise.set(true)
+        },
+        pickTextShimmerMode: {
+            presentBurmalgramShimmerModePicker(onSelect: { mode in
+                SGSimpleSettings.shared.customThemeTextShimmer = true
+                SGSimpleSettings.shared.customThemeTextShimmerMode = mode
+                reloadPromise.set(true)
+            })
         },
         openStandardThemes: {
             pushControllerImpl?(themePickerController(context: context))
@@ -1228,6 +1282,12 @@ public func burmalgramCustomizationController(context: AccountContext) -> ViewCo
         entries.append(.themeReset(presentationData.theme, "🔄 Сбросить тему (По умолчанию)", ""))
         entries.append(.useDefaultThemeColors(presentationData.theme, "Использовать цвета стандартных тем", SGSimpleSettings.shared.useDefaultThemeColors))
         entries.append(.themeFooter(presentationData.theme, "Анимированные частицы (мерцающие звезды, искры, переливы платины), гироскопный параллакс 3D и многоточечные градиенты сообщений и фона. При выключенном переключателе эксклюзивные темы принудительно заменяют стандартные цвета чатов Telegram."))
+        
+        entries.append(.headerShimmer(presentationData.theme, "ПЕРЕЛИВАНИЕ ТЕКСТА СООБЩЕНИЙ"))
+        entries.append(.shimmerToggle(presentationData.theme, "Переливание текста сообщений", SGSimpleSettings.shared.customThemeTextShimmer))
+        let shimmerModeTitle = SGSimpleSettings.shared.customThemeTextShimmerMode == "gradient" ? "🌈 Радужный градиент" : "✨ Одиночная волна"
+        entries.append(.shimmerMode(presentationData.theme, "Режим переливания", shimmerModeTitle))
+        entries.append(.shimmerFooter(presentationData.theme, "Плавное переливание текста сообщений в чатах без рывков. Цвет текста, сообщений, фон и звёзды можно также настроить в Конструкторе кастомных тем."))
         
         entries.append(.headerVisuals(presentationData.theme, "ШРИФТ И ПРОФИЛЬ"))
         entries.append(.customFont(presentationData.theme, "Шрифт интерфейса", burmalgramFontDisplayName(SGSimpleSettings.shared.customFont)))

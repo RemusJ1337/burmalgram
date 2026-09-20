@@ -1863,35 +1863,51 @@ public class ChatMessageTextBubbleContentNode: ChatMessageBubbleContentNode {
         
         maskLayer.frame = CGRect(origin: .zero, size: size)
         
+        let currentMode = isGradient ? "gradient" : "single"
+        let previousMode = maskLayer.value(forKey: "burmaldaMode") as? String
+        if previousMode != currentMode {
+            maskLayer.removeAnimation(forKey: "burmaldaShimmer")
+            maskLayer.setValue(currentMode, forKey: "burmaldaMode")
+        }
+        
         if isGradient {
             maskLayer.colors = [
-                UIColor(white: 1.0, alpha: 0.45).cgColor,
+                UIColor(white: 1.0, alpha: 0.6).cgColor,
+                UIColor(white: 1.0, alpha: 0.6).cgColor,
                 UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.35).cgColor,
+                UIColor(white: 1.0, alpha: 0.65).cgColor,
                 UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.45).cgColor
+                UIColor(white: 1.0, alpha: 0.6).cgColor,
+                UIColor(white: 1.0, alpha: 0.6).cgColor
             ]
-            maskLayer.locations = [0.0, 0.25, 0.5, 0.75, 1.0]
         } else {
             maskLayer.colors = [
-                UIColor(white: 1.0, alpha: 0.55).cgColor,
+                UIColor(white: 1.0, alpha: 0.65).cgColor,
+                UIColor(white: 1.0, alpha: 0.65).cgColor,
                 UIColor(white: 1.0, alpha: 1.0).cgColor,
-                UIColor(white: 1.0, alpha: 0.55).cgColor
+                UIColor(white: 1.0, alpha: 0.65).cgColor,
+                UIColor(white: 1.0, alpha: 0.65).cgColor
             ]
-            maskLayer.locations = [0.0, 0.5, 1.0]
         }
         
         if maskLayer.animation(forKey: "burmaldaShimmer") == nil {
             let anim = CABasicAnimation(keyPath: "locations")
             if isGradient {
-                anim.fromValue = [-0.6, -0.3, 0.0, 0.3, 0.6]
-                anim.toValue = [0.4, 0.7, 1.0, 1.3, 1.6]
-                anim.duration = 2.2
+                let fromLocs: [NSNumber] = [-1.2, -0.9, -0.75, -0.6, -0.45, -0.3, -0.05]
+                let toLocs: [NSNumber] = [1.05, 1.3, 1.45, 1.6, 1.75, 1.9, 2.2]
+                maskLayer.locations = fromLocs
+                anim.fromValue = fromLocs
+                anim.toValue = toLocs
+                anim.duration = 2.6
             } else {
-                anim.fromValue = [-0.5, 0.0, 0.5]
-                anim.toValue = [0.5, 1.0, 1.5]
-                anim.duration = 1.6
+                let fromLocs: [NSNumber] = [-0.9, -0.7, -0.5, -0.3, -0.1]
+                let toLocs: [NSNumber] = [1.1, 1.3, 1.5, 1.7, 1.9]
+                maskLayer.locations = fromLocs
+                anim.fromValue = fromLocs
+                anim.toValue = toLocs
+                anim.duration = 2.2
             }
+            anim.timingFunction = CAMediaTimingFunction(name: .linear)
             anim.repeatCount = .infinity
             maskLayer.add(anim, forKey: "burmaldaShimmer")
         }
