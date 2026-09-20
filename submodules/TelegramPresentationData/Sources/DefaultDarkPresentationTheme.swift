@@ -35,6 +35,8 @@ private extension PresentationThemeBaseColor {
             return nil
         }
     }
+}
+
 private func parseCustomHexColor(_ hex: String) -> UInt32? {
     var cleaned = hex.trimmingCharacters(in: .whitespacesAndNewlines)
     if cleaned.hasPrefix("#") {
