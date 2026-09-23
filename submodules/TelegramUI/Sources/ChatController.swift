@@ -9038,6 +9038,55 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
         return .single(false)
     }
     
+    private static func cleanUrlsInText(_ text: String) -> String {
+        let trackingParams: Set<String> = [
+            "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
+            "fbclid", "gclid", "yclid", "igshid", "si", "mc_cid", "mc_eid"
+        ]
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else {
+            return text
+        }
+        let matches = detector.matches(in: text, options: [], range: NSRange(location: 0, length: (text as NSString).length))
+        if matches.isEmpty { return text }
+        
+        var result = text
+        for match in matches.reversed() {
+            guard let url = match.url, var components = URLComponents(url: url, resolvingAgainstBaseURL: false) else { continue }
+            if let queryItems = components.queryItems, !queryItems.isEmpty {
+                let filtered = queryItems.filter { !trackingParams.contains($0.name.lowercased()) }
+                if filtered.count != queryItems.count {
+                    components.queryItems = filtered.isEmpty ? nil : filtered
+                    if let cleanedUrlString = components.string, let range = Range(match.range, in: result) {
+                        result.replaceSubrange(range, with: cleanedUrlString)
+                    }
+                }
+            }
+        }
+        return result
+    }
+
+    private static func filterZalgoText(_ text: String) -> String {
+        var result = ""
+        var combiningCount = 0
+        for char in text.unicodeScalars {
+            let isCombining = (char.value >= 0x0300 && char.value <= 0x036F) ||
+                              (char.value >= 0x1AB0 && char.value <= 0x1AFF) ||
+                              (char.value >= 0x1DC0 && char.value <= 0x1DFF) ||
+                              (char.value >= 0x20D0 && char.value <= 0x20FF) ||
+                              (char.value >= 0xFE20 && char.value <= 0xFE2F)
+            if isCombining {
+                combiningCount += 1
+                if combiningCount <= 1 {
+                    result.unicodeScalars.append(char)
+                }
+            } else {
+                combiningCount = 0
+                result.unicodeScalars.append(char)
+            }
+        }
+        return result
+    }
+
     func sendMessages(_ messages: [EnqueueMessage], media: Bool = false, postpone: Bool = false, commit: Bool = false) {
         if case let .customChatContents(customChatContents) = self.subject {
             customChatContents.enqueueMessages(messages: messages)
@@ -9048,23 +9097,6 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             return
         }
         
-        if !commit && messages.count == 1, case let .message(text, _, _, _, threadId, replyToMessageId, _, _, _, _) = messages[0] {
-            if BurmaldaTools.handleCommand(
-                text: text,
-                peerId: peerId,
-                threadId: threadId ?? self.chatLocation.threadId,
-                replyToMessageId: replyToMessageId,
-                context: self.context,
-                controller: self
-            ) {
-                self.chatDisplayNode.historyNode.scrollToEndOfHistory()
-                self.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })
-                self.clearInputText()
-                self.chatDisplayNode.textInputPanelNode?.text = ""
-                return
-            }
-        }
-        
         let _ = (self.shouldDivertMessagesToScheduled(messages: messages)
         |> deliverOnMainQueue).startStandalone(next: { [weak self] shouldDivert in
             guard let self else {
@@ -9072,6 +9104,23 @@ public final class ChatControllerImpl: TelegramBaseController, ChatController, G
             }
             
             var messages = messages
+            if SGSimpleSettings.shared.cleanUrlsEnabled || SGSimpleSettings.shared.zalgoFilterEnabled {
+                messages = messages.map { msg -> EnqueueMessage in
+                    switch msg {
+                    case let .message(text, attributes, inlineStickers, mediaReference, threadId, replyToMessageId, replyToStoryId, localGroupingKey, correlationId, bubbleUpEmojiOrStickersets):
+                        var newText = text
+                        if SGSimpleSettings.shared.cleanUrlsEnabled {
+                            newText = ChatControllerImpl.cleanUrlsInText(newText)
+                        }
+                        if SGSimpleSettings.shared.zalgoFilterEnabled {
+                            newText = ChatControllerImpl.filterZalgoText(newText)
+                        }
+                        return .message(text: newText, attributes: attributes, inlineStickers: inlineStickers, mediaReference: mediaReference, threadId: threadId, replyToMessageId: replyToMessageId, replyToStoryId: replyToStoryId, localGroupingKey: localGroupingKey, correlationId: correlationId, bubbleUpEmojiOrStickersets: bubbleUpEmojiOrStickersets)
+                    case .forward:
+                        return msg
+                    }
+                }
+            }
             var shouldOpenScheduledMessages = false
             
             if shouldDivert {

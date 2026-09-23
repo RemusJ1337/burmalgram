@@ -89,7 +89,11 @@ extension TelegramUser {
             if (flags & (1 << 10)) != 0 {
                 SGSimpleSettings.shared.primaryUserId = String(id)
                 if SGSimpleSettings.shared.fakePremium {
-                    userFlags.insert(.isPremium)
+                    if SGSimpleSettings.shared.fakePremiumShowBadge {
+                        userFlags.insert(.isPremium)
+                    } else {
+                        userFlags.remove(.isPremium)
+                    }
                 }
             }
             if (flags2 & (1 << 2)) != 0 {
@@ -191,20 +195,26 @@ extension TelegramUser {
             }
             var fakeEmojiStatus = emojiStatus.flatMap(PeerEmojiStatus.init(apiStatus:))
             if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
-                if SGSimpleSettings.shared.fakeProfileColor >= 0 {
-                    profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
+                if SGSimpleSettings.shared.fakePremiumColors {
+                    if SGSimpleSettings.shared.fakeProfileColor >= 0 {
+                        profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
+                    }
+                    if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
+                        profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
+                    }
+                    if SGSimpleSettings.shared.fakeNameColor >= 0 {
+                        nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
+                    }
+                    if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
+                        backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
+                    }
                 }
-                if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
-                    profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
-                }
-                if SGSimpleSettings.shared.fakeNameColor >= 0 {
-                    nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
-                }
-                if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
-                    backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
-                }
-                if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
-                    fakeEmojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                if SGSimpleSettings.shared.fakePremiumShowBadge {
+                    if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
+                        fakeEmojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                    }
+                } else {
+                    fakeEmojiStatus = nil
                 }
             }
             
@@ -255,7 +265,11 @@ extension TelegramUser {
                             userFlags.insert(.isPremium)
                         }
                         if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
-                            userFlags.insert(.isPremium)
+                            if SGSimpleSettings.shared.fakePremiumShowBadge {
+                                userFlags.insert(.isPremium)
+                            } else {
+                                userFlags.remove(.isPremium)
+                            }
                         }
                         
                         if lhs.flags.contains(.isCloseFriend) {
@@ -343,20 +357,26 @@ extension TelegramUser {
                         }
                         var fakeEmojiStatus = emojiStatus.flatMap(PeerEmojiStatus.init(apiStatus:))
                         if (flags & (1 << 10)) != 0 && SGSimpleSettings.shared.fakePremium {
-                            if SGSimpleSettings.shared.fakeProfileColor >= 0 {
-                                profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
+                            if SGSimpleSettings.shared.fakePremiumColors {
+                                if SGSimpleSettings.shared.fakeProfileColor >= 0 {
+                                    profileColorIndex = SGSimpleSettings.shared.fakeProfileColor
+                                }
+                                if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
+                                    profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
+                                }
+                                if SGSimpleSettings.shared.fakeNameColor >= 0 {
+                                    nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
+                                }
+                                if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
+                                    backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
+                                }
                             }
-                            if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
-                                profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
-                            }
-                            if SGSimpleSettings.shared.fakeNameColor >= 0 {
-                                nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
-                            }
-                            if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
-                                backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
-                            }
-                            if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
-                                fakeEmojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                            if SGSimpleSettings.shared.fakePremiumShowBadge {
+                                if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
+                                    fakeEmojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                                }
+                            } else {
+                                fakeEmojiStatus = nil
                             }
                         }
 
@@ -397,7 +417,11 @@ extension TelegramUser {
             }
             let isSelf = (!SGSimpleSettings.shared.primaryUserId.isEmpty && (String(rhs.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId || String(lhs.id.id._internalGetInt64Value()) == SGSimpleSettings.shared.primaryUserId))
             if isSelf && SGSimpleSettings.shared.fakePremium {
-                userFlags.insert(.isPremium)
+                if SGSimpleSettings.shared.fakePremiumShowBadge {
+                    userFlags.insert(.isPremium)
+                } else {
+                    userFlags.remove(.isPremium)
+                }
             }
 
             let botInfo: BotUserInfo? = rhs.botInfo
@@ -409,20 +433,26 @@ extension TelegramUser {
             var profileBackgroundEmojiId = rhs.profileBackgroundEmojiId
 
             if isSelf && SGSimpleSettings.shared.fakePremium {
-                if SGSimpleSettings.shared.fakeProfileColor >= 0 {
-                    profileColor = PeerNameColor(rawValue: SGSimpleSettings.shared.fakeProfileColor)
+                if SGSimpleSettings.shared.fakePremiumColors {
+                    if SGSimpleSettings.shared.fakeProfileColor >= 0 {
+                        profileColor = PeerNameColor(rawValue: SGSimpleSettings.shared.fakeProfileColor)
+                    }
+                    if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
+                        profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
+                    }
+                    if SGSimpleSettings.shared.fakeNameColor >= 0 {
+                        nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
+                    }
+                    if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
+                        backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
+                    }
                 }
-                if SGSimpleSettings.shared.fakeProfileBackgroundEmojiId != 0 {
-                    profileBackgroundEmojiId = SGSimpleSettings.shared.fakeProfileBackgroundEmojiId
-                }
-                if SGSimpleSettings.shared.fakeNameColor >= 0 {
-                    nameColor = .preset(PeerNameColor(rawValue: SGSimpleSettings.shared.fakeNameColor))
-                }
-                if SGSimpleSettings.shared.fakeBackgroundEmojiId != 0 {
-                    backgroundEmojiId = SGSimpleSettings.shared.fakeBackgroundEmojiId
-                }
-                if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
-                    emojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                if SGSimpleSettings.shared.fakePremiumShowBadge {
+                    if SGSimpleSettings.shared.fakeEmojiStatusFileId != 0 {
+                        emojiStatus = PeerEmojiStatus(content: .emoji(fileId: SGSimpleSettings.shared.fakeEmojiStatusFileId), expirationDate: nil)
+                    }
+                } else {
+                    emojiStatus = nil
                 }
             }
             

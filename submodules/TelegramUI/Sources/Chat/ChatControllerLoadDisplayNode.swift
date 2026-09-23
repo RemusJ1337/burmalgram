@@ -1002,23 +1002,6 @@ extension ChatControllerImpl {
             strongSelf.commitPurposefulAction()
             
             if let peerId = strongSelf.chatLocation.peerId {
-                if messages.count == 1, case let .message(text, _, _, _, threadId, replyToMessageId, _, _, _, _) = messages[0] {
-                    if BurmaldaTools.handleCommand(
-                        text: text,
-                        peerId: peerId,
-                        threadId: threadId ?? strongSelf.chatLocation.threadId,
-                        replyToMessageId: replyToMessageId,
-                        context: strongSelf.context,
-                        controller: strongSelf
-                    ) {
-                        strongSelf.chatDisplayNode.historyNode.scrollToEndOfHistory()
-                        strongSelf.updateChatPresentationInterfaceState(interactive: true, { $0.updatedShowCommands(false) })
-                        strongSelf.clearInputText()
-                        strongSelf.chatDisplayNode.textInputPanelNode?.text = ""
-                        return
-                    }
-                }
-                
                 var hasDisabledContent = false
                 if "".isEmpty {
                     hasDisabledContent = false

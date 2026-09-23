@@ -469,7 +469,7 @@ public final class AccountContextImpl: AccountContext {
         
         self.audioTranscriptionTrialDisposable = (self.engine.data.subscribe(TelegramEngine.EngineData.Item.Peer.Peer(id: account.peerId))
         |> mapToSignal { peer -> Signal<AudioTranscription.TrialState, NoError> in
-            let isPremium = (SGSimpleSettings.shared.fakePremium) || (peer?.isPremium ?? false)
+            let isPremium = (SGSimpleSettings.shared.fakePremium && SGSimpleSettings.shared.fakePremiumVoiceToText) || (peer?.isPremium ?? false)
             if isPremium {
                 return .single(AudioTranscription.TrialState(cooldownUntilTime: nil, remainingCount: 1))
             } else {

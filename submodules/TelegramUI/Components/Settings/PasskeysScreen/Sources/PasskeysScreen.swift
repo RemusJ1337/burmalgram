@@ -122,17 +122,6 @@ final class PasskeysScreenComponent: Component {
                     guard let self, let component = self.component else {
                         return
                     }
-                    // MARK: Swiftgram
-                    if let tgUrl = URL(string: "tg://settings/privacy") {
-                        UIApplication.shared.open(tgUrl, options: [:], completionHandler: { success in
-                            if !success, let tgDLUrl = URL(string: "https://get.telegram.org/") {
-                                    UIApplication.shared.open(tgDLUrl, options: [:], completionHandler: nil)
-                                }
-                            }
-                        )
-                    }
-                    if ({ return true }()) { return }
-                    //
                     let decodeBase64: (String) -> Data? = { string in
                         var string = string.replacingOccurrences(of: "-", with: "+")
                             .replacingOccurrences(of: "_", with: "/")
@@ -151,13 +140,9 @@ final class PasskeysScreenComponent: Component {
                     guard let pkDict = params["publicKey"] as? [String: Any] else {
                         return
                     }
-                    /* MARK: Swiftgram
-                    guard let rp = pkDict["rp"] as? [String: Any] else {
+                    guard let rp = pkDict["rp"] as? [String: Any], let relyingPartyIdentifier = rp["id"] as? String else {
                         return
                     }
-                    guard let relyingPartyIdentifier = rp["id"] as? String else {
-                        return
-                    }*/
                     guard let challengeBase64 = pkDict["challenge"] as? String else {
                         return
                     }
@@ -177,7 +162,7 @@ final class PasskeysScreenComponent: Component {
                         return
                     }
                     
-                    let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: "swiftgram.app")
+                    let platformProvider = ASAuthorizationPlatformPublicKeyCredentialProvider(relyingPartyIdentifier: relyingPartyIdentifier)
                     let platformKeyRequest = platformProvider.createCredentialRegistrationRequest(challenge: challengeData, name: userName, userID: userId)
                     let authController = ASAuthorizationController(authorizationRequests: [platformKeyRequest])
                     authController.delegate = self

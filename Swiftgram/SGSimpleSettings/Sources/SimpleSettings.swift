@@ -74,7 +74,18 @@ public class SGSimpleSettings {
             { let _ = self.hideRecordingButton },
             { let _ = self.inputToolbar },
             { let _ = self.dismissedSGSuggestions },
-            { let _ = self.customAppBadge }
+            { let _ = self.customAppBadge },
+            { let _ = self.exteraUiStyle },
+            { let _ = self.pillStackShowWeather },
+            { let _ = self.pillStackInfiniteScroll },
+            { let _ = self.removeMessageTail },
+            { let _ = self.avatarCorners },
+            { let _ = self.dividerStyle },
+            { let _ = self.forceBlur },
+            { let _ = self.glassOutlineStyle },
+            { let _ = self.springAnimations },
+            { let _ = self.centerTitle },
+            { let _ = self.hideDialogsSearchBar }
         ]
 
         tasks.forEach { task in
@@ -188,24 +199,17 @@ public class SGSimpleSettings {
         case fakeEmojiStatusFileId
         case burmalgramTheme
         case useDefaultThemeColors
-        case enableBurmaldaTools
-        case burmaldaDeleteCommands
-        case burmaldaSendCommandsToServer
-        case burmaldaAutoanswerOn
-        case burmaldaAutoanswerText
-        case burmaldaAutoanswerDelay
-        case burmaldaMutedPeerIds
-        case burmaldaAntispamOn
-        case burmaldaToolAntispam
-        case burmaldaToolMute
-        case burmaldaToolSpam
-        case burmaldaToolText
-        case burmaldaToolCalc
-        case burmaldaToolCoin
-        case burmaldaToolDox
-        case burmaldaToolSend
-        case burmaldaToolEncrypt
-        case burmaldaToolCat
+        case fakePremiumShowBadge
+        case fakePremiumVoiceToText
+        case fakePremiumReactions
+        case fakePremiumColors
+        case exteraUiStyle
+        case pillStackEnabled
+        case pillStackShowCrypto
+        case pillStackShowCache
+        case pillStackShowProxy
+        case cleanUrlsEnabled
+        case zalgoFilterEnabled
         case customThemeEnabled
         case customThemePreset
         case customThemeBgColor1
@@ -220,6 +224,16 @@ public class SGSimpleSettings {
         case customThemeTextShimmerMode
         case customThemeTextShimmerColor
         case customThemeTextShimmerSpeed
+        case pillStackShowWeather
+        case pillStackInfiniteScroll
+        case removeMessageTail
+        case avatarCorners
+        case dividerStyle
+        case forceBlur
+        case glassOutlineStyle
+        case springAnimations
+        case centerTitle
+        case hideDialogsSearchBar
     }
     
     public enum DownloadSpeedBoostValues: String, CaseIterable {
@@ -388,24 +402,17 @@ public class SGSimpleSettings {
         Keys.fakeEmojiStatusFileId.rawValue: 0 as Int64,
         Keys.burmalgramTheme.rawValue: "default",
         Keys.useDefaultThemeColors.rawValue: false,
-        Keys.enableBurmaldaTools.rawValue: true,
-        Keys.burmaldaDeleteCommands.rawValue: true,
-        Keys.burmaldaSendCommandsToServer.rawValue: false,
-        Keys.burmaldaAutoanswerOn.rawValue: false,
-        Keys.burmaldaAutoanswerText.rawValue: "Я сейчас не в сети.",
-        Keys.burmaldaAutoanswerDelay.rawValue: 300,
-        Keys.burmaldaMutedPeerIds.rawValue: [] as [String],
-        Keys.burmaldaAntispamOn.rawValue: true,
-        Keys.burmaldaToolAntispam.rawValue: true,
-        Keys.burmaldaToolMute.rawValue: true,
-        Keys.burmaldaToolSpam.rawValue: true,
-        Keys.burmaldaToolText.rawValue: true,
-        Keys.burmaldaToolCalc.rawValue: true,
-        Keys.burmaldaToolCoin.rawValue: true,
-        Keys.burmaldaToolDox.rawValue: true,
-        Keys.burmaldaToolSend.rawValue: true,
-        Keys.burmaldaToolEncrypt.rawValue: true,
-        Keys.burmaldaToolCat.rawValue: true,
+        Keys.fakePremiumShowBadge.rawValue: false,
+        Keys.fakePremiumVoiceToText.rawValue: true,
+        Keys.fakePremiumReactions.rawValue: true,
+        Keys.fakePremiumColors.rawValue: true,
+        Keys.exteraUiStyle.rawValue: "extera",
+        Keys.pillStackEnabled.rawValue: true,
+        Keys.pillStackShowCrypto.rawValue: true,
+        Keys.pillStackShowCache.rawValue: true,
+        Keys.pillStackShowProxy.rawValue: true,
+        Keys.cleanUrlsEnabled.rawValue: true,
+        Keys.zalgoFilterEnabled.rawValue: true,
         Keys.customThemeEnabled.rawValue: false,
         Keys.customThemePreset.rawValue: "custom",
         Keys.customThemeBgColor1.rawValue: "000C2A",
@@ -419,7 +426,17 @@ public class SGSimpleSettings {
         Keys.customThemeTextShimmer.rawValue: false,
         Keys.customThemeTextShimmerMode.rawValue: "single",
         Keys.customThemeTextShimmerColor.rawValue: "white",
-        Keys.customThemeTextShimmerSpeed.rawValue: "normal"
+        Keys.customThemeTextShimmerSpeed.rawValue: "normal",
+        Keys.pillStackShowWeather.rawValue: true,
+        Keys.pillStackInfiniteScroll.rawValue: false,
+        Keys.removeMessageTail.rawValue: true,
+        Keys.avatarCorners.rawValue: "squircle",
+        Keys.dividerStyle.rawValue: "hidden",
+        Keys.forceBlur.rawValue: true,
+        Keys.glassOutlineStyle.rawValue: "glare",
+        Keys.springAnimations.rawValue: true,
+        Keys.centerTitle.rawValue: false,
+        Keys.hideDialogsSearchBar.rawValue: false
     ]
     
     public static let groupDefaultValues: [String: Any] = [
@@ -428,6 +445,17 @@ public class SGSimpleSettings {
         Keys.mentionsAndRepliesNotifications.rawValue: MentionsAndRepliesNotificationsSettings.default.rawValue,
         Keys.status.rawValue: 1,
         Keys.showRepostToStoryV2.rawValue: true,
+        Keys.exteraUiStyle.rawValue: "extera",
+        Keys.pillStackShowWeather.rawValue: true,
+        Keys.pillStackInfiniteScroll.rawValue: false,
+        Keys.removeMessageTail.rawValue: true,
+        Keys.avatarCorners.rawValue: "squircle",
+        Keys.dividerStyle.rawValue: "hidden",
+        Keys.forceBlur.rawValue: true,
+        Keys.glassOutlineStyle.rawValue: "glare",
+        Keys.springAnimations.rawValue: true,
+        Keys.centerTitle.rawValue: false,
+        Keys.hideDialogsSearchBar.rawValue: false,
     ]
     
     @UserDefault(key: Keys.fakePremium.rawValue)
@@ -466,59 +494,38 @@ public class SGSimpleSettings {
     @UserDefault(key: Keys.useDefaultThemeColors.rawValue)
     public var useDefaultThemeColors: Bool
 
-    @UserDefault(key: Keys.enableBurmaldaTools.rawValue)
-    public var enableBurmaldaTools: Bool
+    @UserDefault(key: Keys.fakePremiumShowBadge.rawValue)
+    public var fakePremiumShowBadge: Bool
 
-    @UserDefault(key: Keys.burmaldaToolSpam.rawValue)
-    public var burmaldaToolSpam: Bool
+    @UserDefault(key: Keys.fakePremiumVoiceToText.rawValue)
+    public var fakePremiumVoiceToText: Bool
 
-    @UserDefault(key: Keys.burmaldaToolText.rawValue)
-    public var burmaldaToolText: Bool
+    @UserDefault(key: Keys.fakePremiumReactions.rawValue)
+    public var fakePremiumReactions: Bool
 
-    @UserDefault(key: Keys.burmaldaToolCalc.rawValue)
-    public var burmaldaToolCalc: Bool
+    @UserDefault(key: Keys.fakePremiumColors.rawValue)
+    public var fakePremiumColors: Bool
 
-    @UserDefault(key: Keys.burmaldaToolCoin.rawValue)
-    public var burmaldaToolCoin: Bool
+    @UserDefault(key: Keys.exteraUiStyle.rawValue)
+    public var exteraUiStyle: String
 
-    @UserDefault(key: Keys.burmaldaToolDox.rawValue)
-    public var burmaldaToolDox: Bool
+    @UserDefault(key: Keys.pillStackEnabled.rawValue)
+    public var pillStackEnabled: Bool
 
-    @UserDefault(key: Keys.burmaldaToolSend.rawValue)
-    public var burmaldaToolSend: Bool
+    @UserDefault(key: Keys.pillStackShowCrypto.rawValue)
+    public var pillStackShowCrypto: Bool
 
-    @UserDefault(key: Keys.burmaldaToolEncrypt.rawValue)
-    public var burmaldaToolEncrypt: Bool
+    @UserDefault(key: Keys.pillStackShowCache.rawValue)
+    public var pillStackShowCache: Bool
 
-    @UserDefault(key: Keys.burmaldaToolCat.rawValue)
-    public var burmaldaToolCat: Bool
+    @UserDefault(key: Keys.pillStackShowProxy.rawValue)
+    public var pillStackShowProxy: Bool
 
-    @UserDefault(key: Keys.burmaldaDeleteCommands.rawValue)
-    public var burmaldaDeleteCommands: Bool
+    @UserDefault(key: Keys.cleanUrlsEnabled.rawValue)
+    public var cleanUrlsEnabled: Bool
 
-    @UserDefault(key: Keys.burmaldaSendCommandsToServer.rawValue)
-    public var burmaldaSendCommandsToServer: Bool
-
-    @UserDefault(key: Keys.burmaldaAutoanswerOn.rawValue)
-    public var burmaldaAutoanswerOn: Bool
-
-    @UserDefault(key: Keys.burmaldaAutoanswerText.rawValue)
-    public var burmaldaAutoanswerText: String
-
-    @UserDefault(key: Keys.burmaldaAutoanswerDelay.rawValue)
-    public var burmaldaAutoanswerDelay: Int
-
-    @UserDefault(key: Keys.burmaldaMutedPeerIds.rawValue)
-    public var burmaldaMutedPeerIds: [String]
-
-    @UserDefault(key: Keys.burmaldaAntispamOn.rawValue)
-    public var burmaldaAntispamOn: Bool
-
-    @UserDefault(key: Keys.burmaldaToolAntispam.rawValue)
-    public var burmaldaToolAntispam: Bool
-
-    @UserDefault(key: Keys.burmaldaToolMute.rawValue)
-    public var burmaldaToolMute: Bool
+    @UserDefault(key: Keys.zalgoFilterEnabled.rawValue)
+    public var zalgoFilterEnabled: Bool
 
     @UserDefault(key: Keys.customThemeEnabled.rawValue)
     public var customThemeEnabled: Bool
@@ -561,6 +568,36 @@ public class SGSimpleSettings {
 
     @UserDefault(key: Keys.customThemeTextShimmerSpeed.rawValue)
     public var customThemeTextShimmerSpeed: String
+
+    @UserDefault(key: Keys.pillStackShowWeather.rawValue)
+    public var pillStackShowWeather: Bool
+
+    @UserDefault(key: Keys.pillStackInfiniteScroll.rawValue)
+    public var pillStackInfiniteScroll: Bool
+
+    @UserDefault(key: Keys.removeMessageTail.rawValue)
+    public var removeMessageTail: Bool
+
+    @UserDefault(key: Keys.avatarCorners.rawValue)
+    public var avatarCorners: String
+
+    @UserDefault(key: Keys.dividerStyle.rawValue)
+    public var dividerStyle: String
+
+    @UserDefault(key: Keys.forceBlur.rawValue)
+    public var forceBlur: Bool
+
+    @UserDefault(key: Keys.glassOutlineStyle.rawValue)
+    public var glassOutlineStyle: String
+
+    @UserDefault(key: Keys.springAnimations.rawValue)
+    public var springAnimations: Bool
+
+    @UserDefault(key: Keys.centerTitle.rawValue)
+    public var centerTitle: Bool
+
+    @UserDefault(key: Keys.hideDialogsSearchBar.rawValue)
+    public var hideDialogsSearchBar: Bool
 
     @UserDefault(key: Keys.hidePhoneInSettings.rawValue)
     public var hidePhoneInSettings: Bool

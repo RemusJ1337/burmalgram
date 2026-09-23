@@ -1256,158 +1256,9 @@ open class TextNode: ASDisplayNode, TextNodeProtocol {
         self.backgroundColor = UIColor.clear
         self.isOpaque = false
         self.clipsToBounds = false
-        
-        NotificationCenter.default.addObserver(self, selector: #selector(self.burmaldaShimmerSettingsChanged), name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self, name: NSNotification.Name("BurmaldaShimmerSettingsChanged"), object: nil)
-    }
-    
-    @objc private func burmaldaShimmerSettingsChanged() {
-        DispatchQueue.main.async { [weak self] in
-            self?.updateBurmaldaShimmer()
-        }
-    }
-    
-    open override func displayDidFinish() {
-        super.displayDidFinish()
-        self.updateBurmaldaShimmer()
-    }
-    
-    open override func didEnterHierarchy() {
-        super.didEnterHierarchy()
-        self.updateBurmaldaShimmer()
-    }
-    
-    open override func layout() {
-        super.layout()
-        self.updateBurmaldaShimmer()
-    }
-    
-    public func updateBurmaldaShimmer() {
-        guard UserDefaults.standard.bool(forKey: "customThemeTextShimmer") else {
-            if let sublayers = self.layer.sublayers {
-                for layer in sublayers where layer.name == "burmaldaTextShimmerLayer" {
-                    layer.removeFromSuperlayer()
-                }
-            }
-            return
-        }
-        
-        guard self.bounds.width > 1.0 && self.bounds.height > 1.0 else {
-            return
-        }
-        
-        let isGradient = (UserDefaults.standard.string(forKey: "customThemeTextShimmerMode") ?? "single") == "gradient"
-        let colorKey = UserDefaults.standard.string(forKey: "customThemeTextShimmerColor") ?? "white"
-        let speed = UserDefaults.standard.string(forKey: "customThemeTextShimmerSpeed") ?? "normal"
-        
-        let duration: Double
-        switch speed {
-        case "turbo": duration = 0.8
-        case "fast": duration = 1.3
-        case "slow": duration = 3.2
-        default: duration = 2.0
-        }
-        
-        let shimmerLayer: CAGradientLayer
-        if let existing = self.layer.sublayers?.first(where: { $0.name == "burmaldaTextShimmerLayer" }) as? CAGradientLayer {
-            shimmerLayer = existing
-        } else {
-            shimmerLayer = CAGradientLayer()
-            shimmerLayer.name = "burmaldaTextShimmerLayer"
-            shimmerLayer.startPoint = CGPoint(x: 0.0, y: 0.5)
-            shimmerLayer.endPoint = CGPoint(x: 1.0, y: 0.5)
-            self.layer.addSublayer(shimmerLayer)
-        }
-        
-        shimmerLayer.frame = self.layer.bounds
-        
-        let maskLayer: CALayer
-        if let existingMask = shimmerLayer.mask {
-            maskLayer = existingMask
-        } else {
-            maskLayer = CALayer()
-            shimmerLayer.mask = maskLayer
-        }
-        maskLayer.frame = shimmerLayer.bounds
-        maskLayer.contents = self.layer.contents
-        maskLayer.contentsScale = self.layer.contentsScale
-        
-        let currentConfig = "\(isGradient)_\(colorKey)_\(speed)"
-        let previousConfig = shimmerLayer.value(forKey: "burmaldaConfig") as? String
-        if previousConfig != currentConfig {
-            shimmerLayer.removeAnimation(forKey: "burmaldaShimmer")
-            shimmerLayer.setValue(currentConfig, forKey: "burmaldaConfig")
-        }
-        
-        let colors: [CGColor]
-        let fromLocs: [NSNumber]
-        let toLocs: [NSNumber]
-        
-        if isGradient {
-            colors = [
-                UIColor(rgb: 0xFF2D55).withAlphaComponent(0.85).cgColor,
-                UIColor(rgb: 0xFF9500).withAlphaComponent(0.9).cgColor,
-                UIColor(rgb: 0xFFCC00).withAlphaComponent(0.95).cgColor,
-                UIColor(rgb: 0x4CD964).withAlphaComponent(0.9).cgColor,
-                UIColor(rgb: 0x5AC8FA).withAlphaComponent(0.95).cgColor,
-                UIColor(rgb: 0x007AFF).withAlphaComponent(0.9).cgColor,
-                UIColor(rgb: 0x5856D6).withAlphaComponent(0.95).cgColor,
-                UIColor(rgb: 0xFF2D55).withAlphaComponent(0.85).cgColor
-            ]
-            fromLocs = [-1.0, -0.8, -0.6, -0.4, -0.2, 0.0, 0.2, 0.4]
-            toLocs = [0.8, 1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.2]
-        } else {
-            let baseColor: UIColor
-            let highlightColor: UIColor
-            switch colorKey {
-            case "gold":
-                baseColor = UIColor(rgb: 0xB8860B).withAlphaComponent(0.8)
-                highlightColor = UIColor(rgb: 0xFFF8DC)
-            case "cyan":
-                baseColor = UIColor(rgb: 0x0097A7).withAlphaComponent(0.8)
-                highlightColor = UIColor(rgb: 0xE0F7FA)
-            case "pink":
-                baseColor = UIColor(rgb: 0xC2185B).withAlphaComponent(0.8)
-                highlightColor = UIColor(rgb: 0xFF80AB)
-            case "emerald":
-                baseColor = UIColor(rgb: 0x00796B).withAlphaComponent(0.8)
-                highlightColor = UIColor(rgb: 0xB9F6CA)
-            case "purple":
-                baseColor = UIColor(rgb: 0x512DA8).withAlphaComponent(0.8)
-                highlightColor = UIColor(rgb: 0xEDE7F6)
-            case "red":
-                baseColor = UIColor(rgb: 0xB71C1C).withAlphaComponent(0.8)
-                highlightColor = UIColor(rgb: 0xFF8A80)
-            default: // white
-                baseColor = UIColor(white: 1.0, alpha: 0.35)
-                highlightColor = UIColor(white: 1.0, alpha: 1.0)
-            }
-            colors = [
-                baseColor.cgColor,
-                baseColor.cgColor,
-                highlightColor.cgColor,
-                baseColor.cgColor,
-                baseColor.cgColor
-            ]
-            fromLocs = [-0.6, -0.4, -0.2, 0.0, 0.2]
-            toLocs = [0.8, 1.0, 1.2, 1.4, 1.6]
-        }
-        
-        shimmerLayer.colors = colors
-        
-        if shimmerLayer.animation(forKey: "burmaldaShimmer") == nil {
-            let anim = CABasicAnimation(keyPath: "locations")
-            shimmerLayer.locations = fromLocs
-            anim.fromValue = fromLocs
-            anim.toValue = toLocs
-            anim.duration = duration
-            anim.timingFunction = CAMediaTimingFunction(name: .linear)
-            anim.repeatCount = .infinity
-            shimmerLayer.add(anim, forKey: "burmaldaShimmer")
-        }
     }
     
     override open func didLoad() {
@@ -2998,7 +2849,6 @@ open class TextNode: ASDisplayNode, TextNodeProtocol {
                     }
                     node.setNeedsDisplay()
                 }
-                node.updateBurmaldaShimmer()
                 
                 return node
             })
